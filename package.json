@@ -1,0 +1,58 @@
+{
+  "name": "compact.md",
+  "version": "0.1.0",
+  "description": "Token-efficient, lossless Markdown compression for agent pipelines.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "bin": {
+    "compact.md": "./dist/cli/index.cjs"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "citty": "^0.1.6",
+    "fast-glob": "^3.3.3",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0"
+  },
+  "peerDependencies": {
+    "tiktoken": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "tiktoken": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^22.13.10",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  }
+}
