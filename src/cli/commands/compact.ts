@@ -4,6 +4,7 @@ import { compact } from '../../core/compact.js';
 import { computeStats } from '../../utils/stats.js';
 import { createTokenCounter } from '../../utils/tokens.js';
 import { readInput, resolveInputPaths, writeOutput } from '../io.js';
+import { parseSectionOptions } from '../section-options.js';
 
 function toCmdFileName(inputPath: string): string {
   const name = basename(inputPath, extname(inputPath));
@@ -44,6 +45,21 @@ export const compactCommand = defineCommand({
       type: 'boolean',
       default: false,
     },
+    only: {
+      type: 'string',
+      required: false,
+      description: 'Keep only sections whose heading matches this query.',
+    },
+    strip: {
+      type: 'string',
+      required: false,
+      description: 'Remove sections whose heading matches this query.',
+    },
+    unwrap: {
+      type: 'boolean',
+      default: false,
+      description: 'Collapse soft line breaks inside paragraphs.',
+    },
     stats: {
       type: 'boolean',
       default: false,
@@ -62,15 +78,21 @@ export const compactCommand = defineCommand({
     },
   },
   async run({ args }) {
+    const onlySections = parseSectionOptions(args.only);
+    const stripSections = parseSectionOptions(args.strip);
+
     if (!args.input) {
       const markdown = await readInput();
       const result = compact(markdown, {
-        dedup: Boolean(args.dedup),
-        semantic: Boolean(args.semantic),
-        keepComments: Boolean(args.keepComments),
+        dedup: args.dedup,
+        semantic: args.semantic,
+        keepComments: args.keepComments,
+        onlySections,
+        stripSections,
+        unwrapLines: args.unwrap,
         tableDelimiter: String(args.tableDelimiter),
-        stats: Boolean(args.stats),
-        versionMarker: Boolean(args.versionMarker) && !args.noVersionMarker,
+        stats: args.stats,
+        versionMarker: args.versionMarker && !args.noVersionMarker,
       });
 
       await writeOutput(result.output, args.output ? String(args.output) : undefined);
@@ -95,12 +117,15 @@ export const compactCommand = defineCommand({
     for (const filePath of paths) {
       const markdown = await readInput(filePath);
       const result = compact(markdown, {
-        dedup: Boolean(args.dedup),
-        semantic: Boolean(args.semantic),
-        keepComments: Boolean(args.keepComments),
+        dedup: args.dedup,
+        semantic: args.semantic,
+        keepComments: args.keepComments,
+        onlySections,
+        stripSections,
+        unwrapLines: args.unwrap,
         tableDelimiter: String(args.tableDelimiter),
-        stats: Boolean(args.stats),
-        versionMarker: Boolean(args.versionMarker) && !args.noVersionMarker,
+        stats: args.stats,
+        versionMarker: args.versionMarker && !args.noVersionMarker,
       });
 
       const targetPath = args.outDir

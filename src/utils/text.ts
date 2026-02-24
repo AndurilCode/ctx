@@ -76,3 +76,16 @@ export function normalizeSmartPunctuation(input: string): string {
 export function stripTrailingHeadingHashes(input: string): string {
   return input.replace(/\s+#+\s*$/, '').trimEnd();
 }
+
+export function normalizeSectionQuery(input: string): string {
+  return input.trim().toLowerCase();
+}
+
+export function containsSectionQuery(heading: string, queries: readonly string[]): boolean {
+  const normalizedHeading = normalizeSectionQuery(heading);
+  return queries.some((query) => normalizedHeading.includes(query));
+}
+
+export function unwrapSoftLineBreaks(input: string): string {
+  return input.replace(/(?<!\n)\n(?!\n)/g, ' ');
+}
