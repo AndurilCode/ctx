@@ -1,5 +1,5 @@
+import { describe, expect, test } from 'bun:test';
 import type { Paragraph, Root, Text } from 'mdast';
-import { describe, expect, test } from 'vitest';
 import { collapseBlankLinesStage } from '../../../src/stages/whitespace/blank-lines.js';
 
 describe('collapseBlankLinesStage', () => {

@@ -1,5 +1,5 @@
+import { describe, expect, test } from 'bun:test';
 import type { Root } from 'mdast';
-import { describe, expect, test } from 'vitest';
 import { runPipeline } from '../../../src/core/pipeline.js';
 import type { Stage } from '../../../src/stages/stage.js';
 

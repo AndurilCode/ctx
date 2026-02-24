@@ -1,7 +1,7 @@
+import { describe, expect, test } from 'bun:test';
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, test } from 'vitest';
 import { compactCommand } from '../../src/cli/commands/compact.js';
 import { expandCommand } from '../../src/cli/commands/expand.js';
 

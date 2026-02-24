@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'bun:test';
 import { compact } from '../../../src/core/compact.js';
 
 describe('dedup option (phase 1 behavior)', () => {

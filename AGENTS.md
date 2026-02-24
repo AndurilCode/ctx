@@ -7,7 +7,7 @@ Token-efficient Markdown compression library. The primary invariant is **lossles
 ## @Stack
 
 - **Linter/formatter**: biome (not eslint + prettier — do not add those).
-- **Package manager**: pnpm (not npm or yarn).
+- **Package manager**: bun (not npm, pnpm, or yarn).
 
 ## @Knowledge Graph
 
@@ -21,10 +21,10 @@ Token-efficient Markdown compression library. The primary invariant is **lossles
 
 ## @Workflow
 
-- ✅ `pnpm build` — compiles ESM + CJS + types via tsup
-- ✅ `pnpm lint` — biome check (lint + format check)
-- ✅ `pnpm typecheck` — tsc --noEmit
-- ✅ `pnpm test` — vitest run
+- ✅ `bun run build` — compiles ESM + CJS via bun build + types via tsc
+- ✅ `bun run lint` — biome check (lint + format check)
+- ✅ `bun run typecheck` — tsc --noEmit
+- ✅ `bun test` — bun test runner
 
 ## @Rules
 

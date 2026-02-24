@@ -1,7 +1,7 @@
+import { describe, expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, test } from 'vitest';
 import { compact } from '../../src/core/compact.js';
 import { verify } from '../../src/core/verify.js';
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'bun:test';
 import { astToMarkdown } from '../../../src/parser/ast-to-markdown.js';
 import { compactToAst } from '../../../src/parser/compact-to-ast.js';
 

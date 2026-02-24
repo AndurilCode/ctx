@@ -1,5 +1,5 @@
+import { describe, expect, test } from 'bun:test';
 import type { List, ListItem } from 'mdast';
-import { describe, expect, test } from 'vitest';
 import { markdownToAst } from '../../../src/parser/markdown-to-ast.js';
 import { transformTaskLists } from '../../../src/stages/structural/task-lists.js';
 

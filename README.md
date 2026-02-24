@@ -5,9 +5,9 @@ Token-efficient, lossless Markdown compression for agent pipelines.
 ## Development
 
 ```bash
-pnpm install
-pnpm test
-pnpm build
+bun install
+bun test
+bun run build
 ```
 
 ## Planned API

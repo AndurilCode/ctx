@@ -4,7 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
-    "types": ["node"],
+    "types": ["node", "bun-types"],
     "strict": true,
     "declaration": true,
     "declarationMap": true,
@@ -16,5 +16,5 @@
     "resolveJsonModule": true,
     "outDir": "dist"
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts", "tsup.config.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts"]
 }

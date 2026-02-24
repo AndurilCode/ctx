@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'bun:test';
 import { markdownToAst } from '../../../src/parser/markdown-to-ast.js';
 import { transformHorizontalRules } from '../../../src/stages/structural/horizontal-rules.js';
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'bun:test';
 import { markdownToAst } from '../../../src/parser/markdown-to-ast.js';
 import { transformCodeBlocks } from '../../../src/stages/structural/code-blocks.js';
 
