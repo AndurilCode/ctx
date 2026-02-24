@@ -19,11 +19,12 @@
     }
   },
   "bin": {
+    "compact-md-mcp": "./dist/mcp/server.cjs",
     "compact.md": "./dist/cli/index.cjs"
   },
   "files": ["dist"],
   "scripts": {
-    "build": "rm -rf dist src/index.js src/index.js.map src/index.cjs src/index.cjs.map src/cli/index.cjs src/cli/index.cjs.map && bun build src/index.ts src/cli/index.ts --outdir dist --root src --format esm --target node --sourcemap=linked --entry-naming \"[dir]/[name].js\" && bun build src/index.ts src/cli/index.ts --outdir dist --root src --format cjs --target node --sourcemap=linked --entry-naming \"[dir]/[name].cjs\" && tsc -p tsconfig.build.json --emitDeclarationOnly --outDir dist",
+    "build": "rm -rf dist src/index.js src/index.js.map src/index.cjs src/index.cjs.map src/cli/index.cjs src/cli/index.cjs.map src/mcp/server.cjs src/mcp/server.cjs.map && bun build src/index.ts src/cli/index.ts src/mcp/server.ts --outdir dist --root src --format esm --target node --sourcemap=linked --entry-naming \"[dir]/[name].js\" && bun build src/index.ts src/cli/index.ts src/mcp/server.ts --outdir dist --root src --format cjs --target node --sourcemap=linked --entry-naming \"[dir]/[name].cjs\" && tsc -p tsconfig.build.json --emitDeclarationOnly --outDir dist",
     "clean": "rm -rf dist",
     "lint": "biome check .",
     "format": "biome format --write .",
@@ -32,13 +33,15 @@
     "test:watch": "bun test --watch"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.0",
     "citty": "^0.1.6",
     "fast-glob": "^3.3.3",
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
     "unified": "^11.0.5",
-    "unist-util-visit": "^5.0.0"
+    "unist-util-visit": "^5.0.0",
+    "zod": "^4.3.6"
   },
   "peerDependencies": {
     "tiktoken": ">=1.0.0"
