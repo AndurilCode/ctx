@@ -11,6 +11,16 @@ function stringifyNode(node: Content): string {
   } as Root).trimEnd();
 }
 
+function listItemHasComplexChildren(item: ListItem): boolean {
+  return item.children.some((child) => child.type !== 'paragraph' && child.type !== 'list');
+}
+
+function listHasComplexContent(list: List): boolean {
+  return list.children.some(
+    (child) => child.type === 'listItem' && listItemHasComplexChildren(child as ListItem),
+  );
+}
+
 function stringifyInline(children: readonly PhrasingContent[]): string {
   const paragraph: Content = {
     type: 'paragraph',
@@ -40,9 +50,15 @@ function listItemText(item: ListItem): string {
 function serializeList(list: List, depth = 0): string[] {
   const lines: string[] = [];
 
-  for (const child of list.children) {
-    if (child.type !== 'listItem') {
+  for (let i = 0; i < list.children.length; i++) {
+    const child = list.children[i];
+    if (!child || child.type !== 'listItem') {
       continue;
+    }
+
+    // Blank line separator before non-first items of a loose (spread) list
+    if (i > 0 && list.spread) {
+      lines.push('');
     }
 
     const item = child as ListItem;
@@ -107,6 +123,15 @@ export function astToCompact(tree: Root, options: CompactOptions = {}): string {
     }
 
     if (node.type === 'list') {
+      // Fall back to standard Markdown for lists containing complex items
+      // (code blocks, blockquotes, etc.) that can't be flattened to a single line.
+      if (listHasComplexContent(node as List)) {
+        const serialized = stringifyNode(node).trim();
+        if (serialized) {
+          chunks.push(serialized);
+        }
+        continue;
+      }
       const lines = serializeList(node as List);
       if (lines.length > 0) {
         chunks.push(lines.join('\n'));

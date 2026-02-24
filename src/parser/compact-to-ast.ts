@@ -50,14 +50,33 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
   const lines = input.replace(/\r\n/g, '\n').split('\n');
   const output: string[] = [];
   const orderedCounters: number[] = [];
+  // Track whether the list at each depth is ordered, to compute correct indent
+  const depthIsOrdered: boolean[] = [];
 
   let inCode = false;
   let index = 0;
+  // Track whether the last non-blank content line was a list item, so blank
+  // lines between list items (loose lists) don't reset the ordered counter.
+  let lastNonBlankWasList = false;
 
   const resetCountersFrom = (depth: number): void => {
     for (let i = depth; i < orderedCounters.length; i += 1) {
       orderedCounters[i] = 0;
     }
+  };
+
+  // Compute the indentation string for a given depth.
+  // Each level contributes its marker width: `N. ` for ordered, `- ` for unordered.
+  const indentFor = (depth: number): string => {
+    let spaces = 0;
+    for (let d = 0; d < depth; d += 1) {
+      if (depthIsOrdered[d]) {
+        spaces += String(orderedCounters[d] ?? 1).length + 2;
+      } else {
+        spaces += 2;
+      }
+    }
+    return ' '.repeat(spaces);
   };
 
   while (index < lines.length) {
@@ -128,18 +147,22 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
 
     const listLine = parseListLine(line);
     if (listLine) {
-      const indent = '  '.repeat(listLine.depth);
+      lastNonBlankWasList = true;
 
       if (listLine.marker === '+') {
         const next = (orderedCounters[listLine.depth] ?? 0) + 1;
         orderedCounters[listLine.depth] = next;
+        depthIsOrdered[listLine.depth] = true;
         resetCountersFrom(listLine.depth + 1);
+        const indent = indentFor(listLine.depth);
         output.push(`${indent}${next}. ${listLine.text}`.trimEnd());
         index += 1;
         continue;
       }
 
+      depthIsOrdered[listLine.depth] = false;
       resetCountersFrom(listLine.depth);
+      const indent = indentFor(listLine.depth);
 
       if (listLine.marker === '[]' || listLine.marker === '[x]') {
         const check = listLine.marker === '[x]' ? 'x' : ' ';
@@ -154,7 +177,18 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
     }
 
     if (line.trim() === '') {
-      resetCountersFrom(0);
+      // If this blank line falls between two list items (loose list separator),
+      // preserve it without resetting counters so ordered numbering continues.
+      let lookahead = index + 1;
+      while (lookahead < lines.length && (lines[lookahead] ?? '').trim() === '') {
+        lookahead += 1;
+      }
+      const nextIsListItem = parseListLine(lines[lookahead] ?? '') !== null;
+      if (!(lastNonBlankWasList && nextIsListItem)) {
+        resetCountersFrom(0);
+      }
+    } else {
+      lastNonBlankWasList = false;
     }
 
     output.push(line);
