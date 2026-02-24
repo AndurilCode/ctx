@@ -1,9 +1,8 @@
 import type { Root } from 'mdast';
 import type { ExpandOptions } from '../types/options.js';
 import { parseCsvRow } from '../utils/text.js';
+import { VERSION_MARKER } from './constants.js';
 import { markdownToAst } from './markdown-to-ast.js';
-
-const VERSION_MARKER = '%compact.md:1';
 
 interface ListMatch {
   depth: number;
@@ -73,7 +72,7 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
     }
 
     if (inCode) {
-      if (line.trim() === '`') {
+      if (line.trim() === '``') {
         output.push('```');
         inCode = false;
       } else {
@@ -84,10 +83,16 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
       continue;
     }
 
-    if (line.startsWith('`') && !line.startsWith('```')) {
+    if (line.startsWith('`') && !line.startsWith('```') && line.trim() !== '``') {
       const lang = line.slice(1).trim();
       output.push(`\`\`\`${lang}`);
       inCode = true;
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith('\\:')) {
+      output.push(line.slice(1));
       index += 1;
       continue;
     }

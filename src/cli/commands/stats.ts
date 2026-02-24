@@ -25,10 +25,6 @@ export const statsCommand = defineCommand({
       tableDelimiter: String(args.tableDelimiter),
     });
 
-    if (typeof result === 'string') {
-      throw new Error('Stats were not returned from compact().');
-    }
-
     process.stdout.write(`${JSON.stringify(result.stats, null, 2)}\n`);
   },
 });

@@ -67,10 +67,9 @@ export const compactCommand = defineCommand({
         versionMarker: !args.noVersionMarker,
       });
 
-      const output = typeof result === 'string' ? result : result.output;
-      await writeOutput(output, args.output ? String(args.output) : undefined);
+      await writeOutput(result.output, args.output ? String(args.output) : undefined);
 
-      if (typeof result !== 'string') {
+      if (result.stats) {
         process.stderr.write(`${JSON.stringify(result.stats, null, 2)}\n`);
       }
       return;
@@ -96,16 +95,15 @@ export const compactCommand = defineCommand({
         versionMarker: !args.noVersionMarker,
       });
 
-      const output = typeof result === 'string' ? result : result.output;
       const targetPath = args.outDir
         ? join(String(args.outDir), toCmdFileName(filePath))
         : args.output
           ? String(args.output)
           : undefined;
 
-      await writeOutput(output, targetPath);
+      await writeOutput(result.output, targetPath);
 
-      if (typeof result !== 'string') {
+      if (result.stats) {
         process.stderr.write(`${filePath}\n${JSON.stringify(result.stats, null, 2)}\n`);
       }
     }

@@ -2,8 +2,7 @@ import type { Content, List, ListItem, PhrasingContent, Root, Table, TableCell }
 import type { CompactOptions } from '../types/options.js';
 import { csvRow } from '../utils/text.js';
 import { astToMarkdown } from './ast-to-markdown.js';
-
-const VERSION_MARKER = '%compact.md:1';
+import { VERSION_MARKER } from './constants.js';
 
 function stringifyNode(node: Content): string {
   return astToMarkdown({
@@ -49,7 +48,7 @@ function serializeList(list: List, depth = 0): string[] {
     const item = child as ListItem;
     const text = listItemText(item);
 
-    let prefix = list.ordered ? '+' : `${'..'.repeat(depth)}-`;
+    let prefix = `${'..'.repeat(depth)}${list.ordered ? '+' : '-'}`;
     if (typeof item.checked === 'boolean') {
       prefix = `${'..'.repeat(depth)}[${item.checked ? 'x' : ''}]`;
     }
@@ -126,7 +125,7 @@ export function astToCompact(tree: Root, options: CompactOptions = {}): string {
     if (node.type === 'code') {
       const open = `\`${node.lang ?? ''}`;
       const body = node.value;
-      chunks.push(`${open}\n${body}\n\``);
+      chunks.push(`${open}\n${body}\n\`\``);
       continue;
     }
 
@@ -137,7 +136,11 @@ export function astToCompact(tree: Root, options: CompactOptions = {}): string {
 
     const serialized = stringifyNode(node).trim();
     if (serialized) {
-      chunks.push(serialized);
+      const escaped = serialized
+        .split('\n')
+        .map((l) => (/^:[1-6](\s|$)/.test(l) ? `\\${l}` : l))
+        .join('\n');
+      chunks.push(escaped);
     }
   }
 

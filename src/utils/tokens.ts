@@ -30,6 +30,9 @@ export async function createTokenCounter(): Promise<TokenCounter> {
         return encoded.length;
       },
     };
+    process.once('exit', () => {
+      encoder.free();
+    });
   } catch {
     cachedCounter = new FallbackTokenCounter();
   }

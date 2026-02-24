@@ -14,11 +14,19 @@ describe('round-trip integration', () => {
     expect(verify(markdown)).toBe(true);
   });
 
+  test('verifies edge-case fixture round-trip (commas in table cells, code with heading-like text)', async () => {
+    const markdown = await readFile(
+      resolve(root, 'fixtures/edge-cases/code-and-tables.md'),
+      'utf8',
+    );
+    expect(verify(markdown)).toBe(true);
+  });
+
   test('matches expected compact fixture shape', async () => {
     const markdown = await readFile(resolve(root, 'fixtures/documents/sample.md'), 'utf8');
     const expected = await readFile(resolve(root, 'fixtures/expected/sample.cmd'), 'utf8');
     const output = compact(markdown);
-    const compactText = typeof output === 'string' ? output : output.output;
+    const compactText = output.output;
 
     expect(compactText.trim()).toBe(expected.trim());
   });

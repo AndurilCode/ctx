@@ -15,7 +15,7 @@ export function verify(
   expandOptions: ExpandOptions = {},
 ): boolean {
   const compacted = compact(markdown, compactOptions);
-  const compactText = typeof compacted === 'string' ? compacted : compacted.output;
+  const compactText = compacted.output;
   const restored = expand(compactText, expandOptions);
   return normalizeMarkdown(markdown) === normalizeMarkdown(restored);
 }
