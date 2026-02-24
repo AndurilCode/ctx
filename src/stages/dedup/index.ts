@@ -4,13 +4,13 @@ import type { CompactOptions } from '../../types/options.js';
 import { createStage } from '../stage.js';
 import { buildDedupDictionary, setDedupDictionary } from './dictionary.js';
 import { applyDedupReplacements } from './replacer.js';
-import { scanDedupCandidates } from './scanner.js';
+import { estimateTokens, scanDedupCandidates } from './scanner.js';
 
 function collectTextValues(tree: Root): string[] {
   const values: string[] = [];
 
   visit(tree, (node) => {
-    if (node.type !== 'text' && node.type !== 'code' && node.type !== 'html') {
+    if (node.type !== 'text') {
       return;
     }
 
@@ -30,8 +30,9 @@ function runDedupTransform(tree: Root, _options: CompactOptions): Root {
     return tree;
   }
 
-  const candidates = scanDedupCandidates(sourceValues);
-  const dictionary = buildDedupDictionary(candidates, sourceValues.join('\n'));
+  const candidates = scanDedupCandidates(sourceValues, estimateTokens);
+  const fullText = sourceValues.join('\n');
+  const dictionary = buildDedupDictionary(candidates, fullText, estimateTokens);
   if (dictionary.length === 0) {
     return tree;
   }

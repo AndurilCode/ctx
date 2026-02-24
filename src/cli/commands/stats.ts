@@ -13,6 +13,18 @@ export const statsCommand = defineCommand({
       required: false,
       description: 'Input markdown path. Omit to read from stdin.',
     },
+    dedup: {
+      type: 'boolean',
+      default: false,
+    },
+    semantic: {
+      type: 'boolean',
+      default: false,
+    },
+    keepComments: {
+      type: 'boolean',
+      default: false,
+    },
     tableDelimiter: {
       type: 'string',
       default: ',',
@@ -22,6 +34,9 @@ export const statsCommand = defineCommand({
     const markdown = await readInput(args.input ? String(args.input) : undefined);
     const result = compact(markdown, {
       stats: true,
+      dedup: Boolean(args.dedup),
+      semantic: Boolean(args.semantic),
+      keepComments: Boolean(args.keepComments),
       tableDelimiter: String(args.tableDelimiter),
     });
 
