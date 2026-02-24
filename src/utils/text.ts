@@ -1,4 +1,14 @@
 const QUOTE = '"';
+const SMART_PUNCTUATION_MAP: Record<string, string> = {
+  '\u2018': "'",
+  '\u2019': "'",
+  '\u201c': '"',
+  '\u201d': '"',
+  '\u2013': '-',
+  '\u2014': '--',
+  '\u2026': '...',
+  '\u00a0': ' ',
+};
 
 export function stripTrailingWhitespace(input: string): string {
   return input.replace(/[ \t]+$/gm, '');
@@ -55,4 +65,14 @@ export function parseCsvRow(input: string, delimiter: string): string[] {
 
 export function csvRow(values: readonly string[], delimiter: string): string {
   return values.map((value) => quoteCsvValue(value, delimiter)).join(`${delimiter} `);
+}
+
+export function normalizeSmartPunctuation(input: string): string {
+  return input.replace(/[\u2018\u2019\u201c\u201d\u2013\u2014\u2026\u00a0]/g, (char) => {
+    return SMART_PUNCTUATION_MAP[char] ?? char;
+  });
+}
+
+export function stripTrailingHeadingHashes(input: string): string {
+  return input.replace(/\s+#+\s*$/, '').trimEnd();
 }

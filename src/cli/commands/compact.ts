@@ -1,6 +1,8 @@
 import { basename, extname, join } from 'node:path';
 import { defineCommand } from 'citty';
 import { compact } from '../../core/compact.js';
+import { computeStats } from '../../utils/stats.js';
+import { createTokenCounter } from '../../utils/tokens.js';
 import { readInput, resolveInputPaths, writeOutput } from '../io.js';
 
 function toCmdFileName(inputPath: string): string {
@@ -50,6 +52,10 @@ export const compactCommand = defineCommand({
       type: 'string',
       default: ',',
     },
+    versionMarker: {
+      type: 'boolean',
+      default: false,
+    },
     noVersionMarker: {
       type: 'boolean',
       default: false,
@@ -64,13 +70,15 @@ export const compactCommand = defineCommand({
         keepComments: Boolean(args.keepComments),
         tableDelimiter: String(args.tableDelimiter),
         stats: Boolean(args.stats),
-        versionMarker: !args.noVersionMarker,
+        versionMarker: Boolean(args.versionMarker) && !args.noVersionMarker,
       });
 
       await writeOutput(result.output, args.output ? String(args.output) : undefined);
 
       if (result.stats) {
-        process.stderr.write(`${JSON.stringify(result.stats, null, 2)}\n`);
+        const tokenCounter = await createTokenCounter();
+        const stats = computeStats(markdown, result.output, result.stats.stageStats, tokenCounter);
+        process.stderr.write(`${JSON.stringify(stats, null, 2)}\n`);
       }
       return;
     }
@@ -92,7 +100,7 @@ export const compactCommand = defineCommand({
         keepComments: Boolean(args.keepComments),
         tableDelimiter: String(args.tableDelimiter),
         stats: Boolean(args.stats),
-        versionMarker: !args.noVersionMarker,
+        versionMarker: Boolean(args.versionMarker) && !args.noVersionMarker,
       });
 
       const targetPath = args.outDir
@@ -104,7 +112,9 @@ export const compactCommand = defineCommand({
       await writeOutput(result.output, targetPath);
 
       if (result.stats) {
-        process.stderr.write(`${filePath}\n${JSON.stringify(result.stats, null, 2)}\n`);
+        const tokenCounter = await createTokenCounter();
+        const stats = computeStats(markdown, result.output, result.stats.stageStats, tokenCounter);
+        process.stderr.write(`${filePath}\n${JSON.stringify(stats, null, 2)}\n`);
       }
     }
   },

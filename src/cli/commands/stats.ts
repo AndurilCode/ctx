@@ -1,5 +1,7 @@
 import { defineCommand } from 'citty';
 import { compact } from '../../core/compact.js';
+import { computeStats } from '../../utils/stats.js';
+import { createTokenCounter } from '../../utils/tokens.js';
 import { readInput } from '../io.js';
 
 export const statsCommand = defineCommand({
@@ -39,7 +41,13 @@ export const statsCommand = defineCommand({
       keepComments: Boolean(args.keepComments),
       tableDelimiter: String(args.tableDelimiter),
     });
+    if (!result.stats) {
+      throw new Error('Expected stats payload from compact()');
+    }
 
-    process.stdout.write(`${JSON.stringify(result.stats, null, 2)}\n`);
+    const tokenCounter = await createTokenCounter();
+    const stats = computeStats(markdown, result.output, result.stats.stageStats, tokenCounter);
+
+    process.stdout.write(`${JSON.stringify(stats, null, 2)}\n`);
   },
 });

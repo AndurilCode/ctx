@@ -2,6 +2,7 @@ import { astToCompact } from '../parser/ast-to-compact.js';
 import { astToMarkdown } from '../parser/ast-to-markdown.js';
 import { markdownToAst } from '../parser/markdown-to-ast.js';
 import { dedupStage } from '../stages/dedup/index.js';
+import { semanticStage } from '../stages/semantic/index.js';
 import { whitespaceStage } from '../stages/whitespace/index.js';
 import type { CompactOptions } from '../types/options.js';
 import type { CompactResult } from '../types/results.js';
@@ -9,7 +10,7 @@ import { type StageMeasurement, computeStageStats, computeStats } from '../utils
 import { createFallbackTokenCounter } from '../utils/tokens.js';
 import { runPipeline } from './pipeline.js';
 
-const PIPELINE_STAGES = [whitespaceStage, dedupStage];
+const PIPELINE_STAGES = [whitespaceStage, semanticStage, dedupStage];
 
 export function compact(markdown: string, options: CompactOptions = {}): CompactResult {
   const tree = markdownToAst(markdown);

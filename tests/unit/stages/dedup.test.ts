@@ -10,7 +10,7 @@ describe('dedup stage', () => {
 
     expect(output).toContain('§§');
     expect(output).toMatch(/§\d+/);
-    expect(output).toContain(':1 Title');
+    expect(output).toContain('# Title');
   });
 
   test('skips single words that cost fewer tokens than the marker', () => {

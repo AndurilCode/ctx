@@ -32,12 +32,14 @@ describe('cli integration', () => {
         keepComments: false,
         stats: false,
         tableDelimiter: ',',
+        versionMarker: false,
         noVersionMarker: false,
       },
     } as CompactRunInput);
 
     const compactText = await readFile(compactPath, 'utf8');
-    expect(compactText).toContain(':1 Title');
+    expect(compactText).toContain('# Title');
+    expect(compactText).not.toContain('%compact.md:1');
 
     await runExpand({
       args: {

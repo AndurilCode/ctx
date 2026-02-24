@@ -150,6 +150,9 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
         cursor += 1;
       }
 
+      if (output.length > 0 && output[output.length - 1]?.trim() !== '') {
+        output.push('');
+      }
       output.push(...toMarkdownTable(tableLines, delimiter));
       resetCountersFrom(0);
       index = cursor;

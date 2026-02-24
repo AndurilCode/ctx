@@ -8,8 +8,8 @@ describe('astToCompact', () => {
     const ast = markdownToAst(markdown);
     const compact = astToCompact(ast);
 
-    expect(compact).toContain('%compact.md:1');
-    expect(compact).toContain(':1 Title');
+    expect(compact).not.toContain('%compact.md:1');
+    expect(compact).toContain('# Title');
     expect(compact).toContain('[] todo');
     expect(compact).toContain('|: A, B');
   });
@@ -19,18 +19,17 @@ describe('astToCompact', () => {
     const ast = markdownToAst(markdown);
     const compact = astToCompact(ast);
 
-    expect(compact).toContain(':1 Title\n:2 Section\n~');
-    expect(compact).not.toContain(':1 Title\n\n:2 Section');
-    expect(compact).not.toContain(':2 Section\n\n~');
+    expect(compact).toContain('# Title\n## Section\n---');
+    expect(compact).not.toContain('# Title\n\n## Section');
+    expect(compact).not.toContain('## Section\n\n---');
   });
 
-  test('emits a single-backtick code fence close marker', () => {
+  test('keeps standard code fences unchanged', () => {
     const markdown = '```ts\nconsole.log("x");\n```\n';
     const ast = markdownToAst(markdown);
     const compact = astToCompact(ast, { versionMarker: false });
     const lines = compact.split('\n');
 
-    expect(lines.at(-1)).toBe('`');
-    expect(lines.at(-1)).not.toBe('``');
+    expect(lines.at(-1)).toBe('```');
   });
 });

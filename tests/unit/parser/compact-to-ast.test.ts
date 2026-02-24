@@ -58,4 +58,25 @@ console.log("x");
     expect(markdown).toContain('console.log("x");');
     expect(markdown).toContain('```');
   });
+
+  test('parses markdown-style headings, hr, and code fences unchanged', () => {
+    const compact = `# Title
+
+## Section
+
+\`\`\`ts
+console.log("x");
+\`\`\`
+
+---
+`;
+
+    const ast = compactToAst(compact);
+    const markdown = astToMarkdown(ast);
+
+    expect(markdown).toContain('# Title');
+    expect(markdown).toContain('## Section');
+    expect(markdown).toContain('```ts');
+    expect(markdown).toContain('---');
+  });
 });

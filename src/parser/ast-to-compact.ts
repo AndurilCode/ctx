@@ -168,7 +168,7 @@ export function astToCompact(tree: Root, options: CompactOptions = {}): string {
 
     if (node.type === 'heading') {
       const heading = stringifyInline(node.children as PhrasingContent[]);
-      chunks.push({ text: `:${node.depth} ${heading}`.trimEnd(), compactBlock: true });
+      chunks.push({ text: `${'#'.repeat(node.depth)} ${heading}`.trimEnd(), compactBlock: true });
       continue;
     }
 
@@ -198,14 +198,14 @@ export function astToCompact(tree: Root, options: CompactOptions = {}): string {
     }
 
     if (node.type === 'code') {
-      const open = `\`${node.lang ?? ''}`;
+      const open = `\`\`\`${node.lang ?? ''}`;
       const body = node.value;
-      chunks.push({ text: `${open}\n${body}\n\``, compactBlock: true });
+      chunks.push({ text: `${open}\n${body}\n\`\`\``, compactBlock: true });
       continue;
     }
 
     if (node.type === 'thematicBreak') {
-      chunks.push({ text: '~', compactBlock: true });
+      chunks.push({ text: '---', compactBlock: true });
       continue;
     }
 
@@ -223,7 +223,7 @@ export function astToCompact(tree: Root, options: CompactOptions = {}): string {
     joinChunks(chunks),
     options.dedup ? readDedupEntries(tree) : [],
   );
-  if (options.versionMarker === false) {
+  if (options.versionMarker !== true) {
     return compactBody;
   }
 
