@@ -2,6 +2,7 @@ import type { Root } from 'mdast';
 import type { ExpandOptions } from '../types/options.js';
 import { parseCsvRow } from '../utils/text.js';
 import { VERSION_MARKER } from './constants.js';
+import { expandDedupTokens, parseDedupDictionary } from './dedup-dictionary.js';
 import { markdownToAst } from './markdown-to-ast.js';
 
 interface ListMatch {
@@ -50,13 +51,11 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
   const lines = input.replace(/\r\n/g, '\n').split('\n');
   const output: string[] = [];
   const orderedCounters: number[] = [];
-  // Track whether the list at each depth is ordered, to compute correct indent
   const depthIsOrdered: boolean[] = [];
+  const dedupEntries: Array<readonly [string, string]> = [];
 
   let inCode = false;
   let index = 0;
-  // Track whether the last non-blank content line was a list item, so blank
-  // lines between list items (loose lists) don't reset the ordered counter.
   let lastNonBlankWasList = false;
 
   const resetCountersFrom = (depth: number): void => {
@@ -65,8 +64,6 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
     }
   };
 
-  // Compute the indentation string for a given depth.
-  // Each level contributes its marker width: `N. ` for ordered, `- ` for unordered.
   const indentFor = (depth: number): string => {
     let spaces = 0;
     for (let d = 0; d < depth; d += 1) {
@@ -81,6 +78,7 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
 
   while (index < lines.length) {
     const line = lines[index] ?? '';
+    const decodedLine = dedupEntries.length > 0 ? expandDedupTokens(line, dedupEntries) : line;
 
     if (line === VERSION_MARKER) {
       index += 1;
@@ -90,33 +88,46 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
       continue;
     }
 
+    if (!inCode && dedupEntries.length === 0) {
+      const parsed = parseDedupDictionary(lines, index);
+      if (parsed) {
+        dedupEntries.push(...parsed.entries);
+        index = parsed.nextIndex;
+        continue;
+      }
+    }
+
     if (inCode) {
-      if (line.trim() === '``') {
+      if (line.trim() === '`' || line.trim() === '``') {
         output.push('```');
         inCode = false;
       } else {
-        output.push(line);
+        output.push(decodedLine);
       }
 
       index += 1;
       continue;
     }
 
-    if (line.startsWith('`') && !line.startsWith('```') && line.trim() !== '``') {
-      const lang = line.slice(1).trim();
+    if (
+      decodedLine.startsWith('`') &&
+      !decodedLine.startsWith('```') &&
+      decodedLine.trim() !== '``'
+    ) {
+      const lang = decodedLine.slice(1).trim();
       output.push(`\`\`\`${lang}`);
       inCode = true;
       index += 1;
       continue;
     }
 
-    if (line.startsWith('\\:')) {
-      output.push(line.slice(1));
+    if (decodedLine.startsWith('\\:')) {
+      output.push(decodedLine.slice(1));
       index += 1;
       continue;
     }
 
-    const heading = line.match(/^:([1-6])\s+(.*)$/);
+    const heading = decodedLine.match(/^:([1-6])\s+(.*)$/);
     if (heading) {
       output.push(`${'#'.repeat(Number(heading[1]))} ${heading[2] ?? ''}`.trimEnd());
       resetCountersFrom(0);
@@ -124,18 +135,18 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
       continue;
     }
 
-    if (line.trim() === '~') {
+    if (decodedLine.trim() === '~') {
       output.push('---');
       resetCountersFrom(0);
       index += 1;
       continue;
     }
 
-    if (line.startsWith('|:')) {
-      const tableLines: string[] = [line];
+    if (decodedLine.startsWith('|:')) {
+      const tableLines: string[] = [decodedLine];
       let cursor = index + 1;
-      while ((lines[cursor] ?? '').startsWith('| ')) {
-        tableLines.push(lines[cursor] ?? '');
+      while (expandDedupTokens(lines[cursor] ?? '', dedupEntries).startsWith('| ')) {
+        tableLines.push(expandDedupTokens(lines[cursor] ?? '', dedupEntries));
         cursor += 1;
       }
 
@@ -145,7 +156,7 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
       continue;
     }
 
-    const listLine = parseListLine(line);
+    const listLine = parseListLine(decodedLine);
     if (listLine) {
       lastNonBlankWasList = true;
 
@@ -176,14 +187,16 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
       continue;
     }
 
-    if (line.trim() === '') {
-      // If this blank line falls between two list items (loose list separator),
-      // preserve it without resetting counters so ordered numbering continues.
+    if (decodedLine.trim() === '') {
       let lookahead = index + 1;
-      while (lookahead < lines.length && (lines[lookahead] ?? '').trim() === '') {
+      while (
+        lookahead < lines.length &&
+        expandDedupTokens(lines[lookahead] ?? '', dedupEntries).trim() === ''
+      ) {
         lookahead += 1;
       }
-      const nextIsListItem = parseListLine(lines[lookahead] ?? '') !== null;
+      const nextIsListItem =
+        parseListLine(expandDedupTokens(lines[lookahead] ?? '', dedupEntries)) !== null;
       if (!(lastNonBlankWasList && nextIsListItem)) {
         resetCountersFrom(0);
       }
@@ -191,7 +204,7 @@ export function compactToAst(input: string, options: ExpandOptions = {}): Root {
       lastNonBlankWasList = false;
     }
 
-    output.push(line);
+    output.push(decodedLine);
     index += 1;
   }
 

@@ -9,9 +9,7 @@ export function stripTrailingStage(tree: Root, _options: CompactOptions): Root {
     // parent. Intermediate text nodes between inline elements (bold, code, etc.)
     // carry significant word-boundary spaces that must be preserved.
     const isLastChild =
-      parent !== null &&
-      index !== null &&
-      index === (parent as Parent).children.length - 1;
+      parent !== null && index !== null && index === (parent as Parent).children.length - 1;
     if (!isLastChild) {
       return;
     }
