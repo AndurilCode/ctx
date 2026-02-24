@@ -1,0 +1,11 @@
+import { describe, expect, test } from 'vitest';
+import { compact } from '../../../src/core/compact.js';
+
+describe('dedup option (phase 1 behavior)', () => {
+  test('is accepted and does not break compact output', () => {
+    const input = '# Title\n\nrepeat repeat repeat';
+    const output = compact(input, { dedup: true, versionMarker: false });
+    expect(typeof output).toBe('string');
+    expect(output).toContain(':1 Title');
+  });
+});
