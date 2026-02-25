@@ -1,4 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerContextTool } from './context.js';
 import { registerDiffTool } from './diff.js';
 import { registerExtractTool } from './extract.js';
 import { registerOutlineTool } from './outline.js';
@@ -31,4 +32,5 @@ export function registerCompactMdTools(server: McpServer): void {
   registerTreeTool(server);
   registerVerifyTool(server);
   registerReadTool(server);
+  registerContextTool(server);
 }

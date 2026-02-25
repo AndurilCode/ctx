@@ -1,5 +1,6 @@
 import { defineCommand, runMain } from 'citty';
 import { codeOutlineCommand } from './commands/code-outline.js';
+import { contextCommand } from './commands/context.js';
 import { compactCommand } from './commands/compact.js';
 import { diffCommand } from './commands/diff.js';
 import { expandCommand } from './commands/expand.js';
@@ -33,6 +34,7 @@ export const command = defineCommand({
     'token-count': tokenCountCommand,
     tree: treeCommand,
     read: readCommand,
+    context: contextCommand,
   },
 });
 

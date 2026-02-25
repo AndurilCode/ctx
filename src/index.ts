@@ -28,3 +28,5 @@ export { tree } from './core/tree.js';
 export type { TreeOptions, TreeResult } from './types/tree.js';
 export { budgetedRead } from './core/read.js';
 export type { ReadOptions, ReadResult, ReadStrategy } from './types/read.js';
+export { assembleContext } from './core/context.js';
+export type { ContextOptions, ContextResult, ContextSource, ContextSourceResult } from './types/context.js';
