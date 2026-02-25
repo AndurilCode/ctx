@@ -1,17 +1,9 @@
 import type { Root } from 'mdast';
+import type { DedupEntry, RootWithDedupData } from '../../types/dedup.js';
 import type { DedupCandidate } from './scanner.js';
 import { MARKER_TOKEN_COST } from './scanner.js';
 
-export interface DedupEntry {
-  token: string;
-  value: string;
-}
-
-type RootWithDedupData = Root & {
-  data?: {
-    compactDedupDictionary?: DedupEntry[];
-  };
-};
+export type { DedupEntry } from '../../types/dedup.js';
 
 export function getDedupDictionary(tree: Root): DedupEntry[] {
   return ((tree as RootWithDedupData).data?.compactDedupDictionary ?? []).map((entry) => ({

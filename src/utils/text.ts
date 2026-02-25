@@ -124,3 +124,10 @@ export function truncateForExtract(
 export function formatExtractOverflow(label: 'items' | 'rows', count: number): string {
   return `... ${count} more ${label}`;
 }
+
+export function replaceAll(input: string, from: string, to: string): string {
+  if (!from) {
+    return input;
+  }
+  return input.split(from).join(to);
+}

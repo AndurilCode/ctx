@@ -1,10 +1,8 @@
+import { replaceAll } from '../utils/text.js';
+
 interface ParsedDedupDictionary {
   entries: Array<readonly [string, string]>;
   nextIndex: number;
-}
-
-function replaceAll(input: string, from: string, to: string): string {
-  return input.split(from).join(to);
 }
 
 export function parseDedupDictionary(
@@ -21,7 +19,9 @@ export function parseDedupDictionary(
   while (cursor < lines.length) {
     const line = lines[cursor] ?? '';
     if (line === '§§') {
-      return { entries, nextIndex: cursor + 1 };
+      // Sort by token length descending so §10 is replaced before §1
+      const sorted = [...entries].sort((a, b) => (b[0]?.length ?? 0) - (a[0]?.length ?? 0));
+      return { entries: sorted, nextIndex: cursor + 1 };
     }
 
     const match = line.match(/^(§\d+)=(.*)$/);
@@ -40,9 +40,8 @@ export function expandDedupTokens(
   line: string,
   entries: ReadonlyArray<readonly [string, string]>,
 ): string {
-  const ordered = [...entries].sort((a, b) => (b[0]?.length ?? 0) - (a[0]?.length ?? 0));
   let expanded = line;
-  for (const [token, value] of ordered) {
+  for (const [token, value] of entries) {
     expanded = replaceAll(expanded, token, value);
   }
   return expanded;

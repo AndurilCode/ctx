@@ -1,13 +1,7 @@
 import type { Root } from 'mdast';
 import { visit } from 'unist-util-visit';
+import { replaceAll } from '../../utils/text.js';
 import type { DedupEntry } from './dictionary.js';
-
-function replaceAll(input: string, from: string, to: string): string {
-  if (!from) {
-    return input;
-  }
-  return input.split(from).join(to);
-}
 
 export function applyDedupReplacements(tree: Root, entries: readonly DedupEntry[]): Root {
   const ordered = [...entries].sort((a, b) => b.value.length - a.value.length);
