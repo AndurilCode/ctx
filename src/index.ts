@@ -32,3 +32,5 @@ export { assembleContext } from './core/context.js';
 export type { ContextOptions, ContextResult, ContextSource, ContextSourceResult } from './types/context.js';
 export { relevance } from './core/relevance.js';
 export type { RelevanceMatch, RelevanceOptions, RelevanceResult } from './types/relevance.js';
+export { fileImports } from './core/imports.js';
+export type { ImportEdge, ImportsOptions, ImportsResult } from './types/imports.js';
