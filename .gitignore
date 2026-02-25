@@ -9,3 +9,5 @@ bun.lock
 .env.*
 !.env.example
 .cursor/
+.claude/
+docs/
