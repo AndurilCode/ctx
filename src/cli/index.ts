@@ -7,6 +7,7 @@ import { expandCommand } from './commands/expand.js';
 import { extractCommand } from './commands/extract.js';
 import { pruneLogCommand } from './commands/prune-log.js';
 import { readCommand } from './commands/read.js';
+import { relevanceCommand } from './commands/relevance.js';
 import { searchSectionsCommand } from './commands/search-sections.js';
 import { sectionsCommand } from './commands/sections.js';
 import { statsCommand } from './commands/stats.js';
@@ -34,6 +35,7 @@ export const command = defineCommand({
     'token-count': tokenCountCommand,
     tree: treeCommand,
     read: readCommand,
+    relevance: relevanceCommand,
     context: contextCommand,
   },
 });
