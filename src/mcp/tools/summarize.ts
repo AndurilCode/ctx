@@ -12,12 +12,15 @@ import { getCached, setCached } from '../../utils/summary-cache.js';
 import { resolveMarkdown, textResult } from './common.js';
 import type { ExtractLikeToolInput } from './options.js';
 
+type DocType = 'auto' | 'guide' | 'reference' | 'spec';
+
 interface SummarizeToolInput extends ExtractLikeToolInput {
   markdown?: string;
   file?: string;
   maxTokens?: number;
   temperature?: number;
   systemPrompt?: string;
+  docType?: DocType;
 }
 
 function isSamplingUnavailable(message: string): boolean {
@@ -53,12 +56,21 @@ function buildSummarizeInput(markdown: string, input: ExtractLikeToolInput): str
   });
 }
 
-function summarizePrompt(markdown: string): SamplingMessage {
+const DOC_TYPE_PROMPTS: Record<DocType, string> = {
+  auto: 'Summarize this markdown document. Preserve the section hierarchy, keep inline code examples verbatim, and retain all constraints, invariants, and actionable steps.',
+  guide:
+    'Summarize this guide or instructional document. Preserve the section hierarchy, keep all inline code and command examples verbatim, and retain step-by-step instructions and constraints.',
+  reference:
+    'Summarize this reference document. Preserve the section hierarchy, keep ALL code examples, type signatures, and parameter descriptions verbatim — these are the primary value of a reference doc. Omit only verbose prose.',
+  spec: 'Summarize this specification. Preserve the section hierarchy, keep all constraints, invariants, formal definitions, and example values verbatim. Omit only introductory/motivational prose.',
+};
+
+function summarizePrompt(markdown: string, docType: DocType = 'auto'): SamplingMessage {
   return {
     role: 'user',
     content: {
       type: 'text',
-      text: `Summarize this markdown for implementation work. Keep constraints, invariants, and actionable steps.\n\n${markdown}`,
+      text: `${DOC_TYPE_PROMPTS[docType]}\n\n${markdown}`,
     },
   };
 }
@@ -92,7 +104,7 @@ export async function runSummarizeTool(
   }
 
   const request: CreateMessageRequestParamsBase = {
-    messages: [summarizePrompt(summarizeInput)],
+    messages: [summarizePrompt(summarizeInput, input.docType)],
     maxTokens: input.maxTokens ?? 500,
     ...(typeof input.temperature === 'number' ? { temperature: input.temperature } : {}),
     ...(input.systemPrompt ? { systemPrompt: input.systemPrompt } : {}),
@@ -120,7 +132,7 @@ export function registerSummarizeTool(server: McpServer): void {
     'compact_md_summarize',
     {
       description:
-        'Generate an abstractive summary via MCP sampling. Pass either markdown (string) or file (absolute path).',
+        'Generate an AI-powered abstractive summary (~200 tokens by default). Best for breadth-first exploration — onboarding to many packages at once, or getting the gist of a large doc without loading it fully. NOT ideal for targeted section work; for that prefer compact_md_sections → compact_md_extract. Recommended workflow: (1) compact_md_sections to see structure and token sizes; (2) if full overview needed → compact_md_summarize; (3) if specific section needed → compact_md_extract. Use docType to match the summarization style to the document kind.',
       inputSchema: {
         markdown: z.string().optional(),
         file: z.string().optional(),
@@ -129,6 +141,12 @@ export function registerSummarizeTool(server: McpServer): void {
         maxTokens: z.number().optional(),
         temperature: z.number().optional(),
         systemPrompt: z.string().optional(),
+        docType: z
+          .enum(['auto', 'guide', 'reference', 'spec'])
+          .optional()
+          .describe(
+            'auto (default) — balanced; guide — step-by-step docs, preserves commands; reference — API/type docs, preserves all code verbatim; spec — formal specs, preserves invariants',
+          ),
       },
     },
     async (input) => runSummarizeTool(server, input),

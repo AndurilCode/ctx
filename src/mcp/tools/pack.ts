@@ -22,7 +22,7 @@ export function registerPackTool(server: McpServer): void {
     'compact_md_pack',
     {
       description:
-        'Compress markdown into compact.md format. Pass either markdown (string) or file (absolute path).',
+        'Losslessly compress markdown into compact.md format (token savings ~0–30% depending on doc structure). For lossy compression that strips boilerplate and keeps only key content, use compact_md_summarize or compact_md_extract instead — those trade fidelity for much higher token reduction.',
       inputSchema: {
         markdown: z.string().optional(),
         file: z.string().optional(),

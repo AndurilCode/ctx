@@ -21,7 +21,7 @@ export function registerExtractTool(server: McpServer): void {
     'compact_md_extract',
     {
       description:
-        'Create a lossy markdown summary for reading. Pass either markdown (string) or file (absolute path).',
+        'Retrieve verbatim section content with optional truncation. Best used after compact_md_sections reveals which section you need — target it by heading name via onlySections. Returns exact content with no AI summarization. To get a compressed summary of a specific section instead of the full text, use compact_md_summarize with onlySections — that combines section targeting with LLM compression.',
       inputSchema: {
         markdown: z.string().optional(),
         file: z.string().optional(),

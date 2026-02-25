@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { mkdtemp, writeFile } from 'node:fs/promises';
 import { mkdtempSync } from 'node:fs';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -12,9 +12,9 @@ import { runPackTool } from '../../src/mcp/tools/pack.js';
 import { runSectionsTool } from '../../src/mcp/tools/sections.js';
 import { runStatsTool } from '../../src/mcp/tools/stats.js';
 import { runSummarizeTool } from '../../src/mcp/tools/summarize.js';
-import { _resetForTesting } from '../../src/utils/summary-cache.js';
 import { runUnpackTool } from '../../src/mcp/tools/unpack.js';
 import { runVerifyTool } from '../../src/mcp/tools/verify.js';
+import { _resetForTesting } from '../../src/utils/summary-cache.js';
 
 function textFromToolResult(result: { content: Array<{ type: string; text?: string }> }): string {
   const first = result.content[0];

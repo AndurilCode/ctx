@@ -15,7 +15,47 @@ export function verify(
   expandOptions: ExpandOptions = {},
 ): boolean {
   const compacted = compact(markdown, compactOptions);
-  const compactText = compacted.output;
-  const restored = expand(compactText, expandOptions);
+  const restored = expand(compacted.output, expandOptions);
   return normalizeMarkdown(markdown) === normalizeMarkdown(restored);
+}
+
+export interface VerifyDiagnostics {
+  valid: boolean;
+  mismatch?: {
+    line: number;
+    expected: string;
+    actual: string;
+  };
+}
+
+export function verifyWithDiagnostics(
+  markdown: string,
+  compactOptions: CompactOptions = {},
+  expandOptions: ExpandOptions = {},
+): VerifyDiagnostics {
+  const compacted = compact(markdown, compactOptions);
+  const restored = expand(compacted.output, expandOptions);
+  const expected = normalizeMarkdown(markdown);
+  const actual = normalizeMarkdown(restored);
+
+  if (expected === actual) return { valid: true };
+
+  const expectedLines = expected.split('\n');
+  const actualLines = actual.split('\n');
+  const len = Math.max(expectedLines.length, actualLines.length);
+
+  for (let i = 0; i < len; i++) {
+    if (expectedLines[i] !== actualLines[i]) {
+      return {
+        valid: false,
+        mismatch: {
+          line: i + 1,
+          expected: expectedLines[i] ?? '(end of file)',
+          actual: actualLines[i] ?? '(end of file)',
+        },
+      };
+    }
+  }
+
+  return { valid: false };
 }

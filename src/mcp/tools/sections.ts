@@ -37,7 +37,7 @@ export function registerSectionsTool(server: McpServer): void {
     'compact_md_sections',
     {
       description:
-        'List markdown sections with token costs. Pass either markdown (string) or file (absolute path).',
+        'List the section TOC with per-section token counts. USE THIS FIRST when exploring an unknown document — token counts let you budget context before loading any content. After seeing sizes: if the whole doc is small (<500 tokens) read it directly; if you need a high-level gist use compact_md_summarize; if you need a specific section verbatim use compact_md_extract with onlySections.',
       inputSchema: {
         markdown: z.string().optional(),
         file: z.string().optional(),

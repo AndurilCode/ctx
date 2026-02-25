@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as z from 'zod/v4';
-import { verify } from '../../core/verify.js';
+import { verifyWithDiagnostics } from '../../core/verify.js';
 import { jsonResult, resolveMarkdown } from './common.js';
 
 export interface VerifyToolInput {
@@ -11,7 +11,7 @@ export interface VerifyToolInput {
 
 export async function runVerifyTool(input: VerifyToolInput): Promise<CallToolResult> {
   const markdown = await resolveMarkdown(input);
-  return jsonResult({ valid: verify(markdown) });
+  return jsonResult(verifyWithDiagnostics(markdown));
 }
 
 export function registerVerifyTool(server: McpServer): void {
@@ -19,7 +19,7 @@ export function registerVerifyTool(server: McpServer): void {
     'compact_md_verify',
     {
       description:
-        'Verify lossless round-trip for markdown input. Pass either markdown (string) or file (absolute path).',
+        'Verify lossless round-trip for markdown input. Returns { valid: true } on success, or { valid: false, mismatch: { line, expected, actual } } pinpointing the first line of divergence on failure.',
       inputSchema: {
         markdown: z.string().optional(),
         file: z.string().optional(),
