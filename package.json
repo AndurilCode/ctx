@@ -1,7 +1,7 @@
 {
-  "name": "compact.md",
+  "name": "@anduril-code/compact.md",
   "version": "0.1.0",
-  "description": "Token-efficient, lossless Markdown compression for agent pipelines.",
+  "description": "Token-efficient, context-aware compression for agent pipelines.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -19,12 +19,12 @@
     }
   },
   "bin": {
-    "compact-md-mcp": "./dist/mcp/server.cjs",
-    "compact.md": "./dist/cli/index.cjs"
+    "compact-md-mcp": "./dist/mcp/server.js",
+    "compact.md": "./dist/cli/index.js"
   },
   "files": ["dist"],
   "scripts": {
-    "build": "rm -rf dist src/index.js src/index.js.map src/index.cjs src/index.cjs.map src/cli/index.cjs src/cli/index.cjs.map src/mcp/server.cjs src/mcp/server.cjs.map && bun build src/index.ts src/cli/index.ts src/mcp/server.ts --outdir dist --root src --format esm --target node --sourcemap=linked --entry-naming \"[dir]/[name].js\" && bun build src/index.ts src/cli/index.ts src/mcp/server.ts --outdir dist --root src --format cjs --target node --sourcemap=linked --entry-naming \"[dir]/[name].cjs\" && tsc -p tsconfig.build.json --emitDeclarationOnly --outDir dist",
+    "build": "rm -rf dist src/index.js src/index.js.map src/index.cjs src/index.cjs.map src/cli/index.cjs src/cli/index.cjs.map src/mcp/server.cjs src/mcp/server.cjs.map && bun build src/index.ts src/cli/index.ts src/mcp/server.ts --outdir dist --root src --format esm --target node --sourcemap=linked --entry-naming \"[dir]/[name].js\" && bun build src/index.ts src/cli/index.ts src/mcp/server.ts --outdir dist --root src --format cjs --target node --sourcemap=linked --entry-naming \"[dir]/[name].cjs\" && tsc -p tsconfig.build.json --emitDeclarationOnly --outDir dist && node -e \"for(const f of['dist/cli/index.js','dist/mcp/server.js']){const c=require('fs').readFileSync(f,'utf8');if(!c.startsWith('#!'))require('fs').writeFileSync(f,'#!/usr/bin/env node\\n'+c)}\"",
     "clean": "rm -rf dist",
     "lint": "biome check .",
     "format": "biome format --write .",
