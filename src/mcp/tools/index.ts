@@ -9,6 +9,7 @@ import { registerSectionsTool } from './sections.js';
 import { registerStatsTool } from './stats.js';
 import { registerSummarizeBatchTool } from './summarize-batch.js';
 import { registerSummarizeTool } from './summarize.js';
+import { registerTokenCountTool } from './token-count.js';
 import { registerUnpackTool } from './unpack.js';
 import { registerVerifyTool } from './verify.js';
 
@@ -24,5 +25,6 @@ export function registerCompactMdTools(server: McpServer): void {
   registerSummarizeTool(server);
   registerSummarizeBatchTool(server);
   registerSearchSectionsTool(server);
+  registerTokenCountTool(server);
   registerVerifyTool(server);
 }
