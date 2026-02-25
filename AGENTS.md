@@ -34,7 +34,7 @@ Token-efficient Markdown compression library. The primary invariant is **lossles
 
 ## @Knowledge Graph
 
-- [Format spec + architecture]: `docs/project.md` — consult before any work on stages, parsers, or the compact format syntax (`:1`, `|:`, `+`, `..`, `~`, `§`). Note: the tech-stack section in that doc is outdated; trust `package.json` for tooling.
+<!-- No entries needed -->
 
 ## @Map
 
@@ -45,7 +45,7 @@ Token-efficient Markdown compression library. The primary invariant is **lossles
 ## @Workflow
 
 - ✅ `bun run build` — compiles ESM + CJS via bun build + types via tsc
-- ✅ `bun run lint` — biome check (lint + format check)
+- ⚠️ `bun run lint` — biome check (lint + format check); pre-existing violations in repo
 - ✅ `bun run typecheck` — tsc --noEmit
 - ✅ `bun test` — bun test runner
 
