@@ -1,3 +1,26 @@
+---
+scoped_rules:
+  - id: stages-ast-only
+    scope: "src/stages/**"
+    severity: error
+  - id: core-wiring-only
+    scope: "src/core/compact.ts"
+    severity: error
+  - id: cli-mcp-no-logic
+    scope: "src/{cli,mcp}/**"
+    severity: error
+  - id: no-reverse-imports
+    scope: "src/{core,stages,parser,types}/**"
+    severity: error
+danger_zones:
+  - path: "src/stages/**"
+    invariant: "AST nodes only; string ops belong in src/utils/text.ts"
+  - path: "src/core/compact.ts"
+    invariant: "Wiring only; no business logic"
+  - path: "src/core/expand.ts"
+    invariant: "Wiring only; no business logic"
+---
+
 # AGENTS.md
 
 ## @Context
@@ -11,12 +34,12 @@ Token-efficient Markdown compression library. The primary invariant is **lossles
 
 ## @Knowledge Graph
 
-- [Format spec + architecture]: `docs/project.md` — consult before any work on stages, parsers, or the compact format syntax (`:1`, `|:`, `+`, `..`, `~`, `§`).
+- [Format spec + architecture]: `docs/project.md` — consult before any work on stages, parsers, or the compact format syntax (`:1`, `|:`, `+`, `..`, `~`, `§`). Note: the tech-stack section in that doc is outdated; trust `package.json` for tooling.
 
 ## @Map
 
 - `src/stages/` — Stages **must** operate on AST nodes only. NEVER manipulate raw strings here; string ops belong in `src/utils/text.ts`.
-- `src/core/compact.ts` / `expand.ts` — Wiring only (<40 lines each). NEVER add business logic; it belongs in stages or parser.
+- `src/core/compact.ts` / `expand.ts` — Wiring only. NEVER add business logic; it belongs in stages or parser.
 - Dependency flow is strictly one-way: `types/ → utils/ → stages/ & parser/ → core/ → cli/ & mcp/`. Reverse imports cause silent circular dependency failures at runtime.
 
 ## @Workflow
