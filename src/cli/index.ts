@@ -5,6 +5,7 @@ import { diffCommand } from './commands/diff.js';
 import { expandCommand } from './commands/expand.js';
 import { extractCommand } from './commands/extract.js';
 import { pruneLogCommand } from './commands/prune-log.js';
+import { readCommand } from './commands/read.js';
 import { searchSectionsCommand } from './commands/search-sections.js';
 import { sectionsCommand } from './commands/sections.js';
 import { statsCommand } from './commands/stats.js';
@@ -31,6 +32,7 @@ export const command = defineCommand({
     'search-sections': searchSectionsCommand,
     'token-count': tokenCountCommand,
     tree: treeCommand,
+    read: readCommand,
   },
 });
 

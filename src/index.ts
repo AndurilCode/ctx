@@ -26,3 +26,5 @@ export type {
 export type { CompactResult, StageStats, Stats } from './types/results.js';
 export { tree } from './core/tree.js';
 export type { TreeOptions, TreeResult } from './types/tree.js';
+export { budgetedRead } from './core/read.js';
+export type { ReadOptions, ReadResult, ReadStrategy } from './types/read.js';
