@@ -1,10 +1,18 @@
 import { basename, extname, join } from 'node:path';
 import { defineCommand } from 'citty';
 import { compact } from '../../core/compact.js';
+import { parseFrontmatter } from '../../utils/frontmatter.js';
 import { computeStats } from '../../utils/stats.js';
 import { createTokenCounter } from '../../utils/tokens.js';
 import { readInput, resolveInputPaths, writeOutput } from '../io.js';
 import { parseSectionOptions } from '../section-options.js';
+
+function writeFrontmatterToStderr(markdown: string, label?: string): void {
+  const fm = parseFrontmatter(markdown);
+  if (Object.keys(fm).length === 0) return;
+  const prefix = label ? `${label}\n` : '';
+  process.stderr.write(`${prefix}[frontmatter] ${JSON.stringify(fm)}\n`);
+}
 
 function toCmdFileName(inputPath: string): string {
   const name = basename(inputPath, extname(inputPath));
@@ -83,6 +91,7 @@ export const compactCommand = defineCommand({
 
     if (!args.input) {
       const markdown = await readInput();
+      writeFrontmatterToStderr(markdown);
       const result = compact(markdown, {
         dedup: args.dedup,
         semantic: args.semantic,
@@ -116,6 +125,7 @@ export const compactCommand = defineCommand({
 
     for (const filePath of paths) {
       const markdown = await readInput(filePath);
+      writeFrontmatterToStderr(markdown, paths.length > 1 ? filePath : undefined);
       const result = compact(markdown, {
         dedup: args.dedup,
         semantic: args.semantic,

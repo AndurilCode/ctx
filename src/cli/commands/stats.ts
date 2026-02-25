@@ -1,5 +1,6 @@
 import { defineCommand } from 'citty';
 import { compact } from '../../core/compact.js';
+import { parseFrontmatter } from '../../utils/frontmatter.js';
 import { computeStats } from '../../utils/stats.js';
 import { createTokenCounter } from '../../utils/tokens.js';
 import { readInput } from '../io.js';
@@ -70,6 +71,8 @@ export const statsCommand = defineCommand({
     const tokenCounter = await createTokenCounter();
     const stats = computeStats(markdown, result.output, result.stats.stageStats, tokenCounter);
 
-    process.stdout.write(`${JSON.stringify(stats, null, 2)}\n`);
+    process.stdout.write(
+      `${JSON.stringify({ ...stats, frontmatter: parseFrontmatter(markdown) }, null, 2)}\n`,
+    );
   },
 });

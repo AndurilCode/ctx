@@ -1,5 +1,6 @@
 import { defineCommand } from 'citty';
 import { extract } from '../../core/extract.js';
+import { parseFrontmatter } from '../../utils/frontmatter.js';
 import { readInput, writeOutput } from '../io.js';
 import { parseSectionOptions } from '../section-options.js';
 
@@ -51,6 +52,10 @@ export const extractCommand = defineCommand({
   },
   async run({ args }) {
     const markdown = await readInput(args.input ? String(args.input) : undefined);
+    const fm = parseFrontmatter(markdown);
+    if (Object.keys(fm).length > 0) {
+      process.stderr.write(`[frontmatter] ${JSON.stringify(fm)}\n`);
+    }
     const onlySections = parseSectionOptions(args.only);
     const stripSections = parseSectionOptions(args.strip);
 
