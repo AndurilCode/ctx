@@ -89,3 +89,38 @@ export function containsSectionQuery(heading: string, queries: readonly string[]
 export function unwrapSoftLineBreaks(input: string): string {
   return input.replace(/(?<!\n)\n(?!\n)/g, ' ');
 }
+
+export function normalizeExtractLimit(value: number | undefined, fallback: number): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.floor(value));
+}
+
+export function truncateForExtract(
+  input: string,
+  maxChars: number,
+): {
+  value: string;
+  truncated: boolean;
+} {
+  if (maxChars <= 0) {
+    return { value: '...', truncated: input.length > 0 };
+  }
+
+  if (input.length <= maxChars) {
+    return { value: input, truncated: false };
+  }
+
+  const prefix = input.slice(0, maxChars).trimEnd();
+  if (prefix.length === 0) {
+    return { value: '...', truncated: true };
+  }
+
+  return { value: `${prefix} ...`, truncated: true };
+}
+
+export function formatExtractOverflow(label: 'items' | 'rows', count: number): string {
+  return `... ${count} more ${label}`;
+}

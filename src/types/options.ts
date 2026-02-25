@@ -10,6 +10,14 @@ export interface CompactOptions {
   versionMarker?: boolean;
 }
 
+export interface ExtractOptions {
+  onlySections?: string[];
+  stripSections?: string[];
+  maxChars?: number;
+  maxListItems?: number;
+  maxTableRows?: number;
+}
+
 export interface ExpandOptions {
   tableDelimiter?: string;
 }
