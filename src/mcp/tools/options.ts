@@ -73,3 +73,11 @@ export const summarizeLikeInputSchema = {
       'auto (default) — balanced; guide — step-by-step docs, preserves commands; reference — API/type docs, preserves all code verbatim; spec — formal specs, preserves invariants',
     ),
 };
+
+export const diffInputSchema = {
+  diff: z.string().optional(),
+  file: z.string().optional(),
+  context: z.number().int().min(0).optional(),
+  compactHeaders: z.boolean().optional(),
+  changesOnly: z.boolean().optional(),
+};

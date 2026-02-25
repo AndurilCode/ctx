@@ -1,5 +1,6 @@
 import { defineCommand, runMain } from 'citty';
 import { compactCommand } from './commands/compact.js';
+import { diffCommand } from './commands/diff.js';
 import { expandCommand } from './commands/expand.js';
 import { extractCommand } from './commands/extract.js';
 import { searchSectionsCommand } from './commands/search-sections.js';
@@ -15,6 +16,7 @@ export const command = defineCommand({
   },
   subCommands: {
     pack: compactCommand,
+    diff: diffCommand,
     extract: extractCommand,
     unpack: expandCommand,
     verify: verifyCommand,

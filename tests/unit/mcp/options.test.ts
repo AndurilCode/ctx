@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { toCompactOptions, toExtractOptions } from '../../../src/mcp/tools/options.js';
+import * as z from 'zod/v4';
+import { diffInputSchema, toCompactOptions, toExtractOptions } from '../../../src/mcp/tools/options.js';
 
 describe('toCompactOptions', () => {
   test('maps all fields correctly', () => {
@@ -57,5 +58,12 @@ describe('toExtractOptions', () => {
     const result = toExtractOptions({});
     expect(result.onlySections).toBeUndefined();
     expect(result.maxChars).toBeUndefined();
+  });
+});
+
+describe('diffInputSchema', () => {
+  test('accepts valid diff options', () => {
+    const schema = z.object(diffInputSchema);
+    expect(() => schema.parse({ diff: 'x', context: 1, compactHeaders: true, changesOnly: false })).not.toThrow();
   });
 });

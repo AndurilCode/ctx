@@ -7,6 +7,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { compact } from '../../src/core/compact.js';
 import { expand } from '../../src/core/expand.js';
 import { verify } from '../../src/core/verify.js';
+import { runDiffTool } from '../../src/mcp/tools/diff.js';
 import { runExtractTool } from '../../src/mcp/tools/extract.js';
 import { runPackTool } from '../../src/mcp/tools/pack.js';
 import { runSectionsTool } from '../../src/mcp/tools/sections.js';
@@ -105,6 +106,28 @@ describe('mcp tools integration', () => {
     ).rejects.toThrow(/mutually exclusive/i);
   });
 
+  test('compact_md_diff compacts unified diff input', async () => {
+    const diff = [
+      'diff --git a/src/app.ts b/src/app.ts',
+      'index 1..2 100644',
+      '--- a/src/app.ts',
+      '+++ b/src/app.ts',
+      '@@ -1,3 +1,3 @@ function run() {',
+      ' const a = 1;',
+      '-const oldFlag = true;',
+      '+const newFlag = true;',
+      ' return a;',
+    ].join('\n');
+
+    const result = await runDiffTool({ diff });
+    const output = textFromToolResult(result);
+
+    expect(output).toContain('=== src/app.ts');
+    expect(output).not.toContain('index 1..2');
+    expect(output).toContain('-const oldFlag = true;');
+    expect(output).toContain('+const newFlag = true;');
+  });
+
   describe('file path support', () => {
     test('compact_md_pack reads from file when file param provided', async () => {
       const markdown = '# Title\n\nParagraph text.\n';
@@ -159,8 +182,34 @@ describe('mcp tools integration', () => {
       expect(parsed.valid).toBe(verify(markdown));
     });
 
+    test('compact_md_diff reads from file when file param provided', async () => {
+      const diff = [
+        'diff --git a/src/app.ts b/src/app.ts',
+        'index 1..2 100644',
+        '--- a/src/app.ts',
+        '+++ b/src/app.ts',
+        '@@ -1 +1 @@',
+        '-old',
+        '+new',
+      ].join('\n');
+      const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
+      const filePath = join(dir, 'test.diff');
+      await writeFile(filePath, diff);
+
+      const result = await runDiffTool({ file: filePath });
+      const output = textFromToolResult(result);
+
+      expect(output).toContain('=== src/app.ts');
+      expect(output).toContain('-old');
+      expect(output).toContain('+new');
+    });
+
     test('pack tool throws when neither markdown nor file provided', async () => {
       await expect(runPackTool({} as { markdown: string })).rejects.toThrow(/markdown.*file/i);
+    });
+
+    test('diff tool throws when neither diff nor file provided', async () => {
+      await expect(runDiffTool({})).rejects.toThrow(/diff.*file/i);
     });
   });
 

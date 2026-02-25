@@ -100,7 +100,7 @@ console.log(stats.savings); // e.g. 0.38 (38% fewer tokens)
 ### Library
 
 ```typescript
-import { compact, expand, verify, createPipeline } from 'compact.md';
+import { compact, compactDiff, expand, verify, createPipeline } from 'compact.md';
 ```
 
 #### `compact(markdown, options?): CompactResult`
@@ -131,6 +131,16 @@ Expands compact.md format back to standard Markdown.
 
 Returns `true` if `expand(compact(markdown)) === markdown`.
 
+#### `compactDiff(diffText, options?): string`
+
+Compresses unified git diff text (lossy, one-way). Useful for PR review and change analysis.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `context` | `number` | `1` | Context lines to keep around changed lines (`0` strips all context) |
+| `compactHeaders` | `boolean` | `true` | Replace `diff/index/---/+++` header block with `=== path` |
+| `changesOnly` | `boolean` | `false` | Emit only file path + changed lines (`+`/`-`) |
+
 #### `createPipeline(stages): Pipeline`
 
 Assembles a custom pipeline from an ordered array of `Stage` objects for advanced use cases.
@@ -148,6 +158,7 @@ npx compact.md <command> [options]
 | Command | Description |
 |---|---|
 | `pack` | Compress a Markdown file to compact.md format |
+| `diff` | Compress unified diff output for lower token usage |
 | `unpack` | Expand a compact.md file back to Markdown |
 | `extract` | Extract and compress specific sections only |
 | `verify` | Assert lossless round-trip for a file |
@@ -170,6 +181,7 @@ compact.md stats input.md
 
 # Pipe-friendly
 cat doc.md | compact.md pack > compressed.cmd
+git diff | compact.md diff --changes-only
 
 # With options
 compact.md pack input.md --dedup --semantic --stats
@@ -202,6 +214,7 @@ The MCP server exposes a spectrum of token-reduction strategies. Tools are group
 | `compact_md_unpack` | Expand compact.md format back to standard Markdown |
 | `compact_md_verify` | Assert that round-trip is lossless for a given input |
 | `compact_md_stats` | Report token savings without writing any output |
+| `compact_md_diff` | Compress unified git diff text (one-way, lossy) |
 
 **Section navigation** _(start here for unknown documents)_
 
