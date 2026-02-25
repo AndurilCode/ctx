@@ -14,8 +14,8 @@ export const contextCommand = defineCommand({
     strategy: { type: 'string', required: false, default: 'auto', description: 'auto|truncate|outline|sections' },
   },
   async run({ args }) {
-    // files may be a string (single) or array; citty passes extra positional args differently
-    const fileList = Array.isArray(args.files) ? args.files : [String(args.files)];
+    // citty puts ALL positional args in args._ (including the first named one)
+    const fileList = Array.isArray(args._) ? (args._ as string[]).filter(Boolean) : [String(args.files)];
     const sources: ContextSource[] = fileList.map((f) => ({ file: String(f) }));
 
     const result = await assembleContext({

@@ -1,5 +1,9 @@
-import { resolve, relative } from 'node:path';
+import { relative, resolve } from 'node:path';
 import fg from 'fast-glob';
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 import type { SymbolDefinition, SymbolsOptions, SymbolsResult, SymbolUsage } from '../types/symbols.js';
 import { readFileText } from '../utils/file-reader.js';
 import { findUsagesInContent, flattenNodes } from '../utils/symbol-index.js';
@@ -32,9 +36,11 @@ export async function symbols(options: SymbolsOptions): Promise<SymbolsResult> {
         const { codeOutline } = await import('./code-outline.js');
         const outlined = await codeOutline(content, { filePath: absFile });
         const defs = flattenNodes(outlined.nodes, workspaceRel, options.kind);
-        const matching = defs.filter((d) =>
-          d.name.toLowerCase().includes(options.query.toLowerCase()),
+        const namePattern = new RegExp(
+          `(?:^|(?<=[^a-zA-Z0-9_]))${escapeRegex(options.query)}(?=$|[^a-zA-Z0-9_])`,
+          'i',
         );
+        const matching = defs.filter((d) => namePattern.test(d.name));
         allDefinitions.push(...matching);
       } catch {
         // language not supported by tree-sitter — skip outline
