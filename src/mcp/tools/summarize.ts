@@ -7,9 +7,10 @@ import type {
 } from '@modelcontextprotocol/sdk/types.js';
 import * as z from 'zod/v4';
 import { extract } from '../../core/extract.js';
+import { parseFrontmatter } from '../../utils/frontmatter.js';
 import { hashString } from '../../utils/hash.js';
 import { getCached, setCached } from '../../utils/summary-cache.js';
-import { resolveMarkdown, textResult } from './common.js';
+import { resolveMarkdown, textResultWithFrontmatter } from './common.js';
 import type { ExtractLikeToolInput } from './options.js';
 
 type DocType = 'auto' | 'guide' | 'reference' | 'spec';
@@ -94,13 +95,14 @@ export async function runSummarizeTool(
   input: SummarizeToolInput,
 ): Promise<CallToolResult> {
   const markdown = await resolveMarkdown(input);
+  const frontmatter = parseFrontmatter(markdown);
   const summarizeInput = buildSummarizeInput(markdown, input);
   const contentHash = hashString(summarizeInput);
   const sectionKey = buildSectionKey(input);
 
   const cached = getCached(sectionKey, contentHash);
   if (cached !== undefined) {
-    return textResult(cached);
+    return textResultWithFrontmatter(cached, frontmatter);
   }
 
   const request: CreateMessageRequestParamsBase = {
@@ -114,13 +116,13 @@ export async function runSummarizeTool(
     const result = await server.server.createMessage(request);
     const textContent = getTextContent(result);
     setCached(sectionKey, contentHash, textContent);
-    return textResult(textContent);
+    return textResultWithFrontmatter(textContent, frontmatter);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (isSamplingUnavailable(message)) {
       const fallback = fallbackSummary(markdown, input);
       setCached(sectionKey, contentHash, fallback);
-      return textResult(fallback);
+      return textResultWithFrontmatter(fallback, frontmatter);
     }
 
     throw new Error(`MCP summarize failed: ${message}`);

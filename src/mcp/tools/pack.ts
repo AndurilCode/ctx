@@ -2,7 +2,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as z from 'zod/v4';
 import { compact } from '../../core/compact.js';
-import { resolveMarkdown, textResult } from './common.js';
+import { parseFrontmatter } from '../../utils/frontmatter.js';
+import { resolveMarkdown, textResultWithFrontmatter } from './common.js';
 import { type PackLikeToolInput, toCompactOptions } from './options.js';
 
 export interface PackToolInput extends PackLikeToolInput {
@@ -14,7 +15,7 @@ export async function runPackTool(input: PackToolInput): Promise<CallToolResult>
   const markdown = await resolveMarkdown(input);
   const options = toCompactOptions(input);
   const result = compact(markdown, options);
-  return textResult(result.output);
+  return textResultWithFrontmatter(result.output, parseFrontmatter(markdown));
 }
 
 export function registerPackTool(server: McpServer): void {

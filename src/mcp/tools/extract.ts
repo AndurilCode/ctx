@@ -2,7 +2,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as z from 'zod/v4';
 import { extract } from '../../core/extract.js';
-import { resolveMarkdown, textResult } from './common.js';
+import { parseFrontmatter } from '../../utils/frontmatter.js';
+import { resolveMarkdown, textResultWithFrontmatter } from './common.js';
 import { type ExtractLikeToolInput, toExtractOptions } from './options.js';
 
 export interface ExtractToolInput extends ExtractLikeToolInput {
@@ -13,7 +14,7 @@ export interface ExtractToolInput extends ExtractLikeToolInput {
 export async function runExtractTool(input: ExtractToolInput): Promise<CallToolResult> {
   const markdown = await resolveMarkdown(input);
   const options = toExtractOptions(input);
-  return textResult(extract(markdown, options));
+  return textResultWithFrontmatter(extract(markdown, options), parseFrontmatter(markdown));
 }
 
 export function registerExtractTool(server: McpServer): void {

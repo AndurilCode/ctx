@@ -7,6 +7,18 @@ export function textResult(text: string): CallToolResult {
   };
 }
 
+export function textResultWithFrontmatter(
+  text: string,
+  frontmatter: Record<string, unknown>,
+): CallToolResult {
+  return {
+    content: [
+      { type: 'text', text },
+      { type: 'text', text: JSON.stringify({ frontmatter }, null, 2) },
+    ],
+  };
+}
+
 export function jsonResult(payload: unknown): CallToolResult {
   return textResult(JSON.stringify(payload, null, 2));
 }

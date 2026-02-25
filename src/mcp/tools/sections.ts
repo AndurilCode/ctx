@@ -3,9 +3,10 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as z from 'zod/v4';
 import { astToMarkdown } from '../../parser/ast-to-markdown.js';
 import { markdownToAst } from '../../parser/markdown-to-ast.js';
+import { parseFrontmatter } from '../../utils/frontmatter.js';
 import { buildHeadingRanges } from '../../utils/headings.js';
 import { createTokenCounter } from '../../utils/tokens.js';
-import { resolveMarkdown, textResult } from './common.js';
+import { resolveMarkdown, textResultWithFrontmatter } from './common.js';
 
 export interface SectionsToolInput {
   markdown?: string;
@@ -14,6 +15,7 @@ export interface SectionsToolInput {
 
 export async function runSectionsTool(input: SectionsToolInput): Promise<CallToolResult> {
   const markdown = await resolveMarkdown(input);
+  const frontmatter = parseFrontmatter(markdown);
   const tree = markdownToAst(markdown);
   const ranges = buildHeadingRanges(tree);
   const tokenCounter = await createTokenCounter();
@@ -29,7 +31,7 @@ export async function runSectionsTool(input: SectionsToolInput): Promise<CallToo
     lines.push(`${indent}${prefix} ${range.text}  (${tokens} tokens)`);
   }
 
-  return textResult(lines.join('\n'));
+  return textResultWithFrontmatter(lines.join('\n'), frontmatter);
 }
 
 export function registerSectionsTool(server: McpServer): void {
