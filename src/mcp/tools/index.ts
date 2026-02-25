@@ -3,6 +3,7 @@ import { registerContextTool } from './context.js';
 import { registerDiffTool } from './diff.js';
 import { registerExtractTool } from './extract.js';
 import { registerImportsTool } from './imports.js';
+import { registerSymbolsTool } from './symbols.js';
 import { registerOutlineTool } from './outline.js';
 import { registerPackTool } from './pack.js';
 import { registerPruneLogTool } from './prune-log.js';
@@ -37,4 +38,5 @@ export function registerCompactMdTools(server: McpServer): void {
   registerRelevanceTool(server);
   registerContextTool(server);
   registerImportsTool(server);
+  registerSymbolsTool(server);
 }

@@ -12,6 +12,7 @@ import { relevanceCommand } from './commands/relevance.js';
 import { searchSectionsCommand } from './commands/search-sections.js';
 import { sectionsCommand } from './commands/sections.js';
 import { statsCommand } from './commands/stats.js';
+import { symbolsCommand } from './commands/symbols.js';
 import { tokenCountCommand } from './commands/token-count.js';
 import { treeCommand } from './commands/tree.js';
 import { verifyCommand } from './commands/verify.js';
@@ -35,6 +36,7 @@ export const command = defineCommand({
     'search-sections': searchSectionsCommand,
     'token-count': tokenCountCommand,
     imports: importsCommand,
+    symbols: symbolsCommand,
     tree: treeCommand,
     read: readCommand,
     relevance: relevanceCommand,

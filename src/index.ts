@@ -34,3 +34,5 @@ export { relevance } from './core/relevance.js';
 export type { RelevanceMatch, RelevanceOptions, RelevanceResult } from './types/relevance.js';
 export { fileImports } from './core/imports.js';
 export type { ImportEdge, ImportsOptions, ImportsResult } from './types/imports.js';
+export { symbols } from './core/symbols.js';
+export type { SymbolDefinition, SymbolsOptions, SymbolsResult, SymbolUsage } from './types/symbols.js';
