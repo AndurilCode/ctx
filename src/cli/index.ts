@@ -1,5 +1,6 @@
 import { defineCommand, runMain } from 'citty';
 import { compactCommand } from './commands/compact.js';
+import { codeOutlineCommand } from './commands/code-outline.js';
 import { diffCommand } from './commands/diff.js';
 import { expandCommand } from './commands/expand.js';
 import { extractCommand } from './commands/extract.js';
@@ -17,6 +18,7 @@ export const command = defineCommand({
   },
   subCommands: {
     pack: compactCommand,
+    'code-outline': codeOutlineCommand,
     diff: diffCommand,
     'prune-log': pruneLogCommand,
     extract: extractCommand,

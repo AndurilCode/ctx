@@ -48,6 +48,11 @@ export const markdownOrFileSchema = {
   file: z.string().optional(),
 };
 
+export const codeOrFileSchema = {
+  code: z.string().optional(),
+  file: z.string().optional(),
+};
+
 export const packLikeInputSchema = {
   ...markdownOrFileSchema,
   dedup: z.boolean().optional(),

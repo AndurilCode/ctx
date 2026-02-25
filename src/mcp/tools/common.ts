@@ -37,3 +37,18 @@ export async function resolveMarkdown(input: {
 
   throw new Error('Either markdown or file must be provided.');
 }
+
+export async function resolveTextInput(input: {
+  text?: string;
+  file?: string;
+}): Promise<string> {
+  if (input.file) {
+    return readFile(input.file, 'utf8');
+  }
+
+  if (input.text) {
+    return input.text;
+  }
+
+  throw new Error('Either text or file must be provided.');
+}
