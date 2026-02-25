@@ -81,3 +81,45 @@ export const diffInputSchema = {
   compactHeaders: z.boolean().optional(),
   changesOnly: z.boolean().optional(),
 };
+
+export const pruneLogInputSchema = {
+  log: z.string().optional(),
+  file: z.string().optional(),
+  profile: z.enum(['test', 'ci', 'lint', 'runtime']).optional(),
+  stripTimestamps: z.enum(['auto', 'strip', 'keep']).optional(),
+  foldProgress: z.boolean().optional(),
+  elidePassingTests: z.boolean().optional(),
+  foldDebugLines: z.boolean().optional(),
+  elideHealthChecks: z.boolean().optional(),
+  foldJsonLines: z.boolean().optional(),
+  foldFrameworkStartup: z.boolean().optional(),
+  stripUserAgents: z.boolean().optional(),
+  dedupeStackTraces: z.boolean().optional(),
+  foldRepeatedLines: z.boolean().optional(),
+  foldGlobalRepeats: z.boolean().optional(),
+  allowTokenExpansion: z.boolean().optional(),
+  thresholdTokens: z.number().int().min(0).optional(),
+  summarizeIfOverThreshold: z.boolean().optional(),
+  maxSummaryTokens: z.number().int().min(64).max(4096).optional(),
+  customRules: z
+    .array(
+      z.union([
+        z.object({
+          type: z.literal('strip'),
+          pattern: z.string(),
+        }),
+        z.object({
+          type: z.literal('fold'),
+          pattern: z.string(),
+          label: z.string().optional(),
+        }),
+        z.object({
+          type: z.literal('block'),
+          start: z.string(),
+          end: z.string(),
+          label: z.string().optional(),
+        }),
+      ]),
+    )
+    .optional(),
+};

@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import * as z from 'zod/v4';
-import { diffInputSchema, toCompactOptions, toExtractOptions } from '../../../src/mcp/tools/options.js';
+import {
+  diffInputSchema,
+  pruneLogInputSchema,
+  toCompactOptions,
+  toExtractOptions,
+} from '../../../src/mcp/tools/options.js';
 
 describe('toCompactOptions', () => {
   test('maps all fields correctly', () => {
@@ -65,5 +70,21 @@ describe('diffInputSchema', () => {
   test('accepts valid diff options', () => {
     const schema = z.object(diffInputSchema);
     expect(() => schema.parse({ diff: 'x', context: 1, compactHeaders: true, changesOnly: false })).not.toThrow();
+  });
+});
+
+describe('pruneLogInputSchema', () => {
+  test('accepts valid prune-log options', () => {
+    const schema = z.object(pruneLogInputSchema);
+    expect(() =>
+      schema.parse({
+        log: 'hello',
+        profile: 'lint',
+        stripTimestamps: 'auto',
+        thresholdTokens: 800,
+        summarizeIfOverThreshold: true,
+        customRules: [{ type: 'strip', pattern: '^DEBUG' }],
+      }),
+    ).not.toThrow();
   });
 });

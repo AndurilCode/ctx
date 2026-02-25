@@ -10,6 +10,7 @@ import { verify } from '../../src/core/verify.js';
 import { runDiffTool } from '../../src/mcp/tools/diff.js';
 import { runExtractTool } from '../../src/mcp/tools/extract.js';
 import { runPackTool } from '../../src/mcp/tools/pack.js';
+import { runPruneLogTool } from '../../src/mcp/tools/prune-log.js';
 import { runSectionsTool } from '../../src/mcp/tools/sections.js';
 import { runStatsTool } from '../../src/mcp/tools/stats.js';
 import { runSummarizeTool } from '../../src/mcp/tools/summarize.js';
@@ -128,6 +129,68 @@ describe('mcp tools integration', () => {
     expect(output).toContain('+const newFlag = true;');
   });
 
+  test('compact_md_prune_log prunes noisy logs', async () => {
+    const log = ['✓ test one', '✓ test two', '✗ test three', 'Tests: 2 passed, 1 failed'].join('\n');
+    const result = await runPruneLogTool({ log, allowTokenExpansion: true });
+    const output = textFromToolResult(result);
+    const parsed = JSON.parse(output) as { output: string; summaryUsed: boolean };
+
+    expect(parsed.output).toContain('✗ test three');
+    expect(parsed.output).toContain('[tests pruned: 2 passing stripped, 1 failing kept]');
+    expect(parsed.summaryUsed).toBe(false);
+  });
+
+  test('compact_md_prune_log applies runtime profile defaults', async () => {
+    const log = ['2026-02-25T10:00:00Z GET /users 200', '2026-02-25T10:00:01Z GET /users 500'].join(
+      '\n',
+    );
+    const result = await runPruneLogTool({ log, profile: 'runtime' });
+    const parsed = JSON.parse(textFromToolResult(result)) as { output: string };
+
+    expect(parsed.output).toContain('[timestamps stripped: iso]');
+    expect(parsed.output).not.toContain('2026-02-25T10:00:01Z');
+  });
+
+  test('compact_md_prune_log applies lint profile defaults', async () => {
+    const log = [
+      '$ biome check .',
+      './src/a.ts format',
+      '',
+      '  × Formatter would have printed the following content:',
+      '',
+      '    10 10 │ a',
+      '    11 11 │ b',
+      '',
+    ].join('\n');
+    const result = await runPruneLogTool({ log, profile: 'lint' });
+    const parsed = JSON.parse(textFromToolResult(result)) as { output: string };
+
+    expect(parsed.output).toContain('[diagnostic');
+    expect(parsed.output).not.toContain('10 10 │ a');
+  });
+
+  test('compact_md_prune_log summarizes when over threshold and sampling enabled', async () => {
+    const server = {
+      server: {
+        createMessage: async () => ({
+          model: 'mock',
+          role: 'assistant',
+          content: { type: 'text', text: 'pruned summary' },
+        }),
+      },
+    } as unknown as McpServer;
+
+    const log = Array.from({ length: 40 }, (_, i) => `line ${i}`).join('\n');
+    const result = await runPruneLogTool(
+      { log, thresholdTokens: 1, summarizeIfOverThreshold: true, maxSummaryTokens: 128 },
+      server,
+    );
+    const parsed = JSON.parse(textFromToolResult(result)) as { summaryUsed: boolean; summary?: string };
+
+    expect(parsed.summaryUsed).toBe(true);
+    expect(parsed.summary).toBe('pruned summary');
+  });
+
   describe('file path support', () => {
     test('compact_md_pack reads from file when file param provided', async () => {
       const markdown = '# Title\n\nParagraph text.\n';
@@ -204,12 +267,34 @@ describe('mcp tools integration', () => {
       expect(output).toContain('+new');
     });
 
+    test('compact_md_prune_log reads from file when file param provided', async () => {
+      const log = ['2026-02-25T10:00:00Z info line', '2026-02-25T10:00:01Z info line'].join('\n');
+      const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
+      const filePath = join(dir, 'test.log');
+      await writeFile(filePath, log);
+
+      const result = await runPruneLogTool({
+        file: filePath,
+        stripTimestamps: 'strip',
+        allowTokenExpansion: true,
+      });
+      const output = textFromToolResult(result);
+      const parsed = JSON.parse(output) as { output: string };
+
+      expect(parsed.output).toContain('[timestamps stripped: iso]');
+      expect(parsed.output).not.toContain('2026-02-25T10:00:01Z');
+    });
+
     test('pack tool throws when neither markdown nor file provided', async () => {
       await expect(runPackTool({} as { markdown: string })).rejects.toThrow(/markdown.*file/i);
     });
 
     test('diff tool throws when neither diff nor file provided', async () => {
       await expect(runDiffTool({})).rejects.toThrow(/diff.*file/i);
+    });
+
+    test('prune-log tool throws when neither log nor file provided', async () => {
+      await expect(runPruneLogTool({})).rejects.toThrow(/log.*file/i);
     });
   });
 
