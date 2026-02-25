@@ -1,5 +1,6 @@
-import { describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -11,6 +12,7 @@ import { runPackTool } from '../../src/mcp/tools/pack.js';
 import { runSectionsTool } from '../../src/mcp/tools/sections.js';
 import { runStatsTool } from '../../src/mcp/tools/stats.js';
 import { runSummarizeTool } from '../../src/mcp/tools/summarize.js';
+import { _resetForTesting } from '../../src/utils/summary-cache.js';
 import { runUnpackTool } from '../../src/mcp/tools/unpack.js';
 import { runVerifyTool } from '../../src/mcp/tools/verify.js';
 
@@ -24,6 +26,15 @@ function textFromToolResult(result: { content: Array<{ type: string; text?: stri
 }
 
 describe('mcp tools integration', () => {
+  beforeEach(() => {
+    const tmpPath = join(mkdtempSync(join(tmpdir(), 'compact-md-mcp-test-')), 'cache.json');
+    _resetForTesting(tmpPath);
+  });
+
+  afterEach(() => {
+    _resetForTesting();
+  });
+
   test('compact_md_pack returns compacted markdown text', async () => {
     const markdown = '# Title\n\n- [ ] todo item\n';
     const result = await runPackTool({ markdown });
@@ -231,5 +242,84 @@ describe('mcp tools integration', () => {
     expect(output).toContain('[fallback=extract]');
     expect(output).toContain('# Keep');
     expect(output).not.toContain('# Drop');
+  });
+
+  describe('compact_md_summarize caching', () => {
+    test('second call with identical content skips sampling', async () => {
+      const markdown = '# Topic\n\ncontent\n';
+      let calls = 0;
+      const server = {
+        server: {
+          createMessage: async () => {
+            calls++;
+            return { model: 'mock', role: 'assistant', content: { type: 'text', text: 'summary' } };
+          },
+        },
+      } as unknown as McpServer;
+
+      await runSummarizeTool(server, { markdown });
+      await runSummarizeTool(server, { markdown });
+
+      expect(calls).toBe(1);
+    });
+
+    test('second call returns the cached summary', async () => {
+      const markdown = '# Topic\n\ncontent\n';
+      const server = {
+        server: {
+          createMessage: async () => ({
+            model: 'mock',
+            role: 'assistant',
+            content: { type: 'text', text: 'cached summary' },
+          }),
+        },
+      } as unknown as McpServer;
+
+      await runSummarizeTool(server, { markdown });
+      const result = await runSummarizeTool(server, { markdown });
+
+      expect(textFromToolResult(result)).toBe('cached summary');
+    });
+
+    test('changed content calls sampling again and replaces the cached summary', async () => {
+      let callCount = 0;
+      const server = {
+        server: {
+          createMessage: async () => {
+            callCount++;
+            return {
+              model: 'mock',
+              role: 'assistant',
+              content: { type: 'text', text: `summary-${callCount}` },
+            };
+          },
+        },
+      } as unknown as McpServer;
+
+      await runSummarizeTool(server, { markdown: '# Topic\n\noriginal\n' });
+      const result = await runSummarizeTool(server, { markdown: '# Topic\n\nupdated\n' });
+
+      expect(callCount).toBe(2);
+      expect(textFromToolResult(result)).toBe('summary-2');
+    });
+
+    test('fallback result is cached and avoids a second sampling attempt', async () => {
+      let calls = 0;
+      const server = {
+        server: {
+          createMessage: async () => {
+            calls++;
+            throw new Error('Method not found');
+          },
+        },
+      } as unknown as McpServer;
+
+      const markdown = '# Topic\n\ncontent\n';
+      await runSummarizeTool(server, { markdown });
+      const result = await runSummarizeTool(server, { markdown });
+
+      expect(calls).toBe(1);
+      expect(textFromToolResult(result)).toContain('[fallback=extract]');
+    });
   });
 });

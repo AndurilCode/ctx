@@ -7,6 +7,8 @@ import type {
 } from '@modelcontextprotocol/sdk/types.js';
 import * as z from 'zod/v4';
 import { extract } from '../../core/extract.js';
+import { hashString } from '../../utils/hash.js';
+import { getCached, setCached } from '../../utils/summary-cache.js';
 import { resolveMarkdown, textResult } from './common.js';
 import type { ExtractLikeToolInput } from './options.js';
 
@@ -69,12 +71,26 @@ function getTextContent(result: CreateMessageResult): string {
   return result.content.text;
 }
 
+function buildSectionKey(input: SummarizeToolInput): string {
+  if (!input.file) return 'inline';
+  const sections = JSON.stringify([input.onlySections ?? [], input.stripSections ?? []]);
+  return hashString(`${input.file}\0${sections}`);
+}
+
 export async function runSummarizeTool(
   server: McpServer,
   input: SummarizeToolInput,
 ): Promise<CallToolResult> {
   const markdown = await resolveMarkdown(input);
   const summarizeInput = buildSummarizeInput(markdown, input);
+  const contentHash = hashString(summarizeInput);
+  const sectionKey = buildSectionKey(input);
+
+  const cached = getCached(sectionKey, contentHash);
+  if (cached !== undefined) {
+    return textResult(cached);
+  }
+
   const request: CreateMessageRequestParamsBase = {
     messages: [summarizePrompt(summarizeInput)],
     maxTokens: input.maxTokens ?? 500,
@@ -84,11 +100,15 @@ export async function runSummarizeTool(
 
   try {
     const result = await server.server.createMessage(request);
-    return textResult(getTextContent(result));
+    const textContent = getTextContent(result);
+    setCached(sectionKey, contentHash, textContent);
+    return textResult(textContent);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (isSamplingUnavailable(message)) {
-      return textResult(fallbackSummary(markdown, input));
+      const fallback = fallbackSummary(markdown, input);
+      setCached(sectionKey, contentHash, fallback);
+      return textResult(fallback);
     }
 
     throw new Error(`MCP summarize failed: ${message}`);
