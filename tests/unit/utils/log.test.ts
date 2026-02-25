@@ -11,7 +11,9 @@ describe('pruneTerminalLog', () => {
   });
 
   test('elides passing tests when failures exist', () => {
-    const input = ['✓ test one', '✓ test two', '✗ test three', 'Tests: 2 passed, 1 failed'].join('\n');
+    const input = ['✓ test one', '✓ test two', '✗ test three', 'Tests: 2 passed, 1 failed'].join(
+      '\n',
+    );
     const result = pruneTerminalLog(input, { allowTokenExpansion: true });
 
     expect(result.output).toContain('[tests pruned: 2 passing stripped, 1 failing kept]');

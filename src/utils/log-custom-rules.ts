@@ -1,6 +1,10 @@
 import type { LogCustomRule } from '../types/log.js';
 
-export function applyCustomRules(lines: string[], rules: LogCustomRule[], appliedRules: string[]): string[] {
+export function applyCustomRules(
+  lines: string[],
+  rules: LogCustomRule[],
+  appliedRules: string[],
+): string[] {
   let current = lines;
 
   for (const rule of rules) {

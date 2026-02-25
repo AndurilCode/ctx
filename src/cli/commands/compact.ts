@@ -26,7 +26,12 @@ interface RunCompactArgs {
   statsLabel?: string;
 }
 
-async function runCompact({ markdown, compactOptions, outputPath, statsLabel }: RunCompactArgs): Promise<void> {
+async function runCompact({
+  markdown,
+  compactOptions,
+  outputPath,
+  statsLabel,
+}: RunCompactArgs): Promise<void> {
   const result = compact(markdown, compactOptions);
   await writeOutput(result.output, outputPath);
   if (result.stats) {
@@ -62,9 +67,21 @@ export const compactCommand = defineCommand({
     dedup: { type: 'boolean', default: false },
     semantic: { type: 'boolean', default: false },
     keepComments: { type: 'boolean', default: false },
-    only: { type: 'string', required: false, description: 'Keep only sections whose heading matches this query.' },
-    strip: { type: 'string', required: false, description: 'Remove sections whose heading matches this query.' },
-    unwrap: { type: 'boolean', default: false, description: 'Collapse soft line breaks inside paragraphs.' },
+    only: {
+      type: 'string',
+      required: false,
+      description: 'Keep only sections whose heading matches this query.',
+    },
+    strip: {
+      type: 'string',
+      required: false,
+      description: 'Remove sections whose heading matches this query.',
+    },
+    unwrap: {
+      type: 'boolean',
+      default: false,
+      description: 'Collapse soft line breaks inside paragraphs.',
+    },
     stats: { type: 'boolean', default: false },
     tableDelimiter: { type: 'string', default: ',' },
     versionMarker: { type: 'boolean', default: false },
@@ -88,13 +105,18 @@ export const compactCommand = defineCommand({
     if (!args.input) {
       const markdown = await readInput();
       writeFrontmatterToStderr(markdown);
-      await runCompact({ markdown, compactOptions, outputPath: args.output ? String(args.output) : undefined });
+      await runCompact({
+        markdown,
+        compactOptions,
+        outputPath: args.output ? String(args.output) : undefined,
+      });
       return;
     }
 
     const paths = await resolveInputPaths(String(args.input));
     if (paths.length === 0) throw new Error(`No files matched: ${String(args.input)}`);
-    if (paths.length > 1 && args.output) throw new Error('Cannot use --output with multiple input files. Use --out-dir.');
+    if (paths.length > 1 && args.output)
+      throw new Error('Cannot use --output with multiple input files. Use --out-dir.');
 
     for (const filePath of paths) {
       const markdown = await readInput(filePath);

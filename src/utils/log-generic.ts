@@ -1,7 +1,9 @@
 const DEBUG_LINE_RE = /\b(DEBUG|debug)\b/;
 const HEALTH_RE = /\/(health|healthz|readyz|livez)\b/i;
-const USER_AGENT_RE = /(Mozilla\/5\.0|AppleWebKit\/|Chrome\/\d+|Safari\/\d+|Firefox\/\d+|curl\/\d+)/;
-const STARTUP_RE = /(Starting|Started|Booting|Initializing|Listening on|Migrations? complete|Ready in)\b/i;
+const USER_AGENT_RE =
+  /(Mozilla\/5\.0|AppleWebKit\/|Chrome\/\d+|Safari\/\d+|Firefox\/\d+|curl\/\d+)/;
+const STARTUP_RE =
+  /(Starting|Started|Booting|Initializing|Listening on|Migrations? complete|Ready in)\b/i;
 const ERROR_START_RE = /^(Error|Caused by|Exception|Traceback|panic:)/;
 const JSON_OBJECT_RE = /^\s*\{.*\}\s*$/;
 
@@ -42,7 +44,10 @@ export function stripUserAgents(lines: string[], appliedRules: string[]): string
   const next = lines.map((line) => {
     if (!USER_AGENT_RE.test(line)) return line;
     changed = true;
-    return line.replace(/"[^"]*(Mozilla\/5\.0|AppleWebKit\/|Chrome\/\d+|Safari\/\d+|Firefox\/\d+)[^"]*"/g, '"<ua>"');
+    return line.replace(
+      /"[^"]*(Mozilla\/5\.0|AppleWebKit\/|Chrome\/\d+|Safari\/\d+|Firefox\/\d+)[^"]*"/g,
+      '"<ua>"',
+    );
   });
 
   if (changed) appliedRules.push('user-agent-strip');
@@ -156,6 +161,11 @@ function readStackBlock(lines: string[], start: number): { lines: string[]; end:
 
 function fingerprint(lines: string[]): string {
   return lines
-    .map((line) => line.replace(/\b\d+\b/g, '#').replace(/Retry\s+\d+\/\d+/gi, 'Retry #/#').trim())
+    .map((line) =>
+      line
+        .replace(/\b\d+\b/g, '#')
+        .replace(/Retry\s+\d+\/\d+/gi, 'Retry #/#')
+        .trim(),
+    )
     .join('\n');
 }

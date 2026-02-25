@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { jsonResult, textResult, textResultWithFrontmatter } from '../../../src/mcp/tools/common.js';
+import {
+  jsonResult,
+  textResult,
+  textResultWithFrontmatter,
+} from '../../../src/mcp/tools/common.js';
 
 describe('textResult', () => {
   test('wraps text in content array', () => {

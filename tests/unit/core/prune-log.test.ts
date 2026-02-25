@@ -12,7 +12,9 @@ describe('pruneLog', () => {
   });
 
   test('uses injected token counter for no-regression decisions', () => {
-    const input = ['✓ test one', '✓ test two', '✗ test three', 'Tests: 2 passed, 1 failed'].join('\n');
+    const input = ['✓ test one', '✓ test two', '✗ test three', 'Tests: 2 passed, 1 failed'].join(
+      '\n',
+    );
     const counter = {
       count(text: string): number {
         if (text.includes('[tests pruned:')) return 10;

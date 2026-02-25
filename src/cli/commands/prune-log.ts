@@ -110,7 +110,8 @@ export const pruneLogCommand = defineCommand({
     const userRules = parseCliCustomRules(args.strip, args.fold, args.blockFold);
 
     const options = resolveProfiledOptions(profile, {
-      stripTimestamps: args.timestamps === undefined ? undefined : parseTimestampMode(args.timestamps),
+      stripTimestamps:
+        args.timestamps === undefined ? undefined : parseTimestampMode(args.timestamps),
       foldProgress: args.noProgress ? false : undefined,
       elidePassingTests: args.noPassElision ? false : undefined,
       foldRepeatedLines: args.noRepeatFold ? false : undefined,
@@ -120,7 +121,8 @@ export const pruneLogCommand = defineCommand({
       foldFrameworkStartup: args.noStartupFold ? false : undefined,
       dedupeStackTraces: args.noStackDedup ? false : undefined,
       allowTokenExpansion: args.allowTokenExpansion,
-      thresholdTokens: args.thresholdTokens === undefined ? undefined : Number(args.thresholdTokens),
+      thresholdTokens:
+        args.thresholdTokens === undefined ? undefined : Number(args.thresholdTokens),
       tokenCounter,
       customRules: userRules,
     });

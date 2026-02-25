@@ -1,6 +1,8 @@
 const PASS_RE = /^(?:\(pass\)|\s*(?:✓|✔|PASS\b|--- PASS:|test .* \.\.\. ok\b|PASSED\b))/;
-const FAIL_RE = /^(?:\(fail\)|\s*(?:✗|✘|FAIL\b|FAILED\b|--- FAIL:|test .* \.\.\. FAILED\b|not ok\b))/;
-const SUMMARY_RE = /^(Test Suites:|Tests:|Ran \d+ tests|\d+ passing|\d+ failing|\d+ passed|\d+ failed)/i;
+const FAIL_RE =
+  /^(?:\(fail\)|\s*(?:✗|✘|FAIL\b|FAILED\b|--- FAIL:|test .* \.\.\. FAILED\b|not ok\b))/;
+const SUMMARY_RE =
+  /^(Test Suites:|Tests:|Ran \d+ tests|\d+ passing|\d+ failing|\d+ passed|\d+ failed)/i;
 const BIOME_FILE_RE = /^\.\/.*\s(?:format|lint|organizeImports)\s/;
 const TSC_ERROR_RE = /^(.+)\((\d+),(\d+)\):\s+error\s+TS\d+:/;
 const MYPY_ERROR_RE = /^(.+):(\d+):\s+error:/;

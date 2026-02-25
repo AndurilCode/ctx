@@ -17,7 +17,7 @@ describe('cli code-outline', () => {
         "import { readFile } from 'node:fs/promises';",
         '',
         'export function parse(input: string): string {',
-        "  return input.trim();",
+        '  return input.trim();',
         '}',
         '',
       ].join('\n'),

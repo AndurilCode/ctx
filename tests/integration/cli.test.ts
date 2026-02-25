@@ -146,9 +146,12 @@ describe('cli integration', () => {
 
     await writeFile(
       inputPath,
-      ['✓ test one [3ms]', '✓ test two [4ms]', '✗ test three [5ms]', 'Tests: 2 passed, 1 failed'].join(
-        '\n',
-      ),
+      [
+        '✓ test one [3ms]',
+        '✓ test two [4ms]',
+        '✗ test three [5ms]',
+        'Tests: 2 passed, 1 failed',
+      ].join('\n'),
       'utf8',
     );
 

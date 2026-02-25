@@ -1,13 +1,16 @@
-import { formatOutlineOutput } from './outline-format.js';
 import { parseOutline, resolveDisplayPath } from '../parser/code-outline.js';
 import type { OutlineOptions, OutlineResult } from '../types/outline.js';
+import { formatOutlineOutput } from './outline-format.js';
 
 function countLines(text: string): number {
   if (text.length === 0) return 0;
   return text.split('\n').length;
 }
 
-export async function codeOutline(code: string, options: OutlineOptions = {}): Promise<OutlineResult> {
+export async function codeOutline(
+  code: string,
+  options: OutlineOptions = {},
+): Promise<OutlineResult> {
   const parsed = await parseOutline(code, options);
   const totalLines = countLines(code);
   const output = formatOutlineOutput({

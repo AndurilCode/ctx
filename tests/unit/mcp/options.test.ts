@@ -69,7 +69,9 @@ describe('toExtractOptions', () => {
 describe('diffInputSchema', () => {
   test('accepts valid diff options', () => {
     const schema = z.object(diffInputSchema);
-    expect(() => schema.parse({ diff: 'x', context: 1, compactHeaders: true, changesOnly: false })).not.toThrow();
+    expect(() =>
+      schema.parse({ diff: 'x', context: 1, compactHeaders: true, changesOnly: false }),
+    ).not.toThrow();
   });
 });
 

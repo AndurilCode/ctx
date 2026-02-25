@@ -56,6 +56,16 @@ Token-efficient Markdown compression library. The primary invariant is **lossles
 - ALWAYS keep `core/` free of runtime dependencies — it must stay zero-dep.
 - NEVER import from `cli/` or `mcp/` inside `core/`, `stages/`, `parser/`, or `types/`.
 
+## @Skills
+
+Three agent skills in `.claude/skills/` expose compact.md workflows as slash commands. Each skill references `compact_md_*` MCP tools with CLI fallbacks via `npx @anduril-code/compact.md`.
+
+| Skill | Slash command | When to use | Key tools |
+|---|---|---|---|
+| `compact-review` | `/compact-review [branch\|range]` | Code review — compress diffs, outline changed files, surface risks | `diff`, `code-outline` |
+| `compact-test` | `/compact-test [cmd\|file]` | Test runs — prune noisy output, highlight failures with structural context | `prune-log`, `code-outline` |
+| `compact-explore` | `/compact-explore [question\|path]` | Codebase navigation — token-aware reading, onboarding, topic search | `sections`, `extract`, `code-outline`, `search-sections`, `summarize` |
+
 ## @Memory
 
 ```

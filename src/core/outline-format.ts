@@ -74,7 +74,15 @@ export function formatOutlineOutput(params: {
     }
   }
 
-  for (const kind of ['class', 'interface', 'type', 'enum', 'function', 'method', 'variable'] as const) {
+  for (const kind of [
+    'class',
+    'interface',
+    'type',
+    'enum',
+    'function',
+    'method',
+    'variable',
+  ] as const) {
     const nodes = sortByLine(grouped.get(kind) ?? []);
     if (nodes.length === 0) continue;
     lines.push(`${sectionTitle(kind)}:`);

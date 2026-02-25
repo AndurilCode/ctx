@@ -1,7 +1,6 @@
 import type { List, PhrasingContent, Root, Table } from 'mdast';
 import type { DedupEntry, RootWithDedupData } from '../types/dedup.js';
 import type { CompactOptions } from '../types/options.js';
-import { VERSION_MARKER } from './constants.js';
 import {
   type Chunk,
   isCommentNode,
@@ -12,6 +11,7 @@ import {
   stringifyInline,
   stringifyNode,
 } from './compact-serialize.js';
+import { VERSION_MARKER } from './constants.js';
 
 function readDedupEntries(tree: Root): DedupEntry[] {
   const entries = (tree as RootWithDedupData).data?.compactDedupDictionary ?? [];

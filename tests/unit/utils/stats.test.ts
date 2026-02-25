@@ -3,7 +3,9 @@ import { computeStageStats, computeStats } from '../../../src/utils/stats.js';
 
 describe('computeStageStats', () => {
   test('computes byte savings per stage', () => {
-    const results = computeStageStats([{ stage: 'whitespace', before: 'hello   ', after: 'hello' }]);
+    const results = computeStageStats([
+      { stage: 'whitespace', before: 'hello   ', after: 'hello' },
+    ]);
     expect(results).toHaveLength(1);
     const stat = results[0]!;
     expect(stat.stage).toBe('whitespace');

@@ -1,5 +1,5 @@
-export const ANSI_RE = new RegExp('\\u001B\\[[0-9;]*[a-zA-Z]', 'g');
-export const OSC_RE = new RegExp('\\u001B\\][^\\u0007]*\\u0007', 'g');
+export const ANSI_RE = /\u001B\[[0-9;]*[a-zA-Z]/g;
+export const OSC_RE = /\u001B\][^\u0007]*\u0007/g;
 export const CARRIAGE_RE = /\r(?!\n)/g;
 
 const TIMESTAMP_PATTERNS = [
@@ -8,7 +8,8 @@ const TIMESTAMP_PATTERNS = [
   { name: 'epoch', re: /^\d{10,13}\s+/ },
 ];
 
-const PROGRESS_LINE_RE = /(^\s*(Downloading|Uploading|Installing|Building).+\d+%|[█▓░━⣾⠿]|\b\d+%\b|^\s*\[[-= >]+\])/;
+const PROGRESS_LINE_RE =
+  /(^\s*(Downloading|Uploading|Installing|Building).+\d+%|[█▓░━⣾⠿]|\b\d+%\b|^\s*\[[-= >]+\])/;
 
 export function splitLines(text: string): string[] {
   const lines = text.split(/\r?\n/).map((line) => line.replace(/[ \t]+$/g, ''));
@@ -55,9 +56,10 @@ export function stripTimestamps(
 ): string[] {
   if (mode === 'keep' || lines.length === 0) return lines;
 
-  const candidate = TIMESTAMP_PATTERNS
-    .map((pattern) => ({ ...pattern, matches: lines.filter((line) => pattern.re.test(line)).length }))
-    .sort((a, b) => b.matches - a.matches)[0];
+  const candidate = TIMESTAMP_PATTERNS.map((pattern) => ({
+    ...pattern,
+    matches: lines.filter((line) => pattern.re.test(line)).length,
+  })).sort((a, b) => b.matches - a.matches)[0];
 
   if (!candidate || candidate.matches === 0) return lines;
   if (mode === 'auto' && candidate.matches / lines.length < 0.8) return lines;
@@ -105,7 +107,11 @@ export function foldGlobalRepeats(lines: string[], appliedRules: string[]): stri
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 
-  const target = new Set(Array.from(counts.entries()).filter(([, c]) => c >= 3).map(([k]) => k));
+  const target = new Set(
+    Array.from(counts.entries())
+      .filter(([, c]) => c >= 3)
+      .map(([k]) => k),
+  );
   if (target.size === 0) return lines;
 
   const seen = new Set<string>();

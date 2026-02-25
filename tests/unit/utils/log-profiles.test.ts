@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { parseLogProfile, profileOptions, resolveProfiledOptions } from '../../../src/utils/log-profiles.js';
+import {
+  parseLogProfile,
+  profileOptions,
+  resolveProfiledOptions,
+} from '../../../src/utils/log-profiles.js';
 
 describe('parseLogProfile', () => {
   test('parses supported profiles', () => {

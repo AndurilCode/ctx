@@ -80,7 +80,11 @@ export function registerPruneLogTool(server: McpServer): void {
   );
 }
 
-async function summarizeText(server: McpServer, content: string, maxTokens: number): Promise<string> {
+async function summarizeText(
+  server: McpServer,
+  content: string,
+  maxTokens: number,
+): Promise<string> {
   const response = await server.server.createMessage({
     messages: [
       {

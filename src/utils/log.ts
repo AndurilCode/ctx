@@ -1,5 +1,4 @@
 import type { LogPruneOptions, LogPruneResult } from '../types/log.js';
-import { createFallbackTokenCounter } from './tokens.js';
 import { applyCustomRules } from './log-custom-rules.js';
 import {
   dedupeStackTraces,
@@ -20,7 +19,12 @@ import {
   splitLines,
   stripTimestamps,
 } from './log-rules.js';
-import { foldLinterDiagnostics, foldTypecheckDiagnostics, pruneTestRunnerLines } from './log-toolchain.js';
+import {
+  foldLinterDiagnostics,
+  foldTypecheckDiagnostics,
+  pruneTestRunnerLines,
+} from './log-toolchain.js';
+import { createFallbackTokenCounter } from './tokens.js';
 
 const DEFAULT_OPTIONS: Required<
   Omit<LogPruneOptions, 'customRules' | 'thresholdTokens' | 'tokenCounter'>
@@ -115,7 +119,8 @@ export function pruneTerminalLog(logText: string, options: LogPruneOptions = {})
     };
   }
 
-  const savingsPercent = originalTokens === 0 ? 0 : ((originalTokens - candidateTokens) / originalTokens) * 100;
+  const savingsPercent =
+    originalTokens === 0 ? 0 : ((originalTokens - candidateTokens) / originalTokens) * 100;
 
   return {
     output: candidateOutput,

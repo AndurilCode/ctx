@@ -10,7 +10,11 @@ import { parseFrontmatter } from '../../utils/frontmatter.js';
 import { hashString } from '../../utils/hash.js';
 import { getCached, setCached } from '../../utils/summary-cache.js';
 import { resolveMarkdown, textResultWithFrontmatter } from './common.js';
-import { type ExtractLikeToolInput, markdownOrFileSchema, summarizeLikeInputSchema } from './options.js';
+import {
+  type ExtractLikeToolInput,
+  markdownOrFileSchema,
+  summarizeLikeInputSchema,
+} from './options.js';
 
 type DocType = 'auto' | 'guide' | 'reference' | 'spec';
 

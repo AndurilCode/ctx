@@ -36,7 +36,7 @@ describe('log profile battle tests', () => {
     expect(result.savingsPercent).toBeGreaterThan(35);
     expect(result.output).toContain('Forbidden non-null assertion');
     expect(result.output).toContain('[diagnostic');
-    expect(result.output).not.toContain("10 10 │ a");
+    expect(result.output).not.toContain('10 10 │ a');
   });
 
   test('runtime profile strips timestamps and folds repeated runtime structure', () => {

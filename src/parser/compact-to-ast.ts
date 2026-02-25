@@ -1,7 +1,7 @@
 import type { Root } from 'mdast';
 import type { ExpandOptions } from '../types/options.js';
-import { VERSION_MARKER } from './constants.js';
 import { parseListLine, toMarkdownTable } from './compact-parse-helpers.js';
+import { VERSION_MARKER } from './constants.js';
 import { expandDedupTokens, parseDedupDictionary } from './dedup-dictionary.js';
 import { markdownToAst } from './markdown-to-ast.js';
 

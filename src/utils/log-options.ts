@@ -6,7 +6,11 @@ export function parseTimestampMode(value: unknown): 'auto' | 'strip' | 'keep' {
   return 'auto';
 }
 
-export function parseCliCustomRules(strip: unknown, fold: unknown, blockFold: unknown): LogCustomRule[] {
+export function parseCliCustomRules(
+  strip: unknown,
+  fold: unknown,
+  blockFold: unknown,
+): LogCustomRule[] {
   const rules: LogCustomRule[] = [];
 
   for (const pattern of toPatterns(strip)) {
@@ -29,11 +33,17 @@ export function parseCliCustomRules(strip: unknown, fold: unknown, blockFold: un
 
 function toPatterns(value: unknown): string[] {
   if (Array.isArray(value)) {
-    return value.flatMap((entry) => String(entry).split(',')).map((part) => part.trim()).filter(Boolean);
+    return value
+      .flatMap((entry) => String(entry).split(','))
+      .map((part) => part.trim())
+      .filter(Boolean);
   }
 
   if (typeof value === 'string') {
-    return value.split(',').map((part) => part.trim()).filter(Boolean);
+    return value
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
   }
 
   return [];

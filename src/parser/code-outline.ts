@@ -24,7 +24,8 @@ function initParser(): Promise<void> {
     : join(parserDir, 'web-tree-sitter.wasm');
   parserInitPromise = Parser.init({
     locateFile(scriptName: string) {
-      if (scriptName === 'tree-sitter.wasm' || scriptName === 'web-tree-sitter.wasm') return parserWasm;
+      if (scriptName === 'tree-sitter.wasm' || scriptName === 'web-tree-sitter.wasm')
+        return parserWasm;
       return scriptName;
     },
   });
@@ -43,7 +44,8 @@ function normalizeLanguage(language?: string): string | undefined {
 export function detectOutlineLanguage(filePath?: string, explicitLanguage?: string): string {
   const normalized = normalizeLanguage(explicitLanguage);
   if (normalized) return normalized;
-  if (!filePath) throw new Error('Language could not be detected. Pass --language when reading from stdin.');
+  if (!filePath)
+    throw new Error('Language could not be detected. Pass --language when reading from stdin.');
   const extension = extname(filePath).toLowerCase();
   const language = EXTENSION_TO_LANGUAGE[extension];
   if (language) return language;
@@ -57,16 +59,24 @@ async function loadLanguage(languageKey: string): Promise<Parser.Language> {
   if (cached) return cached;
   const task = (async () => {
     const config = OUTLINE_LANGUAGES[languageKey];
-    if (!config) throw new Error(`Unsupported language "${languageKey}". Supported: ${supportedLanguageNames().join(', ')}`);
+    if (!config)
+      throw new Error(
+        `Unsupported language "${languageKey}". Supported: ${supportedLanguageNames().join(', ')}`,
+      );
     await initParser();
     const packageJson = require.resolve('tree-sitter-wasms/package.json');
-    return Parser.Language.load(join(dirname(packageJson), 'out', `tree-sitter-${config.grammar}.wasm`));
+    return Parser.Language.load(
+      join(dirname(packageJson), 'out', `tree-sitter-${config.grammar}.wasm`),
+    );
   })();
   languageCache.set(languageKey, task);
   return task;
 }
 
-function flattenDeclarationTypes(config: OutlineLanguageConfig, language: Parser.Language): Map<string, OutlineNodeKind> {
+function flattenDeclarationTypes(
+  config: OutlineLanguageConfig,
+  language: Parser.Language,
+): Map<string, OutlineNodeKind> {
   const available = new Set<string>();
   for (let i = 0; i < language.nodeTypeCount; i++) {
     const type = language.nodeTypeForId(i);
@@ -83,7 +93,8 @@ function findName(text: string, node: Parser.SyntaxNode): string {
   const nameNode = node.childForFieldName('name');
   if (nameNode) return nameNode.text.trim();
   for (const candidate of node.namedChildren) {
-    if (candidate.type.includes('identifier') || candidate.type === 'name') return candidate.text.trim();
+    if (candidate.type.includes('identifier') || candidate.type === 'name')
+      return candidate.text.trim();
   }
   return (text.split('\n', 1)[0]?.trim() ?? '').slice(0, 80) || '<anonymous>';
 }
@@ -93,12 +104,17 @@ function normalizeTypeText(value: string): string {
 }
 
 function functionSignature(node: Parser.SyntaxNode, name: string): string {
-  const params = node.childForFieldName('parameters')?.text ?? node.childForFieldName('parameter_list')?.text ?? '()';
+  const params =
+    node.childForFieldName('parameters')?.text ??
+    node.childForFieldName('parameter_list')?.text ??
+    '()';
   const returnType = node.childForFieldName('return_type')?.text;
   return `${name}${params}${returnType ? ` -> ${normalizeTypeText(returnType)}` : ''}`;
 }
 
-function functionVariable(node: Parser.SyntaxNode): { name: string; signature: string } | undefined {
+function functionVariable(
+  node: Parser.SyntaxNode,
+): { name: string; signature: string } | undefined {
   for (const declarator of node.descendantsOfType('variable_declarator')) {
     const value = declarator.childForFieldName('value');
     const nameNode = declarator.childForFieldName('name');
@@ -106,7 +122,10 @@ function functionVariable(node: Parser.SyntaxNode): { name: string; signature: s
     const name = nameNode.text.trim();
     const params = value.childForFieldName('parameters')?.text ?? '()';
     const returnType = value.childForFieldName('return_type')?.text;
-    return { name, signature: `${name}${params}${returnType ? ` -> ${normalizeTypeText(returnType)}` : ''}` };
+    return {
+      name,
+      signature: `${name}${params}${returnType ? ` -> ${normalizeTypeText(returnType)}` : ''}`,
+    };
   }
   return undefined;
 }
@@ -119,7 +138,10 @@ function mapNode(
 ): { kind: OutlineNodeKind; name: string; signature?: string } | undefined {
   const text = source.slice(node.startIndex, node.endIndex);
   if (rawKind === 'import') {
-    const quoted = text.replace(/\s+/g, ' ').trim().match(/['"]([^'"]+)['"]/);
+    const quoted = text
+      .replace(/\s+/g, ' ')
+      .trim()
+      .match(/['"]([^'"]+)['"]/);
     return { kind: 'import', name: quoted?.[1] ?? text.slice(0, 80) };
   }
   if (rawKind === 'variable') {
@@ -128,7 +150,8 @@ function mapNode(
     if (fnVar) return { kind: 'function', name: fnVar.name, signature: fnVar.signature };
   }
   const name = findName(text, node);
-  if (rawKind === 'function' || rawKind === 'method') return { kind: rawKind, name, signature: functionSignature(node, name) };
+  if (rawKind === 'function' || rawKind === 'method')
+    return { kind: rawKind, name, signature: functionSignature(node, name) };
   if (rawKind === 'class' || rawKind === 'interface' || rawKind === 'type' || rawKind === 'enum') {
     return { kind: rawKind, name, signature: `${rawKind} ${name}` };
   }
@@ -167,17 +190,26 @@ function collectNodes(
   return output;
 }
 
-export async function parseOutline(code: string, options: OutlineOptions = {}): Promise<{ nodes: OutlineNode[]; language: string }> {
+export async function parseOutline(
+  code: string,
+  options: OutlineOptions = {},
+): Promise<{ nodes: OutlineNode[]; language: string }> {
   const language = detectOutlineLanguage(options.filePath, options.language);
   const config = OUTLINE_LANGUAGES[language];
-  if (!config) throw new Error(`Unsupported language "${language}". Supported: ${supportedLanguageNames().join(', ')}`);
+  if (!config)
+    throw new Error(
+      `Unsupported language "${language}". Supported: ${supportedLanguageNames().join(', ')}`,
+    );
   const treeSitterLanguage = await loadLanguage(language);
   const parser = new Parser();
   try {
     parser.setLanguage(treeSitterLanguage);
     const tree = parser.parse(code);
     if (!tree) throw new Error('Failed to parse source code.');
-    return { nodes: collectNodes(tree.rootNode, code, flattenDeclarationTypes(config, treeSitterLanguage)), language: config.displayName };
+    return {
+      nodes: collectNodes(tree.rootNode, code, flattenDeclarationTypes(config, treeSitterLanguage)),
+      language: config.displayName,
+    };
   } finally {
     parser.delete();
   }

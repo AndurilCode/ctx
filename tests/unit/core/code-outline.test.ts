@@ -9,7 +9,7 @@ const SAMPLE_TS = [
   '}',
   '',
   'export function runTask(input: string): string {',
-  "  return input.trim();",
+  '  return input.trim();',
   '}',
   '',
   'class Worker {',

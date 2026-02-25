@@ -130,7 +130,9 @@ describe('mcp tools integration', () => {
   });
 
   test('compact_md_prune_log prunes noisy logs', async () => {
-    const log = ['✓ test one', '✓ test two', '✗ test three', 'Tests: 2 passed, 1 failed'].join('\n');
+    const log = ['✓ test one', '✓ test two', '✗ test three', 'Tests: 2 passed, 1 failed'].join(
+      '\n',
+    );
     const result = await runPruneLogTool({ log, allowTokenExpansion: true });
     const output = textFromToolResult(result);
     const parsed = JSON.parse(output) as { output: string; summaryUsed: boolean };
@@ -185,7 +187,10 @@ describe('mcp tools integration', () => {
       { log, thresholdTokens: 1, summarizeIfOverThreshold: true, maxSummaryTokens: 128 },
       server,
     );
-    const parsed = JSON.parse(textFromToolResult(result)) as { summaryUsed: boolean; summary?: string };
+    const parsed = JSON.parse(textFromToolResult(result)) as {
+      summaryUsed: boolean;
+      summary?: string;
+    };
 
     expect(parsed.summaryUsed).toBe(true);
     expect(parsed.summary).toBe('pruned summary');
