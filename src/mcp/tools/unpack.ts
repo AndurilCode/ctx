@@ -9,7 +9,7 @@ export interface UnpackToolInput {
   tableDelimiter?: string;
 }
 
-export async function runUnpackTool(input: UnpackToolInput): Promise<CallToolResult> {
+export function runUnpackTool(input: UnpackToolInput): CallToolResult {
   const output = expand(input.compact, { tableDelimiter: input.tableDelimiter });
   return textResult(output);
 }

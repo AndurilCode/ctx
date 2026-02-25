@@ -5,13 +5,12 @@ import type {
   CreateMessageResult,
   SamplingMessage,
 } from '@modelcontextprotocol/sdk/types.js';
-import * as z from 'zod/v4';
 import { extract } from '../../core/extract.js';
 import { parseFrontmatter } from '../../utils/frontmatter.js';
 import { hashString } from '../../utils/hash.js';
 import { getCached, setCached } from '../../utils/summary-cache.js';
 import { resolveMarkdown, textResultWithFrontmatter } from './common.js';
-import type { ExtractLikeToolInput } from './options.js';
+import { type ExtractLikeToolInput, markdownOrFileSchema, summarizeLikeInputSchema } from './options.js';
 
 type DocType = 'auto' | 'guide' | 'reference' | 'spec';
 
@@ -136,19 +135,8 @@ export function registerSummarizeTool(server: McpServer): void {
       description:
         'Generate an AI-powered abstractive summary (~200 tokens by default). Best for breadth-first exploration — onboarding to many packages at once, or getting the gist of a large doc without loading it fully. NOT ideal for targeted section work; for that prefer compact_md_sections → compact_md_extract. Recommended workflow: (1) compact_md_sections to see structure and token sizes; (2) if full overview needed → compact_md_summarize; (3) if specific section needed → compact_md_extract. Use docType to match the summarization style to the document kind.',
       inputSchema: {
-        markdown: z.string().optional(),
-        file: z.string().optional(),
-        onlySections: z.array(z.string()).optional(),
-        stripSections: z.array(z.string()).optional(),
-        maxTokens: z.number().optional(),
-        temperature: z.number().optional(),
-        systemPrompt: z.string().optional(),
-        docType: z
-          .enum(['auto', 'guide', 'reference', 'spec'])
-          .optional()
-          .describe(
-            'auto (default) — balanced; guide — step-by-step docs, preserves commands; reference — API/type docs, preserves all code verbatim; spec — formal specs, preserves invariants',
-          ),
+        ...markdownOrFileSchema,
+        ...summarizeLikeInputSchema,
       },
     },
     async (input) => runSummarizeTool(server, input),

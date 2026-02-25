@@ -20,3 +20,9 @@ export interface CompactResult {
   output: string;
   stats?: Stats;
 }
+
+declare module 'mdast' {
+  interface RootData {
+    order?: string[];
+  }
+}

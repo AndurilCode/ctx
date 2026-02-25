@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as z from 'zod/v4';
 import { textResult } from './common.js';
-import type { ExtractLikeToolInput } from './options.js';
+import { type ExtractLikeToolInput, summarizeLikeInputSchema } from './options.js';
 import { runSummarizeTool } from './summarize.js';
 
 interface SummarizeBatchToolInput extends ExtractLikeToolInput {
@@ -60,17 +60,7 @@ export function registerSummarizeBatchTool(server: McpServer): void {
         'Summarize multiple files in a single call. Runs compact_md_summarize on each file in parallel and returns all summaries grouped by file path. Ideal for repo onboarding — summarize all package READMEs in one round-trip instead of N sequential calls. Respects caching: repeated calls for unchanged files are instant.',
       inputSchema: {
         files: z.array(z.string()),
-        onlySections: z.array(z.string()).optional(),
-        stripSections: z.array(z.string()).optional(),
-        maxTokens: z.number().optional(),
-        temperature: z.number().optional(),
-        systemPrompt: z.string().optional(),
-        docType: z
-          .enum(['auto', 'guide', 'reference', 'spec'])
-          .optional()
-          .describe(
-            'auto (default) — balanced; guide — step-by-step docs; reference — API/type docs, preserves code; spec — formal specs, preserves invariants',
-          ),
+        ...summarizeLikeInputSchema,
       },
     },
     async (input) => runSummarizeBatchTool(server, input),

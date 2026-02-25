@@ -19,6 +19,24 @@ function toCmdFileName(inputPath: string): string {
   return `${name}.cmd`;
 }
 
+interface RunCompactArgs {
+  markdown: string;
+  compactOptions: Parameters<typeof compact>[1];
+  outputPath: string | undefined;
+  statsLabel?: string;
+}
+
+async function runCompact({ markdown, compactOptions, outputPath, statsLabel }: RunCompactArgs): Promise<void> {
+  const result = compact(markdown, compactOptions);
+  await writeOutput(result.output, outputPath);
+  if (result.stats) {
+    const tokenCounter = await createTokenCounter();
+    const stats = computeStats(markdown, result.output, result.stats.stageStats, tokenCounter);
+    const prefix = statsLabel ? `${statsLabel}\n` : '';
+    process.stderr.write(`${prefix}${JSON.stringify(stats, null, 2)}\n`);
+  }
+}
+
 export const compactCommand = defineCommand({
   meta: {
     name: 'pack',
@@ -41,116 +59,52 @@ export const compactCommand = defineCommand({
       description: 'Output directory for glob/batch mode.',
       required: false,
     },
-    dedup: {
-      type: 'boolean',
-      default: false,
-    },
-    semantic: {
-      type: 'boolean',
-      default: false,
-    },
-    keepComments: {
-      type: 'boolean',
-      default: false,
-    },
-    only: {
-      type: 'string',
-      required: false,
-      description: 'Keep only sections whose heading matches this query.',
-    },
-    strip: {
-      type: 'string',
-      required: false,
-      description: 'Remove sections whose heading matches this query.',
-    },
-    unwrap: {
-      type: 'boolean',
-      default: false,
-      description: 'Collapse soft line breaks inside paragraphs.',
-    },
-    stats: {
-      type: 'boolean',
-      default: false,
-    },
-    tableDelimiter: {
-      type: 'string',
-      default: ',',
-    },
-    versionMarker: {
-      type: 'boolean',
-      default: false,
-    },
-    noVersionMarker: {
-      type: 'boolean',
-      default: false,
-    },
+    dedup: { type: 'boolean', default: false },
+    semantic: { type: 'boolean', default: false },
+    keepComments: { type: 'boolean', default: false },
+    only: { type: 'string', required: false, description: 'Keep only sections whose heading matches this query.' },
+    strip: { type: 'string', required: false, description: 'Remove sections whose heading matches this query.' },
+    unwrap: { type: 'boolean', default: false, description: 'Collapse soft line breaks inside paragraphs.' },
+    stats: { type: 'boolean', default: false },
+    tableDelimiter: { type: 'string', default: ',' },
+    versionMarker: { type: 'boolean', default: false },
+    noVersionMarker: { type: 'boolean', default: false },
   },
   async run({ args }) {
     const onlySections = parseSectionOptions(args.only);
     const stripSections = parseSectionOptions(args.strip);
+    const compactOptions = {
+      dedup: args.dedup,
+      semantic: args.semantic,
+      keepComments: args.keepComments,
+      onlySections,
+      stripSections,
+      unwrapLines: args.unwrap,
+      tableDelimiter: String(args.tableDelimiter),
+      stats: args.stats,
+      versionMarker: args.versionMarker && !args.noVersionMarker,
+    };
 
     if (!args.input) {
       const markdown = await readInput();
       writeFrontmatterToStderr(markdown);
-      const result = compact(markdown, {
-        dedup: args.dedup,
-        semantic: args.semantic,
-        keepComments: args.keepComments,
-        onlySections,
-        stripSections,
-        unwrapLines: args.unwrap,
-        tableDelimiter: String(args.tableDelimiter),
-        stats: args.stats,
-        versionMarker: args.versionMarker && !args.noVersionMarker,
-      });
-
-      await writeOutput(result.output, args.output ? String(args.output) : undefined);
-
-      if (result.stats) {
-        const tokenCounter = await createTokenCounter();
-        const stats = computeStats(markdown, result.output, result.stats.stageStats, tokenCounter);
-        process.stderr.write(`${JSON.stringify(stats, null, 2)}\n`);
-      }
+      await runCompact({ markdown, compactOptions, outputPath: args.output ? String(args.output) : undefined });
       return;
     }
 
     const paths = await resolveInputPaths(String(args.input));
-    if (paths.length === 0) {
-      throw new Error(`No files matched: ${String(args.input)}`);
-    }
-
-    if (paths.length > 1 && args.output) {
-      throw new Error('Cannot use --output with multiple input files. Use --out-dir.');
-    }
+    if (paths.length === 0) throw new Error(`No files matched: ${String(args.input)}`);
+    if (paths.length > 1 && args.output) throw new Error('Cannot use --output with multiple input files. Use --out-dir.');
 
     for (const filePath of paths) {
       const markdown = await readInput(filePath);
       writeFrontmatterToStderr(markdown, paths.length > 1 ? filePath : undefined);
-      const result = compact(markdown, {
-        dedup: args.dedup,
-        semantic: args.semantic,
-        keepComments: args.keepComments,
-        onlySections,
-        stripSections,
-        unwrapLines: args.unwrap,
-        tableDelimiter: String(args.tableDelimiter),
-        stats: args.stats,
-        versionMarker: args.versionMarker && !args.noVersionMarker,
-      });
-
-      const targetPath = args.outDir
+      const outputPath = args.outDir
         ? join(String(args.outDir), toCmdFileName(filePath))
         : args.output
           ? String(args.output)
           : undefined;
-
-      await writeOutput(result.output, targetPath);
-
-      if (result.stats) {
-        const tokenCounter = await createTokenCounter();
-        const stats = computeStats(markdown, result.output, result.stats.stageStats, tokenCounter);
-        process.stderr.write(`${filePath}\n${JSON.stringify(stats, null, 2)}\n`);
-      }
+      await runCompact({ markdown, compactOptions, outputPath, statsLabel: filePath });
     }
   },
 });
