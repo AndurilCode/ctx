@@ -9,6 +9,7 @@ import { searchSectionsCommand } from './commands/search-sections.js';
 import { sectionsCommand } from './commands/sections.js';
 import { statsCommand } from './commands/stats.js';
 import { tokenCountCommand } from './commands/token-count.js';
+import { treeCommand } from './commands/tree.js';
 import { verifyCommand } from './commands/verify.js';
 
 export const command = defineCommand({
@@ -29,6 +30,7 @@ export const command = defineCommand({
     sections: sectionsCommand,
     'search-sections': searchSectionsCommand,
     'token-count': tokenCountCommand,
+    tree: treeCommand,
   },
 });
 
