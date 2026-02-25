@@ -1,6 +1,6 @@
 {
   "name": "@anduril-code/compact.md",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Token-efficient, context-aware compression for agent pipelines.",
   "license": "MIT",
   "type": "module",
@@ -24,7 +24,7 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "rm -rf dist src/index.js src/index.js.map src/index.cjs src/index.cjs.map src/cli/index.cjs src/cli/index.cjs.map src/mcp/server.cjs src/mcp/server.cjs.map && bun build src/index.ts src/cli/index.ts src/mcp/server.ts --outdir dist --root src --format esm --target node --sourcemap=linked --entry-naming \"[dir]/[name].js\" && bun build src/index.ts src/cli/index.ts src/mcp/server.ts --outdir dist --root src --format cjs --target node --sourcemap=linked --entry-naming \"[dir]/[name].cjs\" && tsc -p tsconfig.build.json --emitDeclarationOnly --outDir dist && node -e \"for(const f of['dist/cli/index.js','dist/mcp/server.js']){const c=require('fs').readFileSync(f,'utf8');if(!c.startsWith('#!'))require('fs').writeFileSync(f,'#!/usr/bin/env node\\n'+c)}\"",
+    "build": "rm -rf dist src/index.js src/index.js.map src/index.cjs src/index.cjs.map src/cli/index.cjs src/cli/index.cjs.map src/mcp/server.cjs src/mcp/server.cjs.map && bun build src/index.ts src/cli/index.ts src/mcp/server.ts --outdir dist --root src --format esm --target node --sourcemap=linked --entry-naming \"[dir]/[name].js\" && bun build src/index.ts src/cli/index.ts src/mcp/server.ts --outdir dist --root src --format cjs --target node --sourcemap=linked --entry-naming \"[dir]/[name].cjs\" && tsc -p tsconfig.build.json --emitDeclarationOnly --outDir dist && node -e \"for(const f of['dist/cli/index.js','dist/mcp/server.js']){const c=require('fs').readFileSync(f,'utf8');if(!c.startsWith('#!'))require('fs').writeFileSync(f,'#!/usr/bin/env node\\n'+c)};require('fs').chmodSync('dist/cli/index.js',0o755);require('fs').chmodSync('dist/mcp/server.js',0o755)\"",
     "clean": "rm -rf dist",
     "lint": "biome check .",
     "format": "biome format --write .",
@@ -39,8 +39,10 @@
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
+    "tree-sitter-wasms": "^0.1.13",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
+    "web-tree-sitter": "^0.26.6",
     "zod": "^4.3.6"
   },
   "peerDependencies": {
