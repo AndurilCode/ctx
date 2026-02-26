@@ -8,7 +8,7 @@ import { extractOutgoingEdges } from '../utils/import-resolver.js';
 
 const HIGH_SCORE_THRESHOLD = 5;
 const DEFAULT_MAX_FILES = 15;
-const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx}';
+const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx,md,mdx,json,yaml,yml}';
 const DEFAULT_DEPTH = 1;
 const RELEVANCE_SCAN_LIMIT = 50;
 const DEFAULT_IGNORE = ['node_modules/**', 'dist/**', '.git/**'];
