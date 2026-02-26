@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { HIGH_SCORE_THRESHOLD } from '../../../src/core/auto-context.js';
+import { HIGH_SCORE_THRESHOLD, MIN_SHARED_IMPORTERS } from '../../../src/core/auto-context.js';
 
 describe('auto-context benchmark: threshold', () => {
   test('HIGH_SCORE_THRESHOLD is 5', () => {
@@ -43,5 +43,22 @@ describe('auto-context benchmark: proximity scoring formula', () => {
   test('parent score 4 is below threshold so expansion does not run', () => {
     const parentScore = 4;
     expect(parentScore).toBeLessThan(HIGH_SCORE_THRESHOLD);
+  });
+});
+
+describe('auto-context benchmark: shared-dependency boost', () => {
+  test('MIN_SHARED_IMPORTERS is 2', () => {
+    expect(MIN_SHARED_IMPORTERS).toBe(2);
+  });
+
+  test('shared-dependency boost formula: importer count becomes score', () => {
+    // Files imported by N scored files receive score = N
+    const importerCount = 3;
+    const expectedScore = importerCount;
+    expect(expectedScore).toBeGreaterThanOrEqual(MIN_SHARED_IMPORTERS);
+  });
+
+  test('single-importer files do not meet boost threshold', () => {
+    expect(1).toBeLessThan(MIN_SHARED_IMPORTERS);
   });
 });

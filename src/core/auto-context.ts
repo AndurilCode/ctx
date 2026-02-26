@@ -1,12 +1,13 @@
 import { relative, resolve } from 'node:path';
-import { assembleContext } from './context.js';
-import { relevance } from './relevance.js';
 import type { AutoContextOptions, AutoContextResult, SelectedFile } from '../types/auto-context.js';
 import type { ContextSource } from '../types/context.js';
 import { discoverFilesCached } from '../utils/discovery-cache.js';
 import { extractOutgoingEdges } from '../utils/import-resolver.js';
+import { assembleContext } from './context.js';
+import { relevance } from './relevance.js';
 
 export const HIGH_SCORE_THRESHOLD = 5;
+export const MIN_SHARED_IMPORTERS = 2;
 const DEFAULT_MAX_FILES = 15;
 const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx,md,mdx,json,yaml,yml}';
 const DEFAULT_DEPTH = 1;
@@ -60,6 +61,30 @@ async function expandOutgoingImports(
   }
 }
 
+async function boostSharedDependencies(
+  root: string,
+  fileMap: Map<string, RankedCandidate>,
+): Promise<void> {
+  const scoredFiles = [...fileMap.entries()].filter(([, v]) => v.score > 0);
+  const importCounts = new Map<string, number>();
+
+  await Promise.all(
+    scoredFiles.map(async ([absFile]) => {
+      const edges = await extractOutgoingEdges(relative(root, absFile), root);
+      for (const edge of edges) {
+        const absEdge = resolve(root, edge.resolved);
+        importCounts.set(absEdge, (importCounts.get(absEdge) ?? 0) + 1);
+      }
+    }),
+  );
+
+  for (const [absFile, count] of importCounts) {
+    if (count >= MIN_SHARED_IMPORTERS && !fileMap.has(absFile)) {
+      fileMap.set(absFile, { score: count, priority: 'low' });
+    }
+  }
+}
+
 export async function autoContext(options: AutoContextOptions): Promise<AutoContextResult> {
   const root = resolve(options.path ?? '.');
   const globPattern = options.glob ?? DEFAULT_GLOB;
@@ -94,13 +119,13 @@ export async function autoContext(options: AutoContextOptions): Promise<AutoCont
     }
   }
 
+  await boostSharedDependencies(root, fileMap);
+
   if (depth > 0) {
     await expandOutgoingImports(root, fileMap, depth);
   }
 
-  const sorted = [...fileMap.entries()]
-    .sort((a, b) => b[1].score - a[1].score)
-    .slice(0, maxFiles);
+  const sorted = [...fileMap.entries()].sort((a, b) => b[1].score - a[1].score).slice(0, maxFiles);
 
   const cwd = resolve('.');
   const selectedFiles: SelectedFile[] = sorted.map(([absFile, { score, priority }]) => ({
