@@ -2,10 +2,6 @@ import { readFile } from 'node:fs/promises';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import * as z from 'zod/v4';
-import { astToMarkdown } from '../../parser/ast-to-markdown.js';
-import { markdownToAst } from '../../parser/markdown-to-ast.js';
-import { buildHeadingRanges } from '../../utils/headings.js';
-import { createTokenCounter } from '../../utils/tokens.js';
 import { textResult } from './common.js';
 
 interface SearchSectionsToolInput {
@@ -23,6 +19,13 @@ interface SectionMatch {
 export async function runSearchSectionsTool(
   input: SearchSectionsToolInput,
 ): Promise<CallToolResult> {
+  const [{ astToMarkdown }, { markdownToAst }, { buildHeadingRanges }, { createTokenCounter }] =
+    await Promise.all([
+      import('../../parser/ast-to-markdown.js'),
+      import('../../parser/markdown-to-ast.js'),
+      import('../../utils/headings.js'),
+      import('../../utils/tokens.js'),
+    ]);
   const tokenCounter = await createTokenCounter();
   const normalizedQuery = input.query.toLowerCase();
   const matches: SectionMatch[] = [];

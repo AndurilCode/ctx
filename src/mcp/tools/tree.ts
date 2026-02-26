@@ -9,6 +9,7 @@ export interface TreeToolInput {
   glob?: string;
   depth?: number;
   ignore?: string[];
+  concurrency?: number;
 }
 
 export async function runTreeTool(input: TreeToolInput): Promise<CallToolResult> {
@@ -28,6 +29,12 @@ export function registerTreeTool(server: McpServer): void {
         glob: z.string().optional().describe('Filter pattern, e.g. "**/*.ts"'),
         depth: z.number().int().min(0).optional().describe('Max directory depth (default: 3)'),
         ignore: z.array(z.string()).optional().describe('Additional ignore patterns'),
+        concurrency: z
+          .number()
+          .int()
+          .min(1)
+          .optional()
+          .describe('Max concurrent filesystem workers (default: 16)'),
       },
     },
     async (input) => runTreeTool(input),

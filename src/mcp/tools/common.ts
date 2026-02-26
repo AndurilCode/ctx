@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { readFileText } from '../../utils/file-reader.js';
 
 export function textResult(text: string): CallToolResult {
   return {
@@ -28,7 +28,7 @@ export async function resolveMarkdown(input: {
   file?: string;
 }): Promise<string> {
   if (input.file) {
-    return readFile(input.file, 'utf8');
+    return readFileText(input.file);
   }
 
   if (input.markdown) {
@@ -43,7 +43,7 @@ export async function resolveTextInput(input: {
   file?: string;
 }): Promise<string> {
   if (input.file) {
-    return readFile(input.file, 'utf8');
+    return readFileText(input.file);
   }
 
   if (input.text) {

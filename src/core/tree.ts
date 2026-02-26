@@ -5,7 +5,7 @@ import { createTokenCounter } from '../utils/tokens.js';
 export async function tree(options: TreeOptions = {}): Promise<TreeResult> {
   const { entries, root } = await buildFileTree(options);
   const counter = await createTokenCounter();
-  await enrichWithTokenCounts(entries, root, counter);
+  await enrichWithTokenCounts(entries, root, counter, options.concurrency);
 
   let totalTokens = 0;
   let totalFiles = 0;

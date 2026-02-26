@@ -3,6 +3,7 @@ export interface TreeOptions {
   glob?: string;
   depth?: number;
   ignore?: string[];
+  concurrency?: number;
 }
 
 export interface TreeEntry {

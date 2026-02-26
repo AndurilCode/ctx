@@ -14,11 +14,18 @@ export const importsCommand = defineCommand({
       default: 'both',
       description: 'both|incoming|outgoing',
     },
+    concurrency: {
+      type: 'string',
+      required: false,
+      default: '16',
+      description: 'Max concurrent filesystem workers',
+    },
   },
   async run({ args }) {
     const result = await fileImports({
       file: String(args.file),
       direction: String(args.direction) as 'both' | 'incoming' | 'outgoing',
+      concurrency: Number(args.concurrency),
     });
     process.stdout.write(result.output);
     process.stdout.write('\n');

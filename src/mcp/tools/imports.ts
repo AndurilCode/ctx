@@ -8,6 +8,7 @@ export interface ImportsToolInput {
   file: string;
   direction?: 'both' | 'incoming' | 'outgoing';
   root?: string;
+  concurrency?: number;
 }
 
 export async function runImportsTool(input: ImportsToolInput): Promise<CallToolResult> {
@@ -28,6 +29,12 @@ export function registerImportsTool(server: McpServer): void {
           .optional()
           .describe('Which edges to show (default: both)'),
         root: z.string().optional().describe('Project root for resolving imports (default: cwd)'),
+        concurrency: z
+          .number()
+          .int()
+          .min(1)
+          .optional()
+          .describe('Max concurrent filesystem workers (default: 16)'),
       },
     },
     async (input) => runImportsTool(input),

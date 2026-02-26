@@ -3,6 +3,7 @@ export interface ImportsOptions {
   direction?: 'both' | 'incoming' | 'outgoing';
   depth?: number;
   root?: string;
+  concurrency?: number;
 }
 
 export interface ImportEdge {

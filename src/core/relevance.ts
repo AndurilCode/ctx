@@ -15,6 +15,7 @@ import {
 
 export async function relevance(options: RelevanceOptions): Promise<RelevanceResult> {
   const { query, files, maxResults = 10 } = options;
+  const contentScanMultiplier = Math.max(1, Math.floor(options.contentScanMultiplier ?? 4));
   const terms = queryTerms(query);
 
   const metadataScored = await Promise.all(
@@ -31,7 +32,7 @@ export async function relevance(options: RelevanceOptions): Promise<RelevanceRes
         const headings = extractHeadings(content);
         await setRelevanceMetadata(file, symbols, headings);
         const base = scoreMetadataTerms(terms, file, symbols, headings);
-        return { file, symbols, headings, base };
+        return { file, symbols, headings, base, content: base.score > 0 ? content : undefined };
       } catch {
         return { file, symbols: [], headings: [], base: { score: 0, matches: [] } };
       }
@@ -40,11 +41,23 @@ export async function relevance(options: RelevanceOptions): Promise<RelevanceRes
   await commitRelevanceMetadata();
 
   const candidates = [...metadataScored].sort((a, b) => b.base.score - a.base.score);
+  const contentScanLimit = Math.min(candidates.length, maxResults * contentScanMultiplier);
+  const contentScoredFiles = new Set(
+    candidates.slice(0, contentScanLimit).map((candidate) => candidate.file),
+  );
 
   const scored = await Promise.all(
     candidates.map(async (candidate) => {
+      if (!contentScoredFiles.has(candidate.file)) {
+        return {
+          file: candidate.file,
+          score: candidate.base.score,
+          matches: candidate.base.matches,
+        };
+      }
+
       try {
-        const content = await readFileText(candidate.file);
+        const content = candidate.content ?? (await readFileText(candidate.file));
         const contentScore = scoreContentTerms(terms, content);
         return {
           file: candidate.file,
@@ -52,7 +65,11 @@ export async function relevance(options: RelevanceOptions): Promise<RelevanceRes
           matches: candidate.base.matches,
         };
       } catch {
-        return { file: candidate.file, score: candidate.base.score, matches: candidate.base.matches };
+        return {
+          file: candidate.file,
+          score: candidate.base.score,
+          matches: candidate.base.matches,
+        };
       }
     }),
   );

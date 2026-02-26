@@ -1,9 +1,5 @@
 import { readFile } from 'node:fs/promises';
 import { defineCommand } from 'citty';
-import { astToMarkdown } from '../../parser/ast-to-markdown.js';
-import { markdownToAst } from '../../parser/markdown-to-ast.js';
-import { buildHeadingRanges } from '../../utils/headings.js';
-import { createTokenCounter } from '../../utils/tokens.js';
 
 export const searchSectionsCommand = defineCommand({
   meta: {
@@ -18,6 +14,14 @@ export const searchSectionsCommand = defineCommand({
     },
   },
   async run({ args }) {
+    const [{ astToMarkdown }, { markdownToAst }, { buildHeadingRanges }, { createTokenCounter }] =
+      await Promise.all([
+        import('../../parser/ast-to-markdown.js'),
+        import('../../parser/markdown-to-ast.js'),
+        import('../../utils/headings.js'),
+        import('../../utils/tokens.js'),
+      ]);
+
     const query = String(args.query).toLowerCase();
     // args._ contains all positionals; the first one is `query` itself, so skip it
     const files: string[] = (args._ ?? []).slice(1).map(String);

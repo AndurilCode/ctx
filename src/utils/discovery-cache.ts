@@ -1,10 +1,12 @@
-import fg from 'fast-glob';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { open, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import fg from 'fast-glob';
+import { mapLimit } from './async.js';
 
 const DEFAULT_CACHE_PATH = join(tmpdir(), 'compact-md', 'discovery-cache.json');
+const STAT_CONCURRENCY = 64;
 
 interface DiscoveryCacheEntry {
   files: string[];
@@ -101,24 +103,27 @@ function collectTrackedDirs(root: string, relDirs: string[]): string[] {
 }
 
 async function createDirMtimeMap(dirs: string[]): Promise<Record<string, string>> {
-  const out: Record<string, string> = {};
-  for (const dir of dirs) {
+  const entries = await mapLimit(dirs, STAT_CONCURRENCY, async (dir) => {
     const dirStat = await stat(dir, { bigint: true });
-    out[dir] = dirStat.mtimeNs.toString();
-  }
-  return out;
+    return [dir, dirStat.mtimeNs.toString()] as const;
+  });
+  return Object.fromEntries(entries);
 }
 
 async function isFresh(entry: DiscoveryCacheEntry): Promise<boolean> {
-  for (const [dir, mtimeNs] of Object.entries(entry.dirMtimeNs)) {
-    try {
-      const dirStat = await stat(dir, { bigint: true });
-      if (dirStat.mtimeNs.toString() !== mtimeNs) return false;
-    } catch {
-      return false;
-    }
-  }
-  return true;
+  const checks = await mapLimit(
+    Object.entries(entry.dirMtimeNs),
+    STAT_CONCURRENCY,
+    async ([dir, mtimeNs]) => {
+      try {
+        const dirStat = await stat(dir, { bigint: true });
+        return dirStat.mtimeNs.toString() === mtimeNs;
+      } catch {
+        return false;
+      }
+    },
+  );
+  return checks.every(Boolean);
 }
 
 export async function discoverFilesCached(options: {
@@ -136,16 +141,18 @@ export async function discoverFilesCached(options: {
   }
 
   stats.misses += 1;
-  const files = await fg(options.globPattern, {
-    cwd: root,
-    ignore: options.ignore,
-    onlyFiles: true,
-  });
-  const dirs = await fg('**', {
-    cwd: root,
-    ignore: options.ignore,
-    onlyDirectories: true,
-  });
+  const [files, dirs] = await Promise.all([
+    fg(options.globPattern, {
+      cwd: root,
+      ignore: options.ignore,
+      onlyFiles: true,
+    }),
+    fg('**', {
+      cwd: root,
+      ignore: options.ignore,
+      onlyDirectories: true,
+    }),
+  ]);
   const trackedDirs = collectTrackedDirs(root, dirs);
   load()[key] = {
     files,
