@@ -13,6 +13,8 @@ import {
   scoreMetadataTerms,
 } from '../utils/relevance.js';
 
+const DARK_MATTER_SAMPLE = 10;
+
 export async function relevance(options: RelevanceOptions): Promise<RelevanceResult> {
   const { query, files, maxResults = 10 } = options;
   const contentScanMultiplier = Math.max(1, Math.floor(options.contentScanMultiplier ?? 4));
@@ -41,10 +43,18 @@ export async function relevance(options: RelevanceOptions): Promise<RelevanceRes
   await commitRelevanceMetadata();
 
   const candidates = [...metadataScored].sort((a, b) => b.base.score - a.base.score);
-  const contentScanLimit = Math.min(candidates.length, maxResults * contentScanMultiplier);
-  const contentScoredFiles = new Set(
-    candidates.slice(0, contentScanLimit).map((candidate) => candidate.file),
-  );
+
+  const withScore = candidates.filter((c) => c.base.score > 0);
+  const zeroScore = candidates.filter((c) => c.base.score === 0);
+
+  // Randomly sample zero-scored files to catch content-only relevant matches ("dark matter")
+  const darkMatter = [...zeroScore].sort(() => Math.random() - 0.5).slice(0, DARK_MATTER_SAMPLE);
+
+  const contentScanLimit = Math.min(withScore.length, maxResults * contentScanMultiplier);
+  const contentScoredFiles = new Set([
+    ...withScore.slice(0, contentScanLimit).map((c) => c.file),
+    ...darkMatter.map((c) => c.file),
+  ]);
 
   const scored = await Promise.all(
     candidates.map(async (candidate) => {
