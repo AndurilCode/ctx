@@ -119,9 +119,8 @@ export async function autoContext(options: AutoContextOptions): Promise<AutoCont
     }
   }
 
-  await boostSharedDependencies(root, fileMap);
-
   if (depth > 0) {
+    await boostSharedDependencies(root, fileMap);
     await expandOutgoingImports(root, fileMap, depth);
   }
 
