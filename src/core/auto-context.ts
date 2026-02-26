@@ -41,12 +41,11 @@ async function expandOutgoingImports(
         for (const edge of edges) {
           const absEdge = resolve(root, edge.resolved);
           const derivedScore = Math.max(1, Math.floor(parentScore * 0.5));
-          if (!fileMap.has(absEdge)) {
+          const existing = fileMap.get(absEdge);
+          if (!existing) {
             fileMap.set(absEdge, { score: derivedScore, priority: 'low' });
-          }
-          // Update if a higher derived score is found via a different path
-          const existing = fileMap.get(absEdge)!;
-          if (existing.priority === 'low' && derivedScore > existing.score) {
+          } else if (existing.priority === 'low' && derivedScore > existing.score) {
+            // Update if a higher derived score is found via a different path
             fileMap.set(absEdge, { score: derivedScore, priority: 'low' });
           }
           if (!visited.has(absEdge)) {
