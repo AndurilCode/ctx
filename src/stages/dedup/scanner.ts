@@ -36,12 +36,12 @@ export function estimateTokens(value: string): number {
   let tokens = 0;
 
   for (const word of words) {
-    if (word.length <= 4) {
+    if (word.length <= 7) {
       tokens += 1;
     } else if (word.length <= 10) {
-      tokens += 1;
+      tokens += 2;
     } else {
-      tokens += Math.ceil(word.length / 6);
+      tokens += Math.ceil(word.length / 5);
     }
   }
 
