@@ -96,10 +96,10 @@ export function scoreMetadataTerms(
   let pathScore = 0;
   for (const segment of segments) {
     if (pathScore >= 2) break;
-    const segNorm = segment.toLowerCase();
+    const segNorm = splitCamel(segment);
     for (const term of safeTerms) {
       if (matches_(segNorm, term)) {
-        pathScore = Math.min(pathScore + 1, 2);
+        pathScore++;
         matches.push(`path: ${segment}`);
         break; // one term match per segment
       }

@@ -88,7 +88,7 @@ describe('relevance benchmark: path segment scoring', () => {
   test('path segment score is capped at +2 even with multiple matching segments', () => {
     // "src" and "utils" both match — cap at 2
     const result = scoreMetadataTerms(['src', 'utils'], 'src/utils/foo.ts', [], []);
-    expect(result.score).toBeLessThanOrEqual(2);
+    expect(result.score).toBe(2); // cap is reached: both 'src' and 'utils' match
   });
 
   test('path segment match appears in matches array with "path:" prefix', () => {
@@ -97,10 +97,14 @@ describe('relevance benchmark: path segment scoring', () => {
   });
 
   test('basename is not double-counted as path segment', () => {
-    // path segments exclude basename — just verify scoring doesn't break
+    // 'foo' matches 'foo.ts' as a filename (score 3), not as a path segment
     const withBasenameOnly = scoreMetadataTerms(['foo'], 'foo.ts', [], []);
+    expect(withBasenameOnly.score).toBe(3); // filename only
+    expect(withBasenameOnly.matches.some((m) => m.startsWith('path:'))).toBe(false);
+
+    // 'foo' in 'src/foo/' is a path segment match (score 1), 'bar.ts' is no match
     const withPath = scoreMetadataTerms(['foo'], 'src/foo/bar.ts', [], []);
-    expect(withBasenameOnly.score).toBeGreaterThanOrEqual(0);
-    expect(withPath.score).toBeGreaterThanOrEqual(0);
+    expect(withPath.score).toBe(1); // path segment only
+    expect(withPath.matches.some((m) => m.startsWith('path:'))).toBe(true);
   });
 });
