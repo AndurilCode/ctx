@@ -1,6 +1,15 @@
 import { basename } from 'node:path';
 import type { RelevanceMatch } from '../types/relevance.js';
 
+export interface RelevanceScore {
+  score: number;
+  matches: string[];
+}
+
+export function queryTerms(query: string): string[] {
+  return query.toLowerCase().split(/\s+/).filter(Boolean);
+}
+
 export function scoreFile(
   query: string,
   filePath: string,
@@ -8,7 +17,28 @@ export function scoreFile(
   symbols: string[],
   headings: string[],
 ): RelevanceMatch {
-  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const terms = queryTerms(query);
+  return scoreFileWithTerms(terms, filePath, content, symbols, headings);
+}
+
+export function scoreFileWithTerms(
+  terms: string[],
+  filePath: string,
+  content: string,
+  symbols: string[],
+  headings: string[],
+): RelevanceMatch {
+  const base = scoreMetadataTerms(terms, filePath, symbols, headings);
+  const score = base.score + scoreContentTerms(terms, content);
+  return { file: filePath, score, matches: base.matches };
+}
+
+export function scoreMetadataTerms(
+  terms: string[],
+  filePath: string,
+  symbols: string[],
+  headings: string[],
+): RelevanceScore {
   const matches: string[] = [];
   let score = 0;
 
@@ -43,14 +73,17 @@ export function scoreFile(
     }
   }
 
-  // Content match (weight: 1 per occurrence, capped at 5)
+  return { score, matches: [...new Set(matches)] };
+}
+
+export function scoreContentTerms(terms: string[], content: string): number {
+  let score = 0;
   const contentLower = content.toLowerCase();
   for (const term of terms) {
     const occurrences = Math.min(countOccurrences(contentLower, term), 5);
     score += occurrences;
   }
-
-  return { file: filePath, score, matches: [...new Set(matches)] };
+  return score;
 }
 
 function countOccurrences(text: string, term: string): number {
