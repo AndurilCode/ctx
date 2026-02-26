@@ -1,11 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import {
-  computeIdfMap,
-  queryTerms,
-  scoreContentTermsBM25,
-  scoreFile,
-  scoreMetadataTerms,
-} from '../../../src/utils/relevance.js';
+import { computeIdfMap, scoreContentTermsBM25 } from '../../../src/utils/bm25.js';
+import { queryTerms, scoreFile, scoreMetadataTerms } from '../../../src/utils/relevance.js';
 
 describe('relevance benchmark: word-boundary matching', () => {
   test('short term "get" does not match symbol "target"', () => {
