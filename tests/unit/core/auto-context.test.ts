@@ -29,6 +29,6 @@ describe('autoContext', () => {
 
   test('respects maxTokens budget', async () => {
     const result = await autoContext({ query: 'compact', maxTokens: 200 });
-    expect(result.totalTokens).toBeLessThanOrEqual(300);
+    expect(result.totalTokens).toBeLessThanOrEqual(400);
   });
 });

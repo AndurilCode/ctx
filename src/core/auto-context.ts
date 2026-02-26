@@ -6,7 +6,7 @@ import type { ContextSource } from '../types/context.js';
 import { discoverFilesCached } from '../utils/discovery-cache.js';
 import { extractOutgoingEdges } from '../utils/import-resolver.js';
 
-const HIGH_SCORE_THRESHOLD = 3;
+const HIGH_SCORE_THRESHOLD = 5;
 const DEFAULT_MAX_FILES = 15;
 const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx}';
 const DEFAULT_DEPTH = 1;
@@ -26,13 +26,13 @@ async function expandOutgoingImports(
   const visited = new Set<string>();
   let frontier = [...fileMap.entries()]
     .filter(([, v]) => v.priority === 'high')
-    .map(([file]) => file);
+    .map(([file, v]) => ({ file, parentScore: v.score }));
 
   for (let level = 0; level < depth && frontier.length > 0; level++) {
-    const nextFrontier = new Set<string>();
+    const nextFrontier = new Map<string, number>(); // file → best parentScore seen
 
     await Promise.all(
-      frontier.map(async (absFile) => {
+      frontier.map(async ({ file: absFile, parentScore }) => {
         if (visited.has(absFile)) return;
         visited.add(absFile);
 
@@ -40,17 +40,24 @@ async function expandOutgoingImports(
         const edges = await extractOutgoingEdges(relFile, root);
         for (const edge of edges) {
           const absEdge = resolve(root, edge.resolved);
+          const derivedScore = Math.max(1, Math.floor(parentScore * 0.5));
           if (!fileMap.has(absEdge)) {
-            fileMap.set(absEdge, { score: 0, priority: 'low' });
+            fileMap.set(absEdge, { score: derivedScore, priority: 'low' });
+          }
+          // Update if a higher derived score is found via a different path
+          const existing = fileMap.get(absEdge)!;
+          if (existing.priority === 'low' && derivedScore > existing.score) {
+            fileMap.set(absEdge, { score: derivedScore, priority: 'low' });
           }
           if (!visited.has(absEdge)) {
-            nextFrontier.add(absEdge);
+            const best = Math.max(nextFrontier.get(absEdge) ?? 0, derivedScore);
+            nextFrontier.set(absEdge, best);
           }
         }
       }),
     );
 
-    frontier = [...nextFrontier];
+    frontier = [...nextFrontier.entries()].map(([file, parentScore]) => ({ file, parentScore }));
   }
 }
 
