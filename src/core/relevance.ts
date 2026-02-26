@@ -75,6 +75,8 @@ export async function relevance(options: RelevanceOptions): Promise<RelevanceRes
   );
 
   // Phase 2: compute BM25 corpus statistics over the loaded content
+  // Dark-matter files are included in corpus stats: if they contain query terms,
+  // they participate in IDF, which may slightly suppress scores for non-dark-matter files.
   const { idfMap, avgdl } = computeIdfMap(terms, [...contentMap.values()]);
 
   // Phase 3: score every candidate (BM25 for content-scan set, metadata-only for the rest)

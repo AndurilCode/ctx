@@ -33,6 +33,11 @@ export function scoreFile(
   return scoreFileWithTerms(terms, filePath, content, symbols, headings);
 }
 
+/**
+ * Single-file scorer for use outside a corpus context (e.g. testing, one-off ranking).
+ * Content scoring uses raw occurrence counts, NOT BM25. For corpus-normalized scoring
+ * use `core/relevance.ts` which computes IDF over the full candidate set.
+ */
 export function scoreFileWithTerms(
   terms: string[],
   filePath: string,
@@ -185,4 +190,3 @@ export function extractHeadings(content: string): string[] {
   }
   return headings;
 }
-

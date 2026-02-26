@@ -81,6 +81,7 @@ async function boostSharedDependencies(
 
   for (const [absFile, count] of importCounts) {
     if (count >= MIN_SHARED_IMPORTERS && !fileMap.has(absFile)) {
+      // score = importer count (uncapped): widely-imported utilities naturally rank higher.
       fileMap.set(absFile, { score: count, priority: 'low' });
     }
   }
