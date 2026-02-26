@@ -6,7 +6,7 @@ import type { ContextSource } from '../types/context.js';
 import { discoverFilesCached } from '../utils/discovery-cache.js';
 import { extractOutgoingEdges } from '../utils/import-resolver.js';
 
-const HIGH_SCORE_THRESHOLD = 5;
+export const HIGH_SCORE_THRESHOLD = 5;
 const DEFAULT_MAX_FILES = 15;
 const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx,md,mdx,json,yaml,yml}';
 const DEFAULT_DEPTH = 1;
