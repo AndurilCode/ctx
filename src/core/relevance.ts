@@ -1,4 +1,5 @@
 import type { RelevanceOptions, RelevanceResult } from '../types/relevance.js';
+import { computeIdfMap, scoreContentTermsBM25 } from '../utils/bm25.js';
 import { readFileText } from '../utils/file-reader.js';
 import {
   commitRelevanceMetadata,
@@ -9,7 +10,6 @@ import {
   extractHeadings,
   extractSymbolNames,
   queryTerms,
-  scoreContentTerms,
   scoreMetadataTerms,
 } from '../utils/relevance.js';
 
@@ -56,33 +56,43 @@ export async function relevance(options: RelevanceOptions): Promise<RelevanceRes
     ...darkMatter.map((c) => c.file),
   ]);
 
-  const scored = await Promise.all(
-    candidates.map(async (candidate) => {
-      if (!contentScoredFiles.has(candidate.file)) {
-        return {
-          file: candidate.file,
-          score: candidate.base.score,
-          matches: candidate.base.matches,
-        };
+  // Phase 1: load content for all candidates in the scan set
+  const contentMap = new Map<string, string>();
+  await Promise.all(
+    [...contentScoredFiles].map(async (file) => {
+      // Reuse content already loaded during the metadata pass when available
+      const candidate = metadataScored.find((c) => c.file === file);
+      if (candidate?.content) {
+        contentMap.set(file, candidate.content);
+        return;
       }
-
       try {
-        const content = candidate.content ?? (await readFileText(candidate.file));
-        const contentScore = scoreContentTerms(terms, content);
-        return {
-          file: candidate.file,
-          score: candidate.base.score + contentScore,
-          matches: candidate.base.matches,
-        };
+        contentMap.set(file, await readFileText(file));
       } catch {
-        return {
-          file: candidate.file,
-          score: candidate.base.score,
-          matches: candidate.base.matches,
-        };
+        // file unreadable — skip
       }
     }),
   );
+
+  // Phase 2: compute BM25 corpus statistics over the loaded content
+  const { idfMap, avgdl } = computeIdfMap(terms, [...contentMap.values()]);
+
+  // Phase 3: score every candidate (BM25 for content-scan set, metadata-only for the rest)
+  const scored = candidates.map((candidate) => {
+    if (!contentScoredFiles.has(candidate.file)) {
+      return { file: candidate.file, score: candidate.base.score, matches: candidate.base.matches };
+    }
+    const content = contentMap.get(candidate.file);
+    if (!content) {
+      return { file: candidate.file, score: candidate.base.score, matches: candidate.base.matches };
+    }
+    const contentScore = scoreContentTermsBM25(terms, content, idfMap, avgdl);
+    return {
+      file: candidate.file,
+      score: candidate.base.score + contentScore,
+      matches: candidate.base.matches,
+    };
+  });
 
   const sorted = scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score);
   return { results: sorted.slice(0, maxResults) };

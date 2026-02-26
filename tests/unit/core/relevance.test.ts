@@ -50,4 +50,27 @@ describe('relevance', () => {
       await rm(dir, { recursive: true, force: true });
     }
   });
+
+  test('BM25: shorter file with same term count ranks above longer file', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'compact-md-bm25-'));
+    const shortFile = join(dir, 'short.ts');
+    const longFile = join(dir, 'long.ts');
+    try {
+      // Same 3 occurrences of "compact", but very different document lengths
+      await writeFile(shortFile, 'compact compact compact', 'utf8');
+      await writeFile(longFile, `compact compact compact ${'padding '.repeat(200)}`, 'utf8');
+
+      // longFile is listed first so that without BM25 normalisation the stable sort
+      // would leave it ranked first (equal raw counts preserve insertion order).
+      const result = await relevance({
+        query: 'compact',
+        files: [longFile, shortFile],
+      });
+
+      expect(result.results.length).toBeGreaterThan(0);
+      expect(result.results[0]?.file).toBe(shortFile);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
 });
