@@ -100,7 +100,7 @@ function truncateToTokenBudget(content: string, maxTokens: number, counter: Toke
 }
 
 function isCodeFile(path: string): boolean {
-  return /\.(ts|js|tsx|jsx|py|rs|go|java|c|cpp|rb|swift|kt)$/.test(path);
+  return /\.(ts|js|tsx|jsx|py|rs|go|java|c|cpp|rb|swift|kt|sh|yaml|yml|json|toml|css|scss)$/.test(path);
 }
 
 function isMarkdownFile(path: string): boolean {
