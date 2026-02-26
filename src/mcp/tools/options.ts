@@ -44,8 +44,8 @@ export function toExtractOptions(input: ExtractLikeToolInput): ExtractOptions {
 }
 
 export const markdownOrFileSchema = {
-  markdown: z.string().optional(),
-  file: z.string().optional(),
+  markdown: z.string().optional().describe('Markdown source text (Markdown-only).'),
+  file: z.string().optional().describe('Path to a markdown file (.md/.mdx/.markdown).'),
 };
 
 export const codeOrFileSchema = {

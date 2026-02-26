@@ -7,7 +7,7 @@ import { createTokenCounter } from '../../utils/tokens.js';
 
 export const searchSectionsCommand = defineCommand({
   meta: {
-    name: 'search-sections',
+    name: 'locate',
     description: 'Search for sections matching a keyword across one or more markdown files.',
   },
   args: {

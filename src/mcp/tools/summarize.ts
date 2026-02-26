@@ -137,7 +137,7 @@ export function registerSummarizeTool(server: McpServer): void {
     'compact_md_summarize',
     {
       description:
-        'Generate an AI-powered abstractive summary (~200 tokens by default). Best for breadth-first exploration — onboarding to many packages at once, or getting the gist of a large doc without loading it fully. NOT ideal for targeted section work; for that prefer compact_md_sections → compact_md_extract. Recommended workflow: (1) compact_md_sections to see structure and token sizes; (2) if full overview needed → compact_md_summarize; (3) if specific section needed → compact_md_extract. Use docType to match the summarization style to the document kind.',
+        'Generate an abstractive summary for high-level understanding. Use for gist and onboarding; do not use when exact wording or section-accurate retrieval is required (use compact_md_extract).',
       inputSchema: {
         ...markdownOrFileSchema,
         ...summarizeLikeInputSchema,

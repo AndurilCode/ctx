@@ -4,7 +4,7 @@ import { readInput, writeOutput } from '../io.js';
 
 export const codeOutlineCommand = defineCommand({
   meta: {
-    name: 'code-outline',
+    name: 'outline',
     description: 'Parse source code and emit a structural outline.',
   },
   args: {

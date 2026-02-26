@@ -7,7 +7,7 @@ import { readInput, writeOutput } from '../io.js';
 
 export const pruneLogCommand = defineCommand({
   meta: {
-    name: 'prune-log',
+    name: 'prune',
     description: 'Lossy log pruning for terminal/test/build/CI output.',
   },
   args: {

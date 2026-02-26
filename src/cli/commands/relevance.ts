@@ -4,7 +4,7 @@ import { relevance } from '../../core/relevance.js';
 
 export const relevanceCommand = defineCommand({
   meta: {
-    name: 'relevance',
+    name: 'rank',
     description: 'Rank files by relevance to a query.',
   },
   args: {

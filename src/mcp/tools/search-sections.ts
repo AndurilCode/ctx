@@ -72,13 +72,13 @@ export async function runSearchSectionsTool(
 
 export function registerSearchSectionsTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_search_sections',
+    'compact_md_locate',
     {
       description:
-        'Search for sections matching a keyword across multiple files. Returns matching heading names with token counts, grouped by file. Use to find which files document a given topic (e.g. "oauth", "middleware", "testing") before deciding which to load — avoids running compact_md_sections on every file individually.',
+        'Find headings matching a query across files, with per-match token counts. Use to decide what to open next; do not use to retrieve section content (use compact_md_extract).',
       inputSchema: {
-        files: z.array(z.string()),
-        query: z.string(),
+        files: z.array(z.string()).describe('Markdown file paths to search (.md/.mdx/.markdown).'),
+        query: z.string().describe('Heading keyword query to match in markdown sections.'),
       },
     },
     async (input) => runSearchSectionsTool(input),

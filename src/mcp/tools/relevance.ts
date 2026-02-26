@@ -17,10 +17,10 @@ export async function runRelevanceTool(input: RelevanceToolInput): Promise<CallT
 
 export function registerRelevanceTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_relevance',
+    'compact_md_rank',
     {
       description:
-        'Rank files by structural relevance to a query without calling an LLM. Uses filename, symbol names, headings, and content matches. Use this to decide which files to read before committing tokens.',
+        'Rank candidate files by query relevance without an LLM. Use before reading to choose high-signal files; do not use when file candidates are already fixed.',
       inputSchema: {
         query: z.string().describe('Natural language task description or keyword(s)'),
         files: z.array(z.string()).describe('File paths to rank'),

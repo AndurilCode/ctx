@@ -23,10 +23,10 @@ export function registerVerifyTool(server: McpServer): void {
     'compact_md_verify',
     {
       description:
-        'Verify lossless round-trip for markdown input. Returns { valid: true } on success, or { valid: false, mismatch: { line, expected, actual } } pinpointing the first line of divergence on failure.',
+        'Verify lossless round-trip for markdown input. Use to enforce fidelity guarantees; do not use as a compressor or reader.',
       inputSchema: {
-        markdown: z.string().optional(),
-        file: z.string().optional(),
+        markdown: z.string().optional().describe('Markdown source text (Markdown-only).'),
+        file: z.string().optional().describe('Path to a markdown file (.md/.mdx/.markdown).'),
       },
     },
     async (input) => runVerifyTool(input),

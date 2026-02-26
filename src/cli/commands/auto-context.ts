@@ -3,7 +3,7 @@ import { autoContext } from '../../core/auto-context.js';
 
 export const autoContextCommand = defineCommand({
   meta: {
-    name: 'auto-context',
+    name: 'gather',
     description: 'Auto-discover and assemble relevant context for a query within a token budget.',
   },
   args: {

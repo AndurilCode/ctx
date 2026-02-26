@@ -20,7 +20,7 @@ export function registerImportsTool(server: McpServer): void {
     'compact_md_imports',
     {
       description:
-        'Show import/dependency graph for a file — what it imports and what imports it. Helps agents understand code connectivity without reading all files.',
+        'Show incoming and outgoing import edges for a file. Use for dependency flow analysis; do not use for symbol-level usages (use compact_md_symbols).',
       inputSchema: {
         file: z.string().describe('File path to analyze'),
         direction: z

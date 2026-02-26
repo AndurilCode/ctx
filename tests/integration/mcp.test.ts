@@ -37,7 +37,7 @@ describe('mcp tools integration', () => {
     _resetForTesting();
   });
 
-  test('compact_md_pack returns compacted markdown text', async () => {
+  test('compact_md_compact returns compacted markdown text', async () => {
     const markdown = '# Title\n\n- [ ] todo item\n';
     const result = await runPackTool({ markdown });
     const output = textFromToolResult(result);
@@ -46,7 +46,7 @@ describe('mcp tools integration', () => {
     expect(output).toBe(expected);
   });
 
-  test('compact_md_pack supports section elision options', async () => {
+  test('compact_md_compact supports section elision options', async () => {
     const markdown = '# Intro\n\nhello\n\n# Keep\n\nvalue\n';
     const result = await runPackTool({ markdown, onlySections: ['keep'] });
     const compactText = textFromToolResult(result);
@@ -56,7 +56,7 @@ describe('mcp tools integration', () => {
     expect(restored).not.toContain('# Intro');
   });
 
-  test('compact_md_unpack restores markdown from compact text', async () => {
+  test('compact_md_expand restores markdown from compact text', async () => {
     const markdown = '# Title\n\nParagraph text.\n';
     const compactText = compact(markdown).output;
     const result = await runUnpackTool({ compact: compactText });
@@ -66,7 +66,7 @@ describe('mcp tools integration', () => {
     expect(output).toBe(expected);
   });
 
-  test('compact_md_stats returns JSON stats payload', async () => {
+  test('compact_md_metrics returns JSON stats payload', async () => {
     const markdown = '# Title\n\nParagraph text.\n';
     const result = await runStatsTool({ markdown });
     const output = textFromToolResult(result);
@@ -107,7 +107,7 @@ describe('mcp tools integration', () => {
     ).rejects.toThrow(/mutually exclusive/i);
   });
 
-  test('compact_md_diff compacts unified diff input', async () => {
+  test('compact_md_changes compacts unified diff input', async () => {
     const diff = [
       'diff --git a/src/app.ts b/src/app.ts',
       'index 1..2 100644',
@@ -129,7 +129,7 @@ describe('mcp tools integration', () => {
     expect(output).toContain('+const newFlag = true;');
   });
 
-  test('compact_md_prune_log prunes noisy logs', async () => {
+  test('compact_md_prune prunes noisy logs', async () => {
     const log = ['✓ test one', '✓ test two', '✗ test three', 'Tests: 2 passed, 1 failed'].join(
       '\n',
     );
@@ -142,7 +142,7 @@ describe('mcp tools integration', () => {
     expect(parsed.summaryUsed).toBe(false);
   });
 
-  test('compact_md_prune_log applies runtime profile defaults', async () => {
+  test('compact_md_prune applies runtime profile defaults', async () => {
     const log = ['2026-02-25T10:00:00Z GET /users 200', '2026-02-25T10:00:01Z GET /users 500'].join(
       '\n',
     );
@@ -153,7 +153,7 @@ describe('mcp tools integration', () => {
     expect(parsed.output).not.toContain('2026-02-25T10:00:01Z');
   });
 
-  test('compact_md_prune_log applies lint profile defaults', async () => {
+  test('compact_md_prune applies lint profile defaults', async () => {
     const log = [
       '$ biome check .',
       './src/a.ts format',
@@ -171,7 +171,7 @@ describe('mcp tools integration', () => {
     expect(parsed.output).not.toContain('10 10 │ a');
   });
 
-  test('compact_md_prune_log summarizes when over threshold and sampling enabled', async () => {
+  test('compact_md_prune summarizes when over threshold and sampling enabled', async () => {
     const server = {
       server: {
         createMessage: async () => ({
@@ -197,7 +197,7 @@ describe('mcp tools integration', () => {
   });
 
   describe('file path support', () => {
-    test('compact_md_pack reads from file when file param provided', async () => {
+    test('compact_md_compact reads from file when file param provided', async () => {
       const markdown = '# Title\n\nParagraph text.\n';
       const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
       const filePath = join(dir, 'test.md');
@@ -210,7 +210,7 @@ describe('mcp tools integration', () => {
       expect(output).toBe(expected);
     });
 
-    test('compact_md_stats reads from file when file param provided', async () => {
+    test('compact_md_metrics reads from file when file param provided', async () => {
       const markdown = '# Title\n\nParagraph text.\n';
       const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
       const filePath = join(dir, 'test.md');
@@ -250,7 +250,7 @@ describe('mcp tools integration', () => {
       expect(parsed.valid).toBe(verify(markdown));
     });
 
-    test('compact_md_diff reads from file when file param provided', async () => {
+    test('compact_md_changes reads from file when file param provided', async () => {
       const diff = [
         'diff --git a/src/app.ts b/src/app.ts',
         'index 1..2 100644',
@@ -272,7 +272,7 @@ describe('mcp tools integration', () => {
       expect(output).toContain('+new');
     });
 
-    test('compact_md_prune_log reads from file when file param provided', async () => {
+    test('compact_md_prune reads from file when file param provided', async () => {
       const log = ['2026-02-25T10:00:00Z info line', '2026-02-25T10:00:01Z info line'].join('\n');
       const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
       const filePath = join(dir, 'test.log');

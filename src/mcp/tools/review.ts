@@ -25,7 +25,7 @@ export function registerReviewTool(server: McpServer): void {
     'compact_md_review',
     {
       description:
-        'Run a two-pass token-aware review workflow: rank relevant files, read all with a compact pass, and escalate only flagged files for deeper pass.',
+        'Run two-pass token-aware code review triage with token accounting. Use for repo-level risk surfacing; do not use as final truth for one file (follow with compact_md_read or compact_md_outline).',
       inputSchema: {
         query: z.string().describe('Task description or review query'),
         path: z.string().optional().describe('Root directory to search (default: cwd)'),

@@ -54,12 +54,12 @@ export async function runSummarizeBatchTool(
 
 export function registerSummarizeBatchTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_summarize_batch',
+    'compact_md_batch',
     {
       description:
-        'Summarize multiple files in a single call. Runs compact_md_summarize on each file in parallel and returns all summaries grouped by file path. Ideal for repo onboarding — summarize all package READMEs in one round-trip instead of N sequential calls. Respects caching: repeated calls for unchanged files are instant.',
+        'Summarize multiple files in one call for breadth-first scanning. Use for repo onboarding; do not use when you need exact section text (use compact_md_extract).',
       inputSchema: {
-        files: z.array(z.string()),
+        files: z.array(z.string()).describe('Markdown file paths to summarize (.md/.mdx/.markdown).'),
         ...summarizeLikeInputSchema,
       },
     },

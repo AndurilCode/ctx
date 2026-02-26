@@ -36,7 +36,7 @@ export function registerContextTool(server: McpServer): void {
     'compact_md_context',
     {
       description:
-        'Build a focused context document from multiple source files within a total token budget. Automatically applies the best compression strategy per file based on available tokens.',
+        'Assemble a token-budgeted context document from an explicit source list. Use when you already chose files; do not use for discovery (use compact_md_gather or compact_md_rank).',
       inputSchema: {
         sources: z.array(
           z.object({

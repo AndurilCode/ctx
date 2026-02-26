@@ -32,10 +32,10 @@ export async function runAutoContextTool(input: AutoContextToolInput): Promise<C
 
 export function registerAutoContextTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_auto_context',
+    'compact_md_gather',
     {
       description:
-        'One-shot context assembly. Given a query and token budget, discover relevant files, expand via import graph, and assemble a best-fit context document.',
+        'Discover, rank, and assemble context for a query in one call. Use when file selection should be automatic; do not use when sources are already known (use compact_md_context).',
       inputSchema: {
         query: z.string().describe('Task description or question to find context for'),
         maxTokens: z.number().int().min(1).describe('Total token budget for assembled context'),

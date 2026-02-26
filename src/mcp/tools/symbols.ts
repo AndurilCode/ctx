@@ -26,7 +26,7 @@ export function registerSymbolsTool(server: McpServer): void {
     'compact_md_symbols',
     {
       description:
-        'Cross-file symbol search. Find where a symbol is defined and used across the project. Returns definitions with file paths and line numbers, plus usage sites.',
+        'Find symbol definitions and usage sites across files. Use for ownership and call-site tracing; do not use for module dependency flow (use compact_md_imports).',
       inputSchema: {
         query: z.string().describe('Symbol name to search for (exact or substring match)'),
         path: z.string().optional().describe('Directory to search (default: cwd)'),

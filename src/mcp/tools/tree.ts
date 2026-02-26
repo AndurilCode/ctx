@@ -22,7 +22,7 @@ export function registerTreeTool(server: McpServer): void {
     'compact_md_tree',
     {
       description:
-        'Directory tree with per-file token counts. Use to budget context before reading files. Shows which files are large vs small.',
+        'Show a directory tree with per-file token counts. Use to budget navigation at repo scale; do not use for semantic relevance ranking (use compact_md_rank).',
       inputSchema: {
         path: z.string().optional().describe('Directory path (default: cwd)'),
         glob: z.string().optional().describe('Filter pattern, e.g. "**/*.ts"'),

@@ -8,7 +8,7 @@ import { parseSectionOptions } from '../section-options.js';
 
 export const statsCommand = defineCommand({
   meta: {
-    name: 'stats',
+    name: 'metrics',
     description: 'Show compression stats for markdown input.',
   },
   args: {

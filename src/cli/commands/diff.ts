@@ -4,7 +4,7 @@ import { readInput, writeOutput } from '../io.js';
 
 export const diffCommand = defineCommand({
   meta: {
-    name: 'diff',
+    name: 'changes',
     description: 'Compress unified git diff output for agent-friendly consumption.',
   },
   args: {

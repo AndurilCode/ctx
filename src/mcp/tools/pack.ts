@@ -19,10 +19,10 @@ export async function runPackTool(input: PackToolInput): Promise<CallToolResult>
 
 export function registerPackTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_pack',
+    'compact_md_compact',
     {
       description:
-        'Losslessly compress markdown into compact.md format (token savings ~0–30% depending on doc structure). For lossy compression that strips boilerplate and keeps only key content, use compact_md_summarize or compact_md_extract instead — those trade fidelity for much higher token reduction.',
+        'Losslessly compress markdown into compact.md format. Use when reversibility matters; do not use for aggressive lossy reduction (use compact_md_summarize or compact_md_extract).',
       inputSchema: packLikeInputSchema,
     },
     async (input) => runPackTool(input),

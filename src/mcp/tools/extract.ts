@@ -22,7 +22,7 @@ export function registerExtractTool(server: McpServer): void {
     'compact_md_extract',
     {
       description:
-        'Retrieve verbatim section content with optional truncation. Best used after compact_md_sections reveals which section you need — target it by heading name via onlySections. Returns exact content with no AI summarization. To get a compressed summary of a specific section instead of the full text, use compact_md_summarize with onlySections — that combines section targeting with LLM compression.',
+        'Retrieve verbatim section content with optional truncation controls. Use when exact section text is required; do not use for high-level gist (use compact_md_summarize).',
       inputSchema: {
         ...markdownOrFileSchema,
         onlySections: z.array(z.string()).optional(),

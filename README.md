@@ -182,38 +182,38 @@ npx compact.md <command> [options]
 
 | Command | Description |
 |---|---|
-| `pack` | Compress a Markdown file to compact.md format |
-| `diff` | Compress unified diff output for lower token usage |
-| `prune-log` | Lossy prune of terminal/log output |
-| `unpack` | Expand a compact.md file back to Markdown |
+| `compact` | Compress a Markdown file to compact.md format |
+| `changes` | Compress unified diff output for lower token usage |
+| `prune` | Lossy prune of terminal/log output |
+| `expand` | Expand a compact.md file back to Markdown |
 | `extract` | Extract and compress specific sections only |
 | `verify` | Assert lossless round-trip for a file |
-| `stats` | Report token savings without writing output |
+| `metrics` | Report token savings without writing output |
 | `sections` | List the heading sections in a document |
-| `search-sections` | Search sections by keyword |
+| `locate` | Search sections by keyword |
 
 ```bash
 # Compress
-compact.md pack input.md -o output.cmd
+compact.md compact input.md -o output.cmd
 
 # Expand
-compact.md unpack output.cmd -o restored.md
+compact.md expand output.cmd -o restored.md
 
 # Verify round-trip
 compact.md verify input.md
 
 # Stats only
-compact.md stats input.md
+compact.md metrics input.md
 
 # Pipe-friendly
-cat doc.md | compact.md pack > compressed.cmd
-git diff | compact.md diff --changes-only
-cat test-output.log | compact.md prune-log --stats
-cat lint.log | compact.md prune-log --profile lint --stats
-cat server.log | compact.md prune-log --profile runtime
+cat doc.md | compact.md compact > compressed.cmd
+git diff | compact.md changes --changes-only
+cat test-output.log | compact.md prune --stats
+cat lint.log | compact.md prune --profile lint --stats
+cat server.log | compact.md prune --profile runtime
 
 # With options
-compact.md pack input.md --dedup --semantic --stats
+compact.md compact input.md --dedup --semantic --stats
 ```
 
 ---
@@ -239,19 +239,19 @@ The MCP server exposes a spectrum of token-reduction strategies. Tools are group
 
 | Tool | Description |
 |---|---|
-| `compact_md_pack` | Compress Markdown to compact.md format — fully reversible |
-| `compact_md_unpack` | Expand compact.md format back to standard Markdown |
+| `compact_md_compact` | Compress Markdown to compact.md format — fully reversible |
+| `compact_md_expand` | Expand compact.md format back to standard Markdown |
 | `compact_md_verify` | Assert that round-trip is lossless for a given input |
-| `compact_md_stats` | Report token savings without writing any output |
-| `compact_md_diff` | Compress unified git diff text (one-way, lossy) |
-| `compact_md_prune_log` | Lossy pruning for logs/terminal output with token gate + optional summarize fallback |
+| `compact_md_metrics` | Report token savings without writing any output |
+| `compact_md_changes` | Compress unified git diff text (one-way, lossy) |
+| `compact_md_prune` | Lossy pruning for logs/terminal output with token gate + optional summarize fallback |
 
 **Section navigation** _(start here for unknown documents)_
 
 | Tool | Description |
 |---|---|
 | `compact_md_sections` | List the section TOC with per-section token counts — use this first to budget context before loading content |
-| `compact_md_search_sections` | Search sections by keyword to find relevant content without reading the whole document |
+| `compact_md_locate` | Search sections by keyword to find relevant content without reading the whole document |
 
 **Targeted extraction** _(verbatim content, optionally truncated)_
 
@@ -264,7 +264,7 @@ The MCP server exposes a spectrum of token-reduction strategies. Tools are group
 | Tool | Description |
 |---|---|
 | `compact_md_summarize` | Abstractive LLM summary (~200 tokens by default). Supports `docType`: `auto` \| `guide` \| `reference` \| `spec`. Results are cached — repeated calls on unchanged files are instant. |
-| `compact_md_summarize_batch` | Summarize multiple files in parallel in a single round-trip. Ideal for repo onboarding. |
+| `compact_md_batch` | Summarize multiple files in parallel in a single round-trip. Ideal for repo onboarding. |
 
 **Recommended agent workflow**
 
@@ -273,7 +273,7 @@ The MCP server exposes a spectrum of token-reduction strategies. Tools are group
 2a. doc is small (<500 tokens)  → read it directly
 2b. need a high-level gist      → compact_md_summarize
 2c. need a specific section     → compact_md_extract with onlySections
-2d. need compressed full doc    → compact_md_pack
+2d. need compressed full doc    → compact_md_compact
 ```
 
 ---

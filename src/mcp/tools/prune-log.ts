@@ -70,10 +70,10 @@ export async function runPruneLogTool(
 
 export function registerPruneLogTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_prune_log',
+    'compact_md_prune',
     {
       description:
-        'Lossy log pruning with generic + toolchain rules. Supports token gate and optional summarize fallback.',
+        'Lossy pruning for terminal/test/build logs with token gating. Use to keep failures and actionable lines; do not use when exact full logs are required.',
       inputSchema: pruneLogInputSchema,
     },
     async (input) => runPruneLogTool(input, server),

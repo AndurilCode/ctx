@@ -4,7 +4,7 @@ import { readInput } from '../io.js';
 
 export const tokenCountCommand = defineCommand({
   meta: {
-    name: 'token-count',
+    name: 'tokens',
     description: 'Count tokens, bytes, and lines for a file or stdin.',
   },
   args: {
