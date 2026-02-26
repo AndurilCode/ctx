@@ -7,7 +7,19 @@ export interface RelevanceScore {
 }
 
 export function queryTerms(query: string): string[] {
-  return query.toLowerCase().split(/\s+/).filter(Boolean);
+  const whitespaceTokens = query.split(/\s+/).filter(Boolean);
+  const expanded: string[] = [];
+  for (const token of whitespaceTokens) {
+    // Split camelCase BEFORE lowercasing: autoContext → auto, Context → [auto, context]
+    const camelParts = token.split(/(?<=[a-z])(?=[A-Z])/);
+    // Split snake_case and lowercase each part
+    const parts = camelParts
+      .flatMap((p) => p.split('_'))
+      .map((p) => p.toLowerCase())
+      .filter(Boolean);
+    expanded.push(...parts);
+  }
+  return [...new Set(expanded)];
 }
 
 export function scoreFile(
