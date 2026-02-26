@@ -30,6 +30,8 @@ export { budgetedRead } from './core/read.js';
 export type { ReadOptions, ReadResult, ReadStrategy } from './types/read.js';
 export { assembleContext } from './core/context.js';
 export type { ContextOptions, ContextResult, ContextSource, ContextSourceResult } from './types/context.js';
+export { autoContext } from './core/auto-context.js';
+export type { AutoContextOptions, AutoContextResult, SelectedFile } from './types/auto-context.js';
 export { relevance } from './core/relevance.js';
 export type { RelevanceMatch, RelevanceOptions, RelevanceResult } from './types/relevance.js';
 export { fileImports } from './core/imports.js';

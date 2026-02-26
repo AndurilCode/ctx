@@ -1,4 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerAutoContextTool } from './auto-context.js';
 import { registerContextTool } from './context.js';
 import { registerDiffTool } from './diff.js';
 import { registerExtractTool } from './extract.js';
@@ -37,6 +38,7 @@ export function registerCompactMdTools(server: McpServer): void {
   registerReadTool(server);
   registerRelevanceTool(server);
   registerContextTool(server);
+  registerAutoContextTool(server);
   registerImportsTool(server);
   registerSymbolsTool(server);
 }
