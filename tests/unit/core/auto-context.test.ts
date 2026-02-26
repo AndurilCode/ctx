@@ -61,8 +61,9 @@ describe('autoContext', () => {
         maxTokens: 5000,
       });
 
-      const files = result.selectedFiles.map((f) => f.file);
-      expect(files.some((f) => f.includes('util'))).toBe(true);
+      const utilEntry = result.selectedFiles.find((f) => f.file.includes('util'));
+      expect(utilEntry).toBeDefined();
+      expect(utilEntry?.priority).toBe('low');
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

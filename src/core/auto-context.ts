@@ -68,15 +68,16 @@ async function boostSharedDependencies(
   const scoredFiles = [...fileMap.entries()].filter(([, v]) => v.score > 0);
   const importCounts = new Map<string, number>();
 
-  await Promise.all(
-    scoredFiles.map(async ([absFile]) => {
-      const edges = await extractOutgoingEdges(relative(root, absFile), root);
-      for (const edge of edges) {
-        const absEdge = resolve(root, edge.resolved);
-        importCounts.set(absEdge, (importCounts.get(absEdge) ?? 0) + 1);
-      }
-    }),
+  // AFTER — parallel fan-out, serial accumulation:
+  const allEdges = await Promise.all(
+    scoredFiles.map(([absFile]) => extractOutgoingEdges(relative(root, absFile), root)),
   );
+  for (const edges of allEdges) {
+    for (const edge of edges) {
+      const absEdge = resolve(root, edge.resolved);
+      importCounts.set(absEdge, (importCounts.get(absEdge) ?? 0) + 1);
+    }
+  }
 
   for (const [absFile, count] of importCounts) {
     if (count >= MIN_SHARED_IMPORTERS && !fileMap.has(absFile)) {
@@ -119,6 +120,8 @@ export async function autoContext(options: AutoContextOptions): Promise<AutoCont
     }
   }
 
+  // depth > 0: both boost and expansion perform import-graph traversal.
+  // depth: 0 means "no graph traversal" — low-priority files are excluded.
   if (depth > 0) {
     await boostSharedDependencies(root, fileMap);
     await expandOutgoingImports(root, fileMap, depth);
