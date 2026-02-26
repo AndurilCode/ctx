@@ -1,6 +1,6 @@
 {
   "name": "@anduril-code/compact.md",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Token-efficient, context-aware compression for agent pipelines.",
   "license": "MIT",
   "type": "module",
