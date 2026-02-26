@@ -52,6 +52,14 @@ function termRegex(term: string): RegExp | null {
   return null; // non-alphanumeric: fall back to includes
 }
 
+/** Normalize a camelCase/PascalCase identifier for word-boundary matching.
+ *  "getUser" → "get user", "_foo_bar" → " foo bar"
+ *  Hyphens and underscores already act as \W chars for \b, so we only need
+ *  to insert spaces at lower→upper transitions. */
+function splitCamel(value: string): string {
+  return value.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+}
+
 export function scoreMetadataTerms(
   terms: string[],
   filePath: string,
@@ -83,12 +91,14 @@ export function scoreMetadataTerms(
   score += filenameScore;
 
   // Symbol match (weight: 2, capped at +6 total)
+  // Use splitCamel so that \b fires at camelCase boundaries:
+  // "getUser" → "get user", enabling \bget\b to match.
   let symbolScore = 0;
   for (const sym of symbols) {
     if (symbolScore >= 6) break;
-    const symLower = sym.toLowerCase();
+    const symNorm = splitCamel(sym);
     for (const term of safeTerms) {
-      if (matches_(symLower, term)) {
+      if (matches_(symNorm, term)) {
         symbolScore = Math.min(symbolScore + 2, 6);
         matches.push(`symbol: ${sym}`);
         break; // one term match per symbol
@@ -98,12 +108,13 @@ export function scoreMetadataTerms(
   score += symbolScore;
 
   // Heading match (weight: 2, capped at +4 total)
+  // Use splitCamel so camelCase headings also benefit from word-boundary matching.
   let headingScore = 0;
   for (const heading of headings) {
     if (headingScore >= 4) break;
-    const headLower = heading.toLowerCase();
+    const headNorm = splitCamel(heading);
     for (const term of safeTerms) {
-      if (matches_(headLower, term)) {
+      if (matches_(headNorm, term)) {
         headingScore = Math.min(headingScore + 2, 4);
         matches.push(`heading: ${heading}`);
         break;
