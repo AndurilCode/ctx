@@ -42,7 +42,9 @@ function termRegex(term: string): RegExp | null {
 
 function matchesTerm(value: string, term: string): boolean {
   const re = termRegex(term);
-  return re ? re.test(value) : value.includes(term);
+  if (!re) return value.includes(term);
+  // Normalize underscores so \b fires at _ boundaries too
+  return re.test(value.replace(/_/g, ' '));
 }
 
 export function scoreMetadataTerms(
@@ -51,16 +53,25 @@ export function scoreMetadataTerms(
   symbols: string[],
   headings: string[],
 ): RelevanceScore {
+  const safeTerms = terms.filter(Boolean);
   const matches: string[] = [];
   let score = 0;
+
+  // Compile regexes once per call to avoid redundant construction in loops.
+  const reCache = new Map<string, RegExp | null>(safeTerms.map((t) => [t, termRegex(t)]));
+  const matches_ = (value: string, term: string): boolean => {
+    const re = reCache.get(term)!;
+    if (!re) return value.includes(term);
+    return re.test(value.replace(/_/g, ' '));
+  };
 
   // Filename match (weight: 3, capped at +3 total)
   const name = basename(filePath).toLowerCase();
   let filenameScore = 0;
-  for (const term of terms) {
+  for (const term of safeTerms) {
     if (filenameScore >= 3) break;
-    if (matchesTerm(name, term)) {
-      filenameScore = 3; // cap: first match saturates
+    if (matches_(name, term)) {
+      filenameScore = 3; // first match fills the cap; break on next iteration
       matches.push(`filename: ${basename(filePath)}`);
     }
   }
@@ -71,8 +82,8 @@ export function scoreMetadataTerms(
   for (const sym of symbols) {
     if (symbolScore >= 6) break;
     const symLower = sym.toLowerCase();
-    for (const term of terms) {
-      if (matchesTerm(symLower, term)) {
+    for (const term of safeTerms) {
+      if (matches_(symLower, term)) {
         symbolScore = Math.min(symbolScore + 2, 6);
         matches.push(`symbol: ${sym}`);
         break; // one term match per symbol
@@ -86,8 +97,8 @@ export function scoreMetadataTerms(
   for (const heading of headings) {
     if (headingScore >= 4) break;
     const headLower = heading.toLowerCase();
-    for (const term of terms) {
-      if (matchesTerm(headLower, term)) {
+    for (const term of safeTerms) {
+      if (matches_(headLower, term)) {
         headingScore = Math.min(headingScore + 2, 4);
         matches.push(`heading: ${heading}`);
         break;
@@ -99,6 +110,8 @@ export function scoreMetadataTerms(
   return { score, matches: [...new Set(matches)] };
 }
 
+// Content scoring uses substring matching intentionally — broad coverage for prose.
+// Metadata scoring (scoreMetadataTerms) uses word-boundary matching for precision.
 export function scoreContentTerms(terms: string[], content: string): number {
   let score = 0;
   const contentLower = content.toLowerCase();
