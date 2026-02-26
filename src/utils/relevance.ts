@@ -90,6 +90,23 @@ export function scoreMetadataTerms(
   }
   score += filenameScore;
 
+  // Path segment scoring (weight: 1, capped at +2 total)
+  // Split on both forward and back slashes; exclude basename (already scored above).
+  const segments = filePath.split(/[/\\]/).slice(0, -1);
+  let pathScore = 0;
+  for (const segment of segments) {
+    if (pathScore >= 2) break;
+    const segNorm = segment.toLowerCase();
+    for (const term of safeTerms) {
+      if (matches_(segNorm, term)) {
+        pathScore = Math.min(pathScore + 1, 2);
+        matches.push(`path: ${segment}`);
+        break; // one term match per segment
+      }
+    }
+  }
+  score += pathScore;
+
   // Symbol match (weight: 2, capped at +6 total)
   // Use splitCamel so that \b fires at camelCase boundaries:
   // "getUser" → "get user", enabling \bget\b to match.

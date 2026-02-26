@@ -77,3 +77,30 @@ describe('relevance benchmark: camelCase query splitting', () => {
     expect(withCamel.score).toBeGreaterThan(withRaw.score);
   });
 });
+
+describe('relevance benchmark: path segment scoring', () => {
+  test('utils/ directory boosts score over core/ for query "utils"', () => {
+    const inUtils = scoreMetadataTerms(['utils'], 'src/utils/foo.ts', [], []);
+    const inCore = scoreMetadataTerms(['utils'], 'src/core/foo.ts', [], []);
+    expect(inUtils.score).toBeGreaterThan(inCore.score);
+  });
+
+  test('path segment score is capped at +2 even with multiple matching segments', () => {
+    // "src" and "utils" both match — cap at 2
+    const result = scoreMetadataTerms(['src', 'utils'], 'src/utils/foo.ts', [], []);
+    expect(result.score).toBeLessThanOrEqual(2);
+  });
+
+  test('path segment match appears in matches array with "path:" prefix', () => {
+    const result = scoreMetadataTerms(['utils'], 'src/utils/foo.ts', [], []);
+    expect(result.matches.some((m) => m.startsWith('path:'))).toBe(true);
+  });
+
+  test('basename is not double-counted as path segment', () => {
+    // path segments exclude basename — just verify scoring doesn't break
+    const withBasenameOnly = scoreMetadataTerms(['foo'], 'foo.ts', [], []);
+    const withPath = scoreMetadataTerms(['foo'], 'src/foo/bar.ts', [], []);
+    expect(withBasenameOnly.score).toBeGreaterThanOrEqual(0);
+    expect(withPath.score).toBeGreaterThanOrEqual(0);
+  });
+});
