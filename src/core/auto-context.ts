@@ -1,9 +1,9 @@
-import fg from 'fast-glob';
 import { relative, resolve } from 'node:path';
 import { assembleContext } from './context.js';
 import { relevance } from './relevance.js';
 import type { AutoContextOptions, AutoContextResult, SelectedFile } from '../types/auto-context.js';
 import type { ContextSource } from '../types/context.js';
+import { discoverFilesCached } from '../utils/discovery-cache.js';
 import { extractOutgoingEdges } from '../utils/import-resolver.js';
 
 const HIGH_SCORE_THRESHOLD = 3;
@@ -11,6 +11,7 @@ const DEFAULT_MAX_FILES = 15;
 const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx,md}';
 const DEFAULT_DEPTH = 1;
 const RELEVANCE_SCAN_LIMIT = 50;
+const DEFAULT_IGNORE = ['node_modules/**', 'dist/**', '.git/**'];
 
 interface RankedCandidate {
   score: number;
@@ -59,10 +60,10 @@ export async function autoContext(options: AutoContextOptions): Promise<AutoCont
   const depth = options.depth ?? DEFAULT_DEPTH;
   const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES;
 
-  const relFiles = await fg(globPattern, {
-    cwd: root,
-    ignore: ['node_modules/**', 'dist/**', '.git/**'],
-    onlyFiles: true,
+  const relFiles = await discoverFilesCached({
+    root,
+    globPattern,
+    ignore: DEFAULT_IGNORE,
   });
   const absFiles = relFiles.map((file) => resolve(root, file));
 
