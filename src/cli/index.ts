@@ -10,6 +10,7 @@ import { importsCommand } from './commands/imports.js';
 import { pruneLogCommand } from './commands/prune-log.js';
 import { readCommand } from './commands/read.js';
 import { relevanceCommand } from './commands/relevance.js';
+import { reviewCommand } from './commands/review.js';
 import { searchSectionsCommand } from './commands/search-sections.js';
 import { sectionsCommand } from './commands/sections.js';
 import { statsCommand } from './commands/stats.js';
@@ -41,6 +42,7 @@ export const command = defineCommand({
     tree: treeCommand,
     read: readCommand,
     relevance: relevanceCommand,
+    review: reviewCommand,
     context: contextCommand,
     'auto-context': autoContextCommand,
   },

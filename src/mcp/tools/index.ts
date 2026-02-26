@@ -10,6 +10,7 @@ import { registerPackTool } from './pack.js';
 import { registerPruneLogTool } from './prune-log.js';
 import { registerReadTool } from './read.js';
 import { registerRelevanceTool } from './relevance.js';
+import { registerReviewTool } from './review.js';
 import { registerSearchSectionsTool } from './search-sections.js';
 import { registerSectionsTool } from './sections.js';
 import { registerStatsTool } from './stats.js';
@@ -37,6 +38,7 @@ export function registerCompactMdTools(server: McpServer): void {
   registerVerifyTool(server);
   registerReadTool(server);
   registerRelevanceTool(server);
+  registerReviewTool(server);
   registerContextTool(server);
   registerAutoContextTool(server);
   registerImportsTool(server);

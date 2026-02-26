@@ -34,6 +34,8 @@ export { autoContext } from './core/auto-context.js';
 export type { AutoContextOptions, AutoContextResult, SelectedFile } from './types/auto-context.js';
 export { relevance } from './core/relevance.js';
 export type { RelevanceMatch, RelevanceOptions, RelevanceResult } from './types/relevance.js';
+export { review } from './core/review.js';
+export type { ReviewFileResult, ReviewOptions, ReviewResult, ReviewTotals } from './types/review.js';
 export { fileImports } from './core/imports.js';
 export type { ImportEdge, ImportsOptions, ImportsResult } from './types/imports.js';
 export { symbols } from './core/symbols.js';
