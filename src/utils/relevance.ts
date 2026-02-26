@@ -52,8 +52,8 @@ function termRegex(term: string): RegExp | null {
   return null; // non-alphanumeric: fall back to includes
 }
 
-/** Normalize a camelCase/PascalCase identifier for word-boundary matching.
- *  "getUser" → "get user", "_foo_bar" → " foo bar"
+/** Normalizes camelCase boundaries by inserting spaces, then lowercases.
+ *  "getUser" → "get user", "myURLValue" → "my url value"
  *  Hyphens and underscores already act as \W chars for \b, so we only need
  *  to insert spaces at lower→upper transitions. */
 function splitCamel(value: string): string {
