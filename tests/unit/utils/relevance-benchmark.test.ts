@@ -116,8 +116,8 @@ describe('BM25 content scoring', () => {
     const idfMap = new Map([['compact', Math.log(2)]]);
     const avgdl = 275; // midpoint between 50 and 500
 
-    const shortContent = `compact compact compact ${'x'.repeat(47)}`; // ~50 chars
-    const longContent = `compact compact compact ${'x'.repeat(497)}`; // ~500 chars
+    const shortContent = `compact compact compact ${'x'.repeat(47)}`; // ~71 chars
+    const longContent = `compact compact compact ${'x'.repeat(497)}`; // ~521 chars
 
     const shortScore = scoreContentTermsBM25(terms, shortContent, idfMap, avgdl);
     const longScore = scoreContentTermsBM25(terms, longContent, idfMap, avgdl);
@@ -168,5 +168,23 @@ describe('BM25 content scoring', () => {
   test('computeIdfMap avgdl is mean char length of contents', () => {
     const { avgdl } = computeIdfMap([], ['ab', 'abcd']); // lengths 2 and 4
     expect(avgdl).toBe(3);
+  });
+
+  test('fallback IDF is used when term is not in idfMap', () => {
+    // Term 'rare' not in idfMap — fallback IDF (Math.log(1.5)) should still produce a positive score
+    const score = scoreContentTermsBM25(['rare'], 'rare rare rare', new Map(), 14);
+    expect(score).toBeGreaterThan(0);
+  });
+
+  test('term in idfMap but absent from content contributes 0', () => {
+    const idfMap = new Map([['compact', 2]]);
+    const score = scoreContentTermsBM25(['compact'], 'no matches here', idfMap, 15);
+    expect(score).toBe(0);
+  });
+
+  test('computeIdfMap returns sentinel avgdl:1 for empty corpus', () => {
+    const { idfMap, avgdl } = computeIdfMap(['any'], []);
+    expect(idfMap.size).toBe(0);
+    expect(avgdl).toBe(1);
   });
 });

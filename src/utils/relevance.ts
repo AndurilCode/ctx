@@ -157,6 +157,7 @@ export function scoreContentTerms(terms: string[], content: string): number {
 }
 
 export function countOccurrences(text: string, term: string): number {
+  if (!term) return 0;
   let count = 0;
   let pos = 0;
   while ((pos = text.indexOf(term, pos)) !== -1) {

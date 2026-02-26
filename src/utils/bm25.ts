@@ -7,7 +7,11 @@ import { countOccurrences } from './relevance.js';
 
 /**
  * BM25 term-frequency/IDF content scorer.
+ * k1=1.5 (TF saturation), b=0.75 (length normalisation).
  * Returns 0 when content is empty or avgdl is zero.
+ * NOTE: document length is measured in characters, not word tokens.
+ * This is a reasonable proxy for homogeneous corpora but may under-score
+ * code files with long identifiers relative to short-word prose files.
  */
 export function scoreContentTermsBM25(
   terms: string[],
