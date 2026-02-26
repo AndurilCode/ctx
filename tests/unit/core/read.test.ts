@@ -27,4 +27,25 @@ describe('budgetedRead', () => {
     expect(result.strategy).toBe('truncate');
     expect(result.content).toContain('[...truncated');
   });
+
+  test('treats .json files as code files (auto strategy, over budget)', async () => {
+    // package.json is a real .json file in the repo
+    const result = await budgetedRead({ file: 'package.json', maxTokens: 5 });
+    // With maxTokens: 5, any real file will exceed budget
+    // auto strategy should pick outline or fall back to truncate — never 'full' or 'sections'
+    expect(['outline', 'truncate']).toContain(result.strategy);
+    expect(result.truncated).toBe(true);
+  });
+
+  test('treats .yaml files as code files (auto strategy, over budget)', async () => {
+    // Use inline content with a .yaml filename so no real file is needed
+    const result = await budgetedRead({
+      file: 'fake.yaml',
+      content:
+        'name: test\nversion: 1.0.0\ndescription: a test yaml file with enough content to exceed a small token budget for verification purposes',
+      maxTokens: 5,
+    });
+    expect(['outline', 'truncate']).toContain(result.strategy);
+    expect(result.truncated).toBe(true);
+  });
 });
