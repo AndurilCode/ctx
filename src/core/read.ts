@@ -5,9 +5,9 @@ import type { TokenCounter } from '../utils/tokens.js';
 import { createTokenCounter } from '../utils/tokens.js';
 
 export async function budgetedRead(options: ReadOptions): Promise<ReadResult> {
-  const content = await readFileText(resolve(options.file));
+  const content = options.content ?? (await readFileText(resolve(options.file)));
   const counter = await createTokenCounter();
-  const totalTokens = counter.count(content);
+  const totalTokens = options.totalTokens ?? counter.count(content);
 
   if (!options.maxTokens || totalTokens <= options.maxTokens) {
     return {

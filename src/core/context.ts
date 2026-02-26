@@ -1,18 +1,20 @@
 import type { ContextOptions, ContextResult, ContextSourceResult } from '../types/context.js';
 import { budgetedRead } from './read.js';
-import { tokenCount } from './token-count.js';
+import { readFileText } from '../utils/file-reader.js';
+import { createTokenCounter } from '../utils/tokens.js';
 
 const PRIORITY_WEIGHTS: Record<string, number> = { high: 2, normal: 1, low: 0.25 };
 const PRIORITY_ORDER: Record<string, number> = { high: 3, normal: 2, low: 1 };
 
 export async function assembleContext(options: ContextOptions): Promise<ContextResult> {
   const { sources, maxTokens, strategy } = options;
+  const counter = await createTokenCounter();
 
   // Phase 1: measure each source
   const measurements = await Promise.all(
     sources.map(async (source) => {
-      const count = await tokenCount({ file: source.file });
-      return { source, totalTokens: count.tokens };
+      const content = await readFileText(source.file);
+      return { source, content, totalTokens: counter.count(content) };
     }),
   );
 
@@ -23,8 +25,7 @@ export async function assembleContext(options: ContextOptions): Promise<ContextR
     const parts: string[] = [];
     const sourceResults: ContextSourceResult[] = [];
     for (const m of measurements) {
-      const result = await budgetedRead({ file: m.source.file });
-      parts.push(`## ${m.source.file} (full, ${m.totalTokens}t)\n\n${result.content}`);
+      parts.push(`## ${m.source.file} (full, ${m.totalTokens}t)\n\n${m.content}`);
       sourceResults.push({ file: m.source.file, strategy: 'full', tokens: m.totalTokens });
     }
     const content = parts.join('\n\n---\n\n');
@@ -77,7 +78,13 @@ export async function assembleContext(options: ContextOptions): Promise<ContextR
   let usedTokens = 0;
 
   for (const { m, allocated } of allocations) {
-    const result = await budgetedRead({ file: m.source.file, maxTokens: allocated, strategy });
+    const result = await budgetedRead({
+      file: m.source.file,
+      maxTokens: allocated,
+      strategy,
+      content: m.content,
+      totalTokens: m.totalTokens,
+    });
     parts.push(
       `## ${m.source.file} (${result.strategy}, ${result.returnedTokens}t of ${m.totalTokens}t)\n\n${result.content}`,
     );

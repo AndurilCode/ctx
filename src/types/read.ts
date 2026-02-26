@@ -4,6 +4,8 @@ export interface ReadOptions {
   file: string;
   maxTokens?: number;
   strategy?: ReadStrategy;
+  content?: string;
+  totalTokens?: number;
 }
 
 export interface ReadResult {
