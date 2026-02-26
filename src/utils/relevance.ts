@@ -33,6 +33,18 @@ export function scoreFileWithTerms(
   return { file: filePath, score, matches: base.matches };
 }
 
+function termRegex(term: string): RegExp | null {
+  if (/^\w+$/.test(term)) {
+    return new RegExp(`\\b${term}\\b`, 'i');
+  }
+  return null; // non-alphanumeric: fall back to includes
+}
+
+function matchesTerm(value: string, term: string): boolean {
+  const re = termRegex(term);
+  return re ? re.test(value) : value.includes(term);
+}
+
 export function scoreMetadataTerms(
   terms: string[],
   filePath: string,
@@ -42,36 +54,47 @@ export function scoreMetadataTerms(
   const matches: string[] = [];
   let score = 0;
 
-  // Filename match (weight: 3)
+  // Filename match (weight: 3, capped at +3 total)
   const name = basename(filePath).toLowerCase();
+  let filenameScore = 0;
   for (const term of terms) {
-    if (name.includes(term)) {
-      score += 3;
+    if (filenameScore >= 3) break;
+    if (matchesTerm(name, term)) {
+      filenameScore = 3; // cap: first match saturates
       matches.push(`filename: ${basename(filePath)}`);
     }
   }
+  score += filenameScore;
 
-  // Symbol match (weight: 2)
+  // Symbol match (weight: 2, capped at +6 total)
+  let symbolScore = 0;
   for (const sym of symbols) {
+    if (symbolScore >= 6) break;
     const symLower = sym.toLowerCase();
     for (const term of terms) {
-      if (symLower.includes(term)) {
-        score += 2;
+      if (matchesTerm(symLower, term)) {
+        symbolScore = Math.min(symbolScore + 2, 6);
         matches.push(`symbol: ${sym}`);
+        break; // one term match per symbol
       }
     }
   }
+  score += symbolScore;
 
-  // Heading match (weight: 2)
+  // Heading match (weight: 2, capped at +4 total)
+  let headingScore = 0;
   for (const heading of headings) {
+    if (headingScore >= 4) break;
     const headLower = heading.toLowerCase();
     for (const term of terms) {
-      if (headLower.includes(term)) {
-        score += 2;
+      if (matchesTerm(headLower, term)) {
+        headingScore = Math.min(headingScore + 2, 4);
         matches.push(`heading: ${heading}`);
+        break;
       }
     }
   }
+  score += headingScore;
 
   return { score, matches: [...new Set(matches)] };
 }
