@@ -40,13 +40,6 @@ function termRegex(term: string): RegExp | null {
   return null; // non-alphanumeric: fall back to includes
 }
 
-function matchesTerm(value: string, term: string): boolean {
-  const re = termRegex(term);
-  if (!re) return value.includes(term);
-  // Normalize underscores so \b fires at _ boundaries too
-  return re.test(value.replace(/_/g, ' '));
-}
-
 export function scoreMetadataTerms(
   terms: string[],
   filePath: string,
@@ -116,6 +109,7 @@ export function scoreContentTerms(terms: string[], content: string): number {
   let score = 0;
   const contentLower = content.toLowerCase();
   for (const term of terms) {
+    if (!term) continue; // guard: empty term would infinite-loop countOccurrences
     const occurrences = Math.min(countOccurrences(contentLower, term), 5);
     score += occurrences;
   }
