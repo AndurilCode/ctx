@@ -44,10 +44,46 @@ Token-efficient Markdown compression library. The primary invariant is **lossles
 
 ## @Workflow
 
-- ✅ `bun run build` — compiles ESM + CJS via bun build + types via tsc
-- ⚠️ `bun run lint` — biome check (lint + format check); pre-existing violations in repo
-- ✅ `bun run typecheck` — tsc --noEmit
-- ✅ `bun test` — bun test runner
+- `bun run build` — compiles ESM + CJS via bun build + types via tsc
+- `bun run lint` — biome check (lint + format check); pre-existing violations in repo
+- `bun run typecheck` — tsc --noEmit
+- `bun test` — bun test runner
+
+## @HighSignal
+
+Default to `compact_md_*` tools before raw file reads. Keep first-pass context small, then expand only where blocked.
+
+### Seed set (use first in `compact_md_gather` / `compact_md_context`)
+
+- `AGENTS.md`
+- `src/core/compact.ts`
+- `src/core/expand.ts`
+- `src/stages/**`
+- `src/parser/**`
+- `src/types/**`
+- `src/utils/text.ts`
+- `tests/**`
+
+### Default chains
+
+- Explore/topic: `tree -> rank -> gather -> read/extract`
+- Implement change: `gather (seeded, small budget) -> edit -> outline`
+- Review: `changes/diff -> outline -> review`
+- Test/debug: run tests -> `prune_log(profile=test)` -> outline failing files
+- Docs: `sections -> summarize -> extract`
+
+### Budget policy
+
+- Start with `maxTokens: 1200` for gather/context
+- Raise to `2200` only if blocked
+- Use `extract` for exact wording; use `summarize` for gist only
+- Scope first: derive candidate files from `git diff` (or explicit target paths) before `gather` to prevent context drift
+
+### Evidence policy
+
+- Use `compact_md_read` for triage only
+- For claims/findings, require line-anchored evidence via `compact_md_code_outline` or `rg -n` + `sed -n`
+- No recommendation without file path and line reference
 
 ## @Rules
 
