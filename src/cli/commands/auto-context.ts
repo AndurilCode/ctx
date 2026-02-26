@@ -12,7 +12,7 @@ export const autoContextCommand = defineCommand({
     path: { type: 'string', required: false, description: 'Root directory to search (default: cwd)' },
     seeds: { type: 'string', required: false, description: 'Comma-separated seed file paths' },
     depth: { type: 'string', required: false, default: '1', description: 'Import graph hops (0 = none)' },
-    glob: { type: 'string', required: false, description: 'File pattern (default: **/*.{ts,tsx,js,jsx,md})' },
+    glob: { type: 'string', required: false, description: 'File pattern (default: **/*.{ts,tsx,js,jsx})' },
     maxFiles: { type: 'string', required: false, default: '15', description: 'Max files to include' },
   },
   async run({ args }) {

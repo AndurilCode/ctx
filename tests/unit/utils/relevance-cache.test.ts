@@ -23,7 +23,7 @@ describe('relevance cache', () => {
       _resetRelevanceCacheForTesting(cachePath);
       await writeFile(file, 'export function run() {}', 'utf8');
       await setRelevanceMetadata(file, ['run'], ['Heading']);
-      commitRelevanceMetadata();
+      await commitRelevanceMetadata();
 
       const cached = await getRelevanceMetadata(file);
       expect(cached).toBeDefined();
@@ -42,7 +42,7 @@ describe('relevance cache', () => {
       _resetRelevanceCacheForTesting(cachePath);
       await writeFile(file, 'export function one() {}', 'utf8');
       await setRelevanceMetadata(file, ['one'], ['Heading']);
-      commitRelevanceMetadata();
+      await commitRelevanceMetadata();
 
       await writeFile(file, 'export function two() {}', 'utf8');
       const cached = await getRelevanceMetadata(file);

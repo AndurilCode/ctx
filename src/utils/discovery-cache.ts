@@ -1,6 +1,6 @@
 import fg from 'fast-glob';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { stat } from 'node:fs/promises';
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { open, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
@@ -27,9 +27,14 @@ function load(): DiscoveryCacheStore {
   return cache;
 }
 
-function flush(): void {
-  mkdirSync(dirname(activeCachePath), { recursive: true });
-  writeFileSync(activeCachePath, JSON.stringify(load()), 'utf8');
+async function flush(): Promise<void> {
+  const flushed = await withCacheLock(activeCachePath, async () => {
+    mkdirSync(dirname(activeCachePath), { recursive: true });
+    const merged = { ...(await readDiskAsync()), ...load() };
+    writeAtomically(activeCachePath, JSON.stringify(merged));
+    cache = merged;
+  });
+  if (!flushed) return;
 }
 
 function cacheKey(root: string, globPattern: string, ignore: string[]): string {
@@ -40,19 +45,58 @@ function cacheKey(root: string, globPattern: string, ignore: string[]): string {
   });
 }
 
-function collectTrackedDirs(root: string, relFiles: string[]): string[] {
-  const absRoot = resolve(root);
-  const dirs = new Set<string>([absRoot]);
-  for (const relFile of relFiles) {
-    let current = dirname(resolve(absRoot, relFile));
-    while (current.startsWith(absRoot)) {
-      dirs.add(current);
-      if (current === absRoot) break;
-      const parent = dirname(current);
-      if (parent === current) break;
-      current = parent;
+async function readDiskAsync(): Promise<DiscoveryCacheStore> {
+  try {
+    return JSON.parse(await readFile(activeCachePath, 'utf8')) as DiscoveryCacheStore;
+  } catch {
+    return {};
+  }
+}
+
+function writeAtomically(path: string, content: string): void {
+  const temp = `${path}.${process.pid}.${Date.now()}.tmp`;
+  writeFileSync(temp, content, 'utf8');
+  renameSync(temp, path);
+}
+
+async function withCacheLock(path: string, task: () => Promise<void>): Promise<boolean> {
+  const lockPath = `${path}.lock`;
+  mkdirSync(dirname(lockPath), { recursive: true });
+  const owner = `${process.pid}:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
+  const deadline = Date.now() + 1000;
+
+  while (true) {
+    try {
+      const handle = await open(lockPath, 'wx');
+      await handle.writeFile(owner, 'utf8');
+      await handle.close();
+      break;
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      if (err.code !== 'EEXIST') throw error;
+      if (Date.now() >= deadline) return false;
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 20));
     }
   }
+
+  try {
+    await task();
+    return true;
+  } finally {
+    try {
+      const lockContent = await readFile(lockPath, 'utf8');
+      if (lockContent === owner) {
+        await rm(lockPath, { force: true });
+      }
+    } catch {
+      // lock already removed or replaced
+    }
+  }
+}
+
+function collectTrackedDirs(root: string, relDirs: string[]): string[] {
+  const absRoot = resolve(root);
+  const dirs = new Set<string>([absRoot, ...relDirs.map((dir) => resolve(absRoot, dir))]);
   return [...dirs];
 }
 
@@ -97,12 +141,17 @@ export async function discoverFilesCached(options: {
     ignore: options.ignore,
     onlyFiles: true,
   });
-  const trackedDirs = collectTrackedDirs(root, files);
+  const dirs = await fg('**', {
+    cwd: root,
+    ignore: options.ignore,
+    onlyDirectories: true,
+  });
+  const trackedDirs = collectTrackedDirs(root, dirs);
   load()[key] = {
     files,
     dirMtimeNs: await createDirMtimeMap(trackedDirs),
   };
-  flush();
+  await flush();
   return files;
 }
 

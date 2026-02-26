@@ -49,6 +49,7 @@ describe('discovery cache', () => {
 
     try {
       await mkdir(join(dir, 'src'));
+      await mkdir(join(dir, 'empty'));
       await writeFile(join(dir, 'src', 'a.ts'), 'export const a = 1;', 'utf8');
       _resetDiscoveryCacheForTesting(cachePath);
 
@@ -57,7 +58,7 @@ describe('discovery cache', () => {
         globPattern: '**/*.ts',
         ignore: ['node_modules/**'],
       });
-      await writeFile(join(dir, 'src', 'new.ts'), 'export const n = 1;', 'utf8');
+      await writeFile(join(dir, 'empty', 'new.ts'), 'export const n = 1;', 'utf8');
 
       const next = await discoverFilesCached({
         root: dir,
@@ -65,7 +66,7 @@ describe('discovery cache', () => {
         ignore: ['node_modules/**'],
       });
 
-      expect(next.some((file) => file.endsWith('new.ts'))).toBe(true);
+      expect(next.some((file) => file.endsWith('empty/new.ts'))).toBe(true);
       const stats = _getDiscoveryCacheStatsForTesting();
       expect(stats.misses).toBe(2);
       expect(stats.hits).toBe(0);

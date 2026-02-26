@@ -1,4 +1,7 @@
 import { describe, expect, test } from 'bun:test';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { relevance } from '../../../src/core/relevance.js';
 
 describe('relevance', () => {
@@ -28,5 +31,23 @@ describe('relevance', () => {
       files: ['src/types/diff.ts'],
     });
     expect(result.results).toHaveLength(0);
+  });
+
+  test('keeps content-only matches even without filename/symbol/heading matches', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'compact-md-relevance-'));
+    const fileA = join(dir, 'alpha.ts');
+    const fileB = join(dir, 'beta.ts');
+
+    try {
+      await writeFile(fileA, 'export const value = 1;', 'utf8');
+      await writeFile(fileB, 'const note = "zzztargetterm appears only in plain content";', 'utf8');
+      const result = await relevance({
+        query: 'zzztargetterm',
+        files: [fileA, fileB],
+      });
+      expect(result.results.some((match) => match.file === fileB)).toBe(true);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

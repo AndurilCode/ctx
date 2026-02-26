@@ -13,9 +13,6 @@ import {
   scoreMetadataTerms,
 } from '../utils/relevance.js';
 
-const PREFILTER_MIN = 30;
-const PREFILTER_FACTOR = 5;
-
 export async function relevance(options: RelevanceOptions): Promise<RelevanceResult> {
   const { query, files, maxResults = 10 } = options;
   const terms = queryTerms(query);
@@ -40,13 +37,9 @@ export async function relevance(options: RelevanceOptions): Promise<RelevanceRes
       }
     }),
   );
-  commitRelevanceMetadata();
+  await commitRelevanceMetadata();
 
-  const prefilterCount = Math.max(PREFILTER_MIN, maxResults * PREFILTER_FACTOR);
-  const candidates = metadataScored
-    .filter((item) => item.base.score > 0)
-    .sort((a, b) => b.base.score - a.base.score)
-    .slice(0, prefilterCount);
+  const candidates = [...metadataScored].sort((a, b) => b.base.score - a.base.score);
 
   const scored = await Promise.all(
     candidates.map(async (candidate) => {

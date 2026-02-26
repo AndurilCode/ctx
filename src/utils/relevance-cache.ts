@@ -1,6 +1,6 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import type { BigIntStats } from 'node:fs';
-import { stat } from 'node:fs/promises';
+import { open, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
@@ -39,11 +39,66 @@ function isFresh(entry: RelevanceCacheEntry | undefined, fileStat: BigIntStats):
   return entry.mtimeNs === sig.mtimeNs && entry.size === sig.size;
 }
 
-function flushIfDirty(): void {
+async function flushIfDirty(): Promise<void> {
   if (!dirty) return;
-  mkdirSync(dirname(activeCachePath), { recursive: true });
-  writeFileSync(activeCachePath, JSON.stringify(load()), 'utf8');
-  dirty = false;
+  const flushed = await withCacheLock(activeCachePath, async () => {
+    mkdirSync(dirname(activeCachePath), { recursive: true });
+    const diskStore = await readDiskAsync();
+    const merged = { ...diskStore, ...load() };
+    writeAtomically(activeCachePath, JSON.stringify(merged));
+    cache = merged;
+    dirty = false;
+  });
+  if (!flushed) return;
+}
+
+async function readDiskAsync(): Promise<RelevanceCacheStore> {
+  try {
+    return JSON.parse(await readFile(activeCachePath, 'utf8')) as RelevanceCacheStore;
+  } catch {
+    return {};
+  }
+}
+
+function writeAtomically(path: string, content: string): void {
+  const temp = `${path}.${process.pid}.${Date.now()}.tmp`;
+  writeFileSync(temp, content, 'utf8');
+  renameSync(temp, path);
+}
+
+async function withCacheLock(path: string, task: () => Promise<void>): Promise<boolean> {
+  const lockPath = `${path}.lock`;
+  mkdirSync(dirname(lockPath), { recursive: true });
+  const owner = `${process.pid}:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
+  const deadline = Date.now() + 1000;
+
+  while (true) {
+    try {
+      const handle = await open(lockPath, 'wx');
+      await handle.writeFile(owner, 'utf8');
+      await handle.close();
+      break;
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      if (err.code !== 'EEXIST') throw error;
+      if (Date.now() >= deadline) return false;
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 20));
+    }
+  }
+
+  try {
+    await task();
+    return true;
+  } finally {
+    try {
+      const lockContent = await readFile(lockPath, 'utf8');
+      if (lockContent === owner) {
+        await rm(lockPath, { force: true });
+      }
+    } catch {
+      // lock already removed or replaced
+    }
+  }
 }
 
 export async function getRelevanceMetadata(
@@ -74,8 +129,8 @@ export async function setRelevanceMetadata(
   dirty = true;
 }
 
-export function commitRelevanceMetadata(): void {
-  flushIfDirty();
+export async function commitRelevanceMetadata(): Promise<void> {
+  await flushIfDirty();
 }
 
 /** Reset in-memory cache and optionally redirect to a different file. Tests only. */
