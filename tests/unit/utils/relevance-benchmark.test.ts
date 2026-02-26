@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { queryTerms, scoreFile, scoreMetadataTerms } from '../../../src/utils/relevance.js';
+import {
+  computeIdfMap,
+  queryTerms,
+  scoreContentTermsBM25,
+  scoreFile,
+  scoreMetadataTerms,
+} from '../../../src/utils/relevance.js';
 
 describe('relevance benchmark: word-boundary matching', () => {
   test('short term "get" does not match symbol "target"', () => {
@@ -106,5 +112,66 @@ describe('relevance benchmark: path segment scoring', () => {
     const withPath = scoreMetadataTerms(['foo'], 'src/foo/bar.ts', [], []);
     expect(withPath.score).toBe(1); // path segment only
     expect(withPath.matches.some((m) => m.startsWith('path:'))).toBe(true);
+  });
+});
+
+describe('BM25 content scoring', () => {
+  test('shorter document scores higher than longer for same term count', () => {
+    const terms = ['compact'];
+    const idfMap = new Map([['compact', Math.log(2)]]);
+    const avgdl = 275; // midpoint between 50 and 500
+
+    const shortContent = `compact compact compact ${'x'.repeat(47)}`; // ~50 chars
+    const longContent = `compact compact compact ${'x'.repeat(497)}`; // ~500 chars
+
+    const shortScore = scoreContentTermsBM25(terms, shortContent, idfMap, avgdl);
+    const longScore = scoreContentTermsBM25(terms, longContent, idfMap, avgdl);
+
+    expect(shortScore).toBeGreaterThan(longScore);
+  });
+
+  test('high-IDF term contributes more than low-IDF term', () => {
+    const content = 'import compact import compact import compact';
+    const avgdl = content.length;
+    // "import" appears in 9 of 10 docs (common), "compact" in 1 of 10 (rare)
+    const N = 10;
+    const idfMap = new Map([
+      ['import', Math.log((N - 9 + 0.5) / (9 + 0.5) + 1)], // low IDF ~0.07
+      ['compact', Math.log((N - 1 + 0.5) / (1 + 0.5) + 1)], // high IDF ~1.9
+    ]);
+
+    const importScore = scoreContentTermsBM25(['import'], content, idfMap, avgdl);
+    const compactScore = scoreContentTermsBM25(['compact'], content, idfMap, avgdl);
+
+    expect(compactScore).toBeGreaterThan(importScore);
+  });
+
+  test('returns 0 for empty content', () => {
+    const idfMap = new Map([['compact', 1]]);
+    expect(scoreContentTermsBM25(['compact'], '', idfMap, 100)).toBe(0);
+  });
+
+  test('returns 0 for zero avgdl', () => {
+    const idfMap = new Map([['compact', 1]]);
+    expect(scoreContentTermsBM25(['compact'], 'compact', idfMap, 0)).toBe(0);
+  });
+
+  test('computeIdfMap returns higher IDF for rarer term', () => {
+    const terms = ['rare', 'common'];
+    const contents = [
+      'rare term here',
+      'common common common',
+      'common appears again',
+      'common once more',
+    ];
+    const { idfMap } = computeIdfMap(terms, contents);
+    const rareIdf = idfMap.get('rare') ?? 0;
+    const commonIdf = idfMap.get('common') ?? 0;
+    expect(rareIdf).toBeGreaterThan(commonIdf);
+  });
+
+  test('computeIdfMap avgdl is mean char length of contents', () => {
+    const { avgdl } = computeIdfMap([], ['ab', 'abcd']); // lengths 2 and 4
+    expect(avgdl).toBe(3);
   });
 });
