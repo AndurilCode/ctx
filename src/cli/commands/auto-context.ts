@@ -36,11 +36,11 @@ export const autoContextCommand = defineCommand({
     process.stdout.write(result.content);
     if (!result.content.endsWith('\n')) process.stdout.write('\n');
     process.stderr.write(
-      JSON.stringify(
+      `${JSON.stringify(
         { totalTokens: result.totalTokens, budget: result.budget, selectedFiles: result.selectedFiles },
         null,
         2,
-      ) + '\n',
+      )}\n`,
     );
   },
 });
