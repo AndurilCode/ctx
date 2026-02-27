@@ -96,13 +96,13 @@ Default to `compact_md_*` tools before raw file reads. Keep first-pass context s
 
 ## @Skills
 
-Three agent skills in `.claude/skills/` expose compact.md workflows as slash commands. Each skill references `compact_md_*` MCP tools with CLI fallbacks via `npx @anduril-code/compact.md`.
+Three agent skills in `.claude/skills/` expose compact.md workflows as slash commands. Each skill uses `npx @anduril-code/compact.md` CLI commands.
 
-| Skill | Slash command | When to use | Key tools |
+| Skill | Slash command | When to use | Key CLI commands |
 |---|---|---|---|
-| `compact-review` | `/compact-review [branch\|range]` | Code review — compress diffs, outline changed files, surface risks | `diff`, `code-outline` |
-| `compact-test` | `/compact-test [cmd\|file]` | Test runs — prune noisy output, highlight failures with structural context | `prune-log`, `code-outline` |
-| `compact-explore` | `/compact-explore [question\|path]` | Codebase navigation — token-aware reading, onboarding, topic search | `sections`, `extract`, `code-outline`, `gather` |
+| `compact-review` | `/compact-review [branch\|range]` | Code review — compress diffs, outline changed files, surface risks | `changes`, `outline`, `review`, `imports`, `symbols` |
+| `compact-test` | `/compact-test [cmd\|file]` | Test runs — prune noisy output, highlight failures with structural context | `prune`, `outline`, `symbols` |
+| `compact-explore` | `/compact-explore [question\|path]` | Codebase navigation — token-aware reading, onboarding, topic search | `gather`, `rank`, `outline`, `sections`, `extract`, `locate`, `imports`, `symbols` |
 
 ## @Memory
 
