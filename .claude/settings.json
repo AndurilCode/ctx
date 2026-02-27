@@ -28,6 +28,17 @@
             "statusMessage": "Rewriting noisy commands through ctx prune…"
           }
         ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/context-inject.mjs",
+            "cwd": ".",
+            "statusMessage": "Injecting context rules…"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -50,6 +61,30 @@
             "command": "node .claude/hooks/mcp-to-toon.mjs",
             "cwd": ".",
             "statusMessage": "Converting JSON output to TOON…"
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/context-inject.mjs",
+            "cwd": ".",
+            "statusMessage": "Injecting context rules…"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/context-inject.mjs",
+            "cwd": ".",
+            "statusMessage": "Injecting context rules…"
           }
         ]
       }
