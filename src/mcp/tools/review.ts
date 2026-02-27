@@ -13,6 +13,7 @@ export interface ReviewToolInput {
   pass2Tokens?: number;
   maxPass2Files?: number;
   riskTerms?: string[];
+  evidence?: boolean;
 }
 
 export async function runReviewTool(input: ReviewToolInput): Promise<CallToolResult> {
@@ -35,6 +36,7 @@ export function registerReviewTool(server: McpServer): void {
         pass2Tokens: z.number().int().min(1).optional().describe('Pass-2 token budget per file (default: 2000)'),
         maxPass2Files: z.number().int().min(0).optional().describe('Max files to escalate to pass-2 (default: 3)'),
         riskTerms: z.array(z.string()).optional().describe('Override risk terms used for pass-2 escalation'),
+        evidence: z.boolean().optional().describe('Include line-anchored evidence snippets for flagged files (default: false)'),
       },
     },
     async (input) => runReviewTool(input),

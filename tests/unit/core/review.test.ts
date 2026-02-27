@@ -20,4 +20,32 @@ describe('review', () => {
     expect(result.totals.savedTokens).toBe(result.totals.fullTokens - result.totals.twoPassTokens);
     expect(result.root.length).toBeGreaterThan(0);
   });
+
+  test('evidence: true returns line-anchored snippets for flagged files', async () => {
+    const result = await review({
+      query: 'lock cache',
+      glob: 'src/utils/*cache.ts',
+      maxResults: 3,
+      pass1Tokens: 400,
+      pass2Tokens: 900,
+      maxPass2Files: 1,
+      riskTerms: ['withcachelock'],
+      evidence: true,
+    });
+
+    const flagged = result.files.filter((f) => f.flagged);
+    expect(flagged.length).toBeGreaterThan(0);
+    for (const file of flagged) {
+      expect(file.evidence).toBeDefined();
+      const ev = file.evidence ?? [];
+      expect(ev.length).toBeGreaterThan(0);
+      const first = ev[0];
+      expect(first).toBeDefined();
+      if (first) {
+        expect(first.lineNumber).toBeGreaterThan(0);
+        expect(first.content).toBeTruthy();
+        expect(first.matchedTerm).toBe('withcachelock');
+      }
+    }
+  });
 });

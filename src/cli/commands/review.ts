@@ -15,6 +15,7 @@ export const reviewCommand = defineCommand({
     pass2Tokens: { type: 'string', required: false, default: '2000', description: 'Pass-2 token budget per file' },
     maxPass2Files: { type: 'string', required: false, default: '3', description: 'Max files to escalate to pass-2' },
     riskTerms: { type: 'string', required: false, description: 'Comma-separated risk terms override' },
+    evidence: { type: 'boolean', required: false, default: false, description: 'Include line-anchored evidence for flagged files' },
   },
   async run({ args }) {
     const riskTerms = args.riskTerms
@@ -33,6 +34,7 @@ export const reviewCommand = defineCommand({
       pass2Tokens: Number(args.pass2Tokens),
       maxPass2Files: Number(args.maxPass2Files),
       riskTerms,
+      evidence: args.evidence === true,
     });
 
     process.stdout.write(JSON.stringify(result, null, 2));

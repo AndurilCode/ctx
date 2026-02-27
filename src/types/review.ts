@@ -7,6 +7,13 @@ export interface ReviewOptions {
   pass2Tokens?: number;
   maxPass2Files?: number;
   riskTerms?: string[];
+  evidence?: boolean;
+}
+
+export interface EvidenceLine {
+  lineNumber: number; // 1-indexed
+  content: string;
+  matchedTerm: string;
 }
 
 export interface ReviewFileResult {
@@ -19,6 +26,7 @@ export interface ReviewFileResult {
   matchedRiskTerms: string[];
   pass2Tokens: number;
   pass2Strategy?: string;
+  evidence?: EvidenceLine[];
 }
 
 export interface ReviewTotals {

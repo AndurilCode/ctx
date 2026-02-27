@@ -1,8 +1,9 @@
 import { relative, resolve } from 'node:path';
 import { budgetedRead } from './read.js';
 import { relevance } from './relevance.js';
-import type { ReviewFileResult, ReviewOptions, ReviewResult } from '../types/review.js';
+import type { EvidenceLine, ReviewFileResult, ReviewOptions, ReviewResult } from '../types/review.js';
 import { discoverFilesCached } from '../utils/discovery-cache.js';
+import { extractEvidence } from '../utils/evidence.js';
 
 const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx}';
 const DEFAULT_IGNORE = ['node_modules/**', 'dist/**', '.git/**'];
@@ -79,6 +80,11 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
       pass2Count += 1;
     }
 
+    let evidence: EvidenceLine[] | undefined;
+    if (options.evidence && flagged && matched.length > 0) {
+      evidence = await extractEvidence(candidate.file, matched);
+    }
+
     files.push({
       file: displayFile,
       score: candidate.score,
@@ -89,6 +95,7 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
       matchedRiskTerms: matched,
       pass2Tokens: pass2Used,
       pass2Strategy,
+      ...(evidence !== undefined ? { evidence } : {}),
     });
   }
 
