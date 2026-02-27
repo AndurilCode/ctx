@@ -36,6 +36,7 @@
     "@modelcontextprotocol/sdk": "^1.27.0",
     "citty": "^0.1.6",
     "fast-glob": "^3.3.3",
+    "minimatch": "^10.2.4",
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
