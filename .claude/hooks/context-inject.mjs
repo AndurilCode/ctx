@@ -31,7 +31,9 @@ catch { process.exit(0); }
 
 if (!Array.isArray(rules)) process.exit(0);
 
-const filePath = toolInput.file_path ?? toolInput.path ?? '';
+const rawPath = toolInput.file_path ?? toolInput.path ?? '';
+const cwd = process.cwd();
+const filePath = rawPath.startsWith(cwd) ? rawPath.slice(cwd.length + 1) : rawPath;
 const command = toolInput.command ?? toolInput.cmd ?? '';
 
 function safeRegex(pattern) {
