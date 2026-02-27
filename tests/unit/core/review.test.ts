@@ -32,6 +32,20 @@ describe('review', () => {
     expect(changed).toBeDefined();
   });
 
+  test('profile: docs restricts results to markdown files', async () => {
+    const result = await review({
+      query: 'study plan',
+      profile: 'docs',
+      maxResults: 5,
+    });
+    // When profile is 'docs', the effective glob should only match markdown
+    expect(result.glob).toMatch(/\.md/);
+    // If any files are found, they should all be markdown
+    for (const file of result.files) {
+      expect(file.file).toMatch(/\.(md|mdx|markdown)$/);
+    }
+  });
+
   test('evidence: true returns line-anchored snippets for flagged files', async () => {
     const result = await review({
       query: 'lock cache',

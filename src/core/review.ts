@@ -5,6 +5,7 @@ import type { EvidenceLine, ReviewFileResult, ReviewOptions, ReviewResult } from
 import { discoverFilesCached } from '../utils/discovery-cache.js';
 import { extractEvidence } from '../utils/evidence.js';
 import { getChangedFiles } from '../utils/git.js';
+import { resolveProfile } from '../utils/review-profiles.js';
 
 const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx}';
 const DEFAULT_IGNORE = ['node_modules/**', 'dist/**', '.git/**'];
@@ -41,7 +42,9 @@ function computeReductionPercent(savedTokens: number, fullTokens: number): numbe
 
 export async function review(options: ReviewOptions): Promise<ReviewResult> {
   const root = resolve(options.path ?? '.');
-  const globPattern = options.glob ?? DEFAULT_GLOB;
+  const profileConfig = resolveProfile(options.profile);
+  const globPattern = options.glob ?? profileConfig.glob;
+  const ignore = [...DEFAULT_IGNORE, ...profileConfig.extraIgnore];
   const maxResults = options.maxResults ?? DEFAULT_MAX_RESULTS;
   const pass1Tokens = options.pass1Tokens ?? DEFAULT_PASS1_TOKENS;
   const pass2Tokens = options.pass2Tokens ?? DEFAULT_PASS2_TOKENS;
@@ -51,7 +54,7 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
   const relFiles = await discoverFilesCached({
     root,
     globPattern,
-    ignore: DEFAULT_IGNORE,
+    ignore,
   });
   const absFiles = relFiles.map((file) => resolve(root, file));
 

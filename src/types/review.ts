@@ -2,6 +2,7 @@ export interface ReviewOptions {
   query: string;
   path?: string;
   glob?: string;
+  profile?: 'code' | 'full' | 'docs';
   maxResults?: number;
   pass1Tokens?: number;
   pass2Tokens?: number;

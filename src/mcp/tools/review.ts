@@ -8,6 +8,7 @@ export interface ReviewToolInput {
   query: string;
   path?: string;
   glob?: string;
+  profile?: 'code' | 'full' | 'docs';
   maxResults?: number;
   pass1Tokens?: number;
   pass2Tokens?: number;
@@ -33,6 +34,7 @@ export function registerReviewTool(server: McpServer): void {
         query: z.string().describe('Task description or review query'),
         path: z.string().optional().describe('Root directory to search (default: cwd)'),
         glob: z.string().optional().describe('File glob pattern (default: **/*.{ts,tsx,js,jsx})'),
+        profile: z.enum(['code', 'full', 'docs']).optional().describe('Scope preset: code (default), full, or docs'),
         maxResults: z.number().int().min(1).optional().describe('Max ranked files to review (default: 10)'),
         pass1Tokens: z.number().int().min(1).optional().describe('Pass-1 token budget per file (default: 600)'),
         pass2Tokens: z.number().int().min(1).optional().describe('Pass-2 token budget per file (default: 2000)'),
