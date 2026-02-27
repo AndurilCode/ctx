@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// PreToolUse hook: route noisy command output through compact.md prune.
+// PreToolUse hook: route noisy command output through ctx prune.
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
@@ -32,14 +32,14 @@ if (!isPruneCandidate(originalCommand)) {
 }
 
 const profile = detectProfile(originalCommand);
-const rewritten = `set -o pipefail; (${originalCommand}) 2>&1 | npx @anduril-code/compact.md prune --profile ${profile}`;
+const rewritten = `set -o pipefail; (${originalCommand}) 2>&1 | npx @anduril-code/ctx prune --profile ${profile}`;
 const updatedContainer = { ...container, [key]: rewritten };
 
 const result = {
   hookSpecificOutput: {
     hookEventName: 'PreToolUse',
     updatedInput: updatedContainer,
-    additionalContext: `[compact.md] Rewrote Bash command for log pruning (${profile}):\n${rewritten}`,
+    additionalContext: `[ctx] Rewrote Bash command for log pruning (${profile}):\n${rewritten}`,
   },
 };
 
@@ -71,7 +71,7 @@ function isPruneCandidate(command) {
   const normalized = command.replace(/\s+/g, ' ').trim();
   if (!normalized) return false;
 
-  if (/compact\.md\s+prune/.test(normalized) || /compact\.md\s+changes/.test(normalized))
+  if (/ctx\s+prune/.test(normalized) || /ctx\s+changes/.test(normalized))
     return false;
   if (/^git (diff|show)\b/.test(normalized)) return false;
 

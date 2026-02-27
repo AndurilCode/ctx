@@ -19,13 +19,13 @@
             "type": "command",
             "command": "node .claude/hooks/pretool-diff.mjs",
             "cwd": ".",
-            "statusMessage": "Rewriting diff commands through compact.md…"
+            "statusMessage": "Rewriting diff commands through ctx…"
           },
           {
             "type": "command",
             "command": "node .claude/hooks/pretool-prune-log.mjs",
             "cwd": ".",
-            "statusMessage": "Rewriting noisy commands through compact.md prune…"
+            "statusMessage": "Rewriting noisy commands through ctx prune…"
           }
         ]
       }

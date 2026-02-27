@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Agent hooks — portable across any project",
   "dependencies": {
-    "@anduril-code/compact.md": "^0.1.4",
+    "@anduril-code/ctx": "^0.1.4",
     "@toon-format/toon": "^2.1.0"
   }
 }

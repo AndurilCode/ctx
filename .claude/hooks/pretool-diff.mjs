@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// PreToolUse hook: rewrite git diff-like Bash commands through compact.md changes.
+// PreToolUse hook: rewrite git diff-like Bash commands through ctx changes.
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
@@ -29,20 +29,20 @@ if (!originalCommand) {
 
 if (
   !isPatchDiffCommand(originalCommand) ||
-  /compact\.md\s+changes/.test(originalCommand) ||
-  /npx\s+(@anduril-code\/)?compact\.md/.test(originalCommand)
+  /ctx\s+changes/.test(originalCommand) ||
+  /npx\s+(@anduril-code\/)?ctx/.test(originalCommand)
 ) {
   process.exit(0);
 }
 
-const rewritten = `${originalCommand} | npx @anduril-code/compact.md changes`;
+const rewritten = `${originalCommand} | npx @anduril-code/ctx changes`;
 const updatedContainer = { ...container, [key]: rewritten };
 
 const result = {
   hookSpecificOutput: {
     hookEventName: 'PreToolUse',
     updatedInput: updatedContainer,
-    additionalContext: `[compact.md] Rewrote Bash command for diff compression:\n${rewritten}`,
+    additionalContext: `[ctx] Rewrote Bash command for diff compression:\n${rewritten}`,
   },
 };
 
