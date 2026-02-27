@@ -8,84 +8,29 @@ Token-aware context management for AI agents.
 
 ---
 
-**ctx** gives AI agents a token-aware view of any codebase or document set. Instead of dumping raw files into a context window, agents can navigate structure, rank by relevance, extract only what they need, and compress what they carry — all through a single tool.
+Agents don't need to dump entire codebases into context. **ctx** gives them tools to navigate structure, rank by relevance, extract only what they need, and compress what they carry.
 
-It ships as a library, CLI, MCP server, and Claude Code skills.
-
----
-
-## Installation
-
-```bash
-npm install @anduril-code/ctx
-# or
-bun add @anduril-code/ctx
-```
+It ships as Claude Code skills, an MCP server, a CLI, and a library.
 
 ---
 
-## Library
+## Claude Code Skills
 
-```typescript
-import { compact, expand, verify } from '@anduril-code/ctx';
+The fastest way to get started. Three slash commands cover the main agent workflows:
 
-const result = compact(md);          // compress
-const restored = expand(result.output); // restore — identical to input
-verify(md);                          // true
-
-// With options
-const { output, stats } = compact(md, { dedup: true, semantic: true, stats: true });
-console.log(stats.savings);          // e.g. 0.38 (38% fewer tokens)
-```
-
-**Key exports:** `compact` · `expand` · `verify` · `compactDiff` · `pruneLog` · `createPipeline`
-
-See TypeScript types for full option references — all options have JSDoc descriptions.
-
----
-
-## CLI
-
-```bash
-npx @anduril-code/ctx <command> [options]
-```
-
-| Command | Description |
+| Command | When to use |
 |---|---|
-| `compact` | Compress a Markdown file (lossless) |
-| `expand` | Restore compact format back to Markdown |
-| `verify` | Assert lossless round-trip for a file |
-| `metrics` | Report token savings without writing output |
-| `changes` | Compress unified diff output |
-| `prune` | Lossy pruning for terminal/log/test output |
-| `sections` | List document sections with per-section token counts |
-| `locate` | Search sections by keyword |
-| `extract` | Pull specific sections verbatim |
-| `outline` | Structural code outline with line numbers |
-| `gather` | Auto-discover and assemble token-budgeted context |
-| `rank` | Rank files by relevance to a query |
-| `context` | Assemble context from an explicit file list |
-| `review` | Two-pass risk triage across ranked files |
-| `tree` | Directory tree with per-file token counts |
-| `imports` | Show import graph edges for a file |
-| `symbols` | Find symbol definitions and usage sites |
-| `summarize` | Abstractive LLM summary of a document |
-| `batch` | Summarize multiple files in one call |
+| `/ctx-explore [question or path]` | Navigate a codebase, research a topic, onboard to a new repo |
+| `/ctx-review [branch or range]` | Code review — compress diffs, outline changed files, surface risks |
+| `/ctx-test [command or file]` | Run tests — prune noisy output, highlight failures with structural context |
 
-```bash
-# Common patterns
-cat doc.md | ctx compact > compressed.cmd
-git diff | ctx changes --changes-only
-cat test.log | ctx prune --profile test --stats
-ctx gather "authentication flow" --maxTokens 2000
-ctx review "security issues" --diffBase main --evidence
-```
+Skills are installed automatically when you add ctx as a dependency.
 
 ---
 
 ## MCP Server
 
-Add to your MCP client config:
+For any MCP-compatible client (Claude Desktop, Cursor, etc.):
 
 ```json
 {
@@ -98,53 +43,83 @@ Add to your MCP client config:
 }
 ```
 
-Tools are grouped by fidelity — use the lowest fidelity that answers your question:
+Use the lowest-fidelity tool that answers your question:
 
-**Lossless** — `ctx_compact` · `ctx_expand` · `ctx_verify` · `ctx_metrics` · `ctx_changes` · `ctx_prune`
+**Navigation** _(start here for unknown documents)_
+`ctx_sections` · `ctx_locate`
 
-**Navigation** _(start here for unknown documents)_ — `ctx_sections` · `ctx_locate`
+**Code intelligence**
+`ctx_tree` · `ctx_rank` · `ctx_gather` · `ctx_context` · `ctx_outline` · `ctx_imports` · `ctx_symbols` · `ctx_review`
 
-**Extraction** _(verbatim, optionally truncated)_ — `ctx_extract`
+**Extraction & compression**
+`ctx_extract` · `ctx_compact` · `ctx_expand` · `ctx_changes` · `ctx_prune`
 
-**Code intelligence** — `ctx_outline` · `ctx_gather` · `ctx_context` · `ctx_rank` · `ctx_review` · `ctx_tree` · `ctx_imports` · `ctx_symbols`
+**AI summarization** _(lossy, cached)_
+`ctx_summarize` · `ctx_batch`
 
-**AI summarization** _(lossy, cached)_ — `ctx_summarize` · `ctx_batch`
-
-**Recommended reading workflow:**
+**Typical agent reading flow:**
 ```
-ctx_sections → ctx_extract (specific section) | ctx_summarize (gist) | ctx_compact (full doc)
+ctx_sections → budget the doc
+ctx_extract  → pull the sections you need
+ctx_compact  → compress if carrying the full doc
 ```
 
 ---
 
-## Claude Code Skills
+## CLI
 
-Three slash commands wire ctx into your Claude Code workflow:
+```bash
+npx @anduril-code/ctx <command> [options]
+```
 
-| Skill | Command | When to use |
-|---|---|---|
-| `ctx-explore` | `/ctx-explore [question or path]` | Codebase navigation, onboarding, topic search |
-| `ctx-review` | `/ctx-review [branch or range]` | Code review — compress diffs, surface risks |
-| `ctx-test` | `/ctx-test [command or file]` | Test runs — prune noisy output, highlight failures |
+```bash
+# Context assembly
+ctx gather "authentication flow" --maxTokens 2000
+ctx rank "error handling" --glob "**/*.ts"
+ctx tree src/ --depth 3
 
-Skills are installed automatically when you add ctx as a dependency. Each skill uses `npx @anduril-code/ctx` commands with a deterministic breadth-first flow.
+# Code intelligence
+ctx outline src/core/compact.ts
+ctx imports src/stages/tables.ts
+ctx symbols "compact" --kind function
+ctx review "security" --diffBase main --evidence
+
+# Document navigation
+ctx sections docs/api.md
+ctx extract docs/api.md --onlySections "Authentication"
+ctx summarize docs/api.md
+
+# Compression
+git diff | ctx changes --changes-only
+cat test.log | ctx prune --profile test
+cat doc.md | ctx compact | ctx expand   # round-trips exactly
+```
 
 ---
 
-## Compact Format
+## Library
 
-What changes: table separators and padding removed, ordered list numbers (`1.` → `+`), nested list indentation (spaces → `..` per level), task list brackets (`- [ ]` → `[]`), blank lines between consecutive blocks collapsed.
+For embedding compression primitives in your own pipeline:
 
-What passes through unchanged: headings, code blocks, paragraphs, blockquotes, inline formatting, links, images, frontmatter.
+```bash
+npm install @anduril-code/ctx
+```
 
-| Construct | Standard Markdown | ctx output |
-|---|---|---|
-| Ordered list item | `1. First` | `+ First` |
-| Nested list item | `··- Nested` | `..- Nested` |
-| Table header | `\| A \| B \|` + separator | `\|: A, B` |
-| Table row | `\| 1 \| 2 \|` | `\| 1, 2` |
-| Task (open) | `- [ ] Todo` | `[] Todo` |
-| Task (done) | `- [x] Done` | `[x] Done` |
+```typescript
+import { compact, expand, pruneLog, compactDiff } from '@anduril-code/ctx';
+
+// Lossless Markdown compression — expand(compact(md)) === md, always
+const { output, stats } = compact(md, { dedup: true, stats: true });
+console.log(stats.savings); // e.g. 0.38
+
+// Log pruning
+const { output: pruned } = pruneLog(testOutput, { profile: 'test' });
+
+// Diff compression
+const compressed = compactDiff(gitDiff, { changesOnly: true });
+```
+
+See TypeScript types for full option references.
 
 ---
 
@@ -162,9 +137,7 @@ bun run typecheck   # tsc --noEmit
 
 ## Contributing
 
-Read [`AGENTS.md`](AGENTS.md) before contributing — it documents the architecture, one-way dependency graph, and file-size rules.
-
-The compression path guarantees **lossless round-trip**: `expand(compact(md)) === md` for all inputs. When in doubt between two approaches, prefer the one that makes this easier to maintain.
+Read [`AGENTS.md`](AGENTS.md) — it documents the architecture, dependency rules, and invariants.
 
 ---
 
