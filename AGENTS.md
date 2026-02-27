@@ -92,6 +92,7 @@ Default to `compact_md_*` tools before raw file reads. Keep first-pass context s
 - NEVER add business logic to `src/cli/` or `src/mcp/` — they are thin adapters over `core/`.
 - ALWAYS keep `core/` free of runtime dependencies — it must stay zero-dep.
 - NEVER import from `cli/` or `mcp/` inside `core/`, `stages/`, `parser/`, or `types/`.
+- PITFALL: Claude Code PostToolUse hook `additionalContext` at top level is silently ignored → FIX: wrap in `hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: '...' }`.
 
 ## @Skills
 
@@ -101,7 +102,7 @@ Three agent skills in `.claude/skills/` expose compact.md workflows as slash com
 |---|---|---|---|
 | `compact-review` | `/compact-review [branch\|range]` | Code review — compress diffs, outline changed files, surface risks | `diff`, `code-outline` |
 | `compact-test` | `/compact-test [cmd\|file]` | Test runs — prune noisy output, highlight failures with structural context | `prune-log`, `code-outline` |
-| `compact-explore` | `/compact-explore [question\|path]` | Codebase navigation — token-aware reading, onboarding, topic search | `sections`, `extract`, `code-outline`, `search-sections`, `summarize` |
+| `compact-explore` | `/compact-explore [question\|path]` | Codebase navigation — token-aware reading, onboarding, topic search | `sections`, `extract`, `code-outline`, `gather` |
 
 ## @Memory
 
