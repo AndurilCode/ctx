@@ -59,6 +59,12 @@ export function mapNode(
       .match(/['"]([^'"]+)['"]/);
     return { kind: 'import', name: quoted?.[1] ?? text.slice(0, 80) };
   }
+  if (rawKind === 'export') {
+    if (node.childForFieldName('declaration')) return undefined;
+    const normalized = text.replace(/\s+/g, ' ').trim();
+    const quoted = normalized.match(/from\s+['"]([^'"]+)['"]/);
+    return { kind: 'export', name: quoted?.[1] ?? normalized.slice(0, 80) };
+  }
   if (rawKind === 'variable') {
     if (inCallable) return undefined;
     const fnVar = functionVariable(node);

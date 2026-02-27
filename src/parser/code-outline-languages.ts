@@ -32,6 +32,7 @@ export const EXTENSION_TO_LANGUAGE: Record<string, string> = {
 
 const TS_DECLS: OutlineLanguageConfig['declarationTypes'] = {
   import: ['import_statement'],
+  export: ['export_statement'],
   class: ['class_declaration', 'abstract_class_declaration'],
   interface: ['interface_declaration'],
   type: ['type_alias_declaration'],
@@ -43,6 +44,7 @@ const TS_DECLS: OutlineLanguageConfig['declarationTypes'] = {
 
 const JS_DECLS: OutlineLanguageConfig['declarationTypes'] = {
   import: ['import_statement'],
+  export: ['export_statement'],
   class: ['class_declaration'],
   function: ['function_declaration'],
   method: ['method_definition'],

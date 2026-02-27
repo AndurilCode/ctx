@@ -57,8 +57,9 @@ export function formatOutlineOutput(params: {
   const collapseImports = params.collapseImports ?? true;
   const topLevel = params.nodes.filter((n) => n.startLine >= 1);
   const imports = topLevel.filter((n) => n.kind === 'import');
-  const nonImports = topLevel.filter((n) => n.kind !== 'import');
-  const grouped = groupByKind(nonImports);
+  const exports = topLevel.filter((n) => n.kind === 'export');
+  const declarations = topLevel.filter((n) => n.kind !== 'import' && n.kind !== 'export');
+  const grouped = groupByKind(declarations);
   const lines = [`${params.pathLabel}  (${params.totalLines} lines, ${params.language})`, ''];
 
   if (imports.length > 0) {
@@ -68,6 +69,19 @@ export function formatOutlineOutput(params: {
     } else {
       lines.push('Imports:');
       for (const item of sortByLine(imports)) {
+        lines.push(`  ${item.name}  ${formatRange(item)}`);
+      }
+      lines.push('');
+    }
+  }
+
+  if (exports.length > 0) {
+    if (collapseImports) {
+      const names = sortByLine(exports).map((item) => item.name);
+      lines.push(`Exports: ${names.join(', ')} (${exports.length} exports)`, '');
+    } else {
+      lines.push('Exports:');
+      for (const item of sortByLine(exports)) {
         lines.push(`  ${item.name}  ${formatRange(item)}`);
       }
       lines.push('');
