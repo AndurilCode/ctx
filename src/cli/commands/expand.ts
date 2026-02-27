@@ -11,7 +11,7 @@ function toMdFileName(inputPath: string): string {
 export const expandCommand = defineCommand({
   meta: {
     name: 'expand',
-    description: 'Expand compact.md format back to markdown.',
+    description: 'Expand compact format back to markdown.',
   },
   args: {
     input: {

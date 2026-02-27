@@ -19,7 +19,7 @@ export function registerUnpackTool(server: McpServer): void {
     'ctx_expand',
     {
       description:
-        'Expand compact.md text back to markdown. Use after ctx_compact; do not use for arbitrary non-compact text.',
+        'Expand compact text back to markdown. Use after ctx_compact; do not use for arbitrary non-compact text.',
       inputSchema: {
         compact: z.string(),
         tableDelimiter: z.string().optional(),

@@ -45,7 +45,7 @@ async function runCompact({
 export const compactCommand = defineCommand({
   meta: {
     name: 'compact',
-    description: 'Compress markdown into compact.md format.',
+    description: 'Compress markdown into compact format.',
   },
   args: {
     input: {

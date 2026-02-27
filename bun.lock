@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "compact.md",
+      "name": "@anduril-code/ctx",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.27.0",
         "citty": "^0.1.6",

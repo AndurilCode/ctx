@@ -22,7 +22,7 @@ export function registerPackTool(server: McpServer): void {
     'ctx_compact',
     {
       description:
-        'Losslessly compress markdown into compact.md format. Use when reversibility matters; do not use for aggressive lossy reduction (use ctx_summarize or ctx_extract).',
+        'Losslessly compress markdown into compact format. Use when reversibility matters; do not use for aggressive lossy reduction (use ctx_summarize or ctx_extract).',
       inputSchema: packLikeInputSchema,
     },
     async (input) => runPackTool(input),
