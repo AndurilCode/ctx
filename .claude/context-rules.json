@@ -6,27 +6,17 @@
       "path": "src/stages/**"
     },
     "inject": {
-      "text": "AGENTS.md @Map: stages/ must operate on AST nodes ONLY. NEVER manipulate raw strings here; string ops belong in src/utils/text.ts."
+      "text": "Stages must operate on AST nodes ONLY. String ops belong in src/utils/text.ts."
     }
   },
   {
     "on": "PreToolUse",
     "when": {
       "tool": "Write|Edit|MultiEdit",
-      "path": "src/core/compact.ts"
+      "path": "src/core/**"
     },
     "inject": {
-      "text": "AGENTS.md @Map: src/core/compact.ts is WIRING ONLY. NEVER add business logic here; it belongs in stages/ or parser/."
-    }
-  },
-  {
-    "on": "PreToolUse",
-    "when": {
-      "tool": "Write|Edit|MultiEdit",
-      "path": "src/core/expand.ts"
-    },
-    "inject": {
-      "text": "AGENTS.md @Map: src/core/expand.ts is WIRING ONLY. NEVER add business logic here; it belongs in stages/ or parser/."
+      "text": "core/ files are WIRING ONLY — no business logic. Must stay zero-dep (no runtime dependencies)."
     }
   },
   {
@@ -36,17 +26,17 @@
       "path": "src/{cli,mcp}/**"
     },
     "inject": {
-      "text": "AGENTS.md @Rules: cli/ and mcp/ are THIN ADAPTERS only. NEVER add business logic here. Keep core/ zero-dep; no runtime dependencies."
+      "text": "cli/ and mcp/ are thin adapters over core/. No business logic here."
     }
   },
   {
     "on": "PreToolUse",
     "when": {
-      "tool": "Write|Edit|MultiEdit",
-      "path": "src/{core,stages,parser,types}/**"
+      "tool": "Write",
+      "path": "src/{core,stages,parser,types,utils}/**"
     },
     "inject": {
-      "text": "AGENTS.md @Rules: NEVER import from cli/ or mcp/ inside core/, stages/, parser/, or types/. Reverse imports cause silent circular dependency failures."
+      "text": "Dependency flow is one-way: types/ → utils/ → stages/ & parser/ → core/ → cli/ & mcp/. Never import from cli/ or mcp/ here."
     }
   },
   {
@@ -56,7 +46,17 @@
       "path": ".claude/hooks/**"
     },
     "inject": {
-      "text": "AGENTS.md PITFALL: PostToolUse hook additionalContext at top level is silently ignored. FIX: wrap in hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: '...' }."
+      "text": "PITFALL: PostToolUse additionalContext at top level is silently ignored. Wrap in hookSpecificOutput: { hookEventName, additionalContext }."
+    }
+  },
+  {
+    "on": "PostToolUse",
+    "when": {
+      "tool": "Read",
+      "path": "src/parser/**"
+    },
+    "inject": {
+      "hint": "src/types/ — AST node types used by the parser are defined here"
     }
   },
   {
@@ -65,16 +65,27 @@
       "prompt": "expand|compact|round.trip|lossless|round_trip"
     },
     "inject": {
-      "text": "AGENTS.md @Context: Primary invariant is lossless round-trip: expand(compact(md)) === md for ALL inputs. Prefer approaches that guarantee round-trip over higher compression."
+      "text": "Primary invariant: expand(compact(md)) === md for ALL inputs. Prefer approaches that guarantee round-trip over higher compression."
     }
   },
   {
-    "on": "UserPromptSubmit",
+    "on": "PreToolUse",
     "when": {
-      "prompt": "install|add.*dep|npm|yarn|pnpm|eslint|prettier"
+      "tool": "Bash",
+      "command": "\\b(npm|yarn|pnpm)\\s+(install|add|run|test|exec)\\b"
     },
     "inject": {
-      "text": "AGENTS.md @Stack: Use BUN (not npm/pnpm/yarn). Use BIOME for linting/formatting (not eslint+prettier). Do not add those tools."
+      "text": "WRONG TOOL: use BUN, not npm/yarn/pnpm. Rewrite the command with bun."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Bash",
+      "command": "\\b(eslint|prettier)\\b"
+    },
+    "inject": {
+      "text": "WRONG TOOL: use BIOME for linting/formatting, not eslint/prettier."
     }
   }
 ]
