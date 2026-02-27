@@ -46,6 +46,25 @@ describe('review', () => {
     }
   });
 
+  test('cluster: true groups flagged files by matched risk term', async () => {
+    const result = await review({
+      query: 'lock cache',
+      glob: 'src/utils/*cache.ts',
+      maxResults: 5,
+      riskTerms: ['lock', 'cache'],
+      cluster: true,
+    });
+    expect(result.clusters).toBeDefined();
+    expect(Array.isArray(result.clusters)).toBe(true);
+    const clusters = result.clusters ?? [];
+    if (clusters.length > 0) {
+      const first = clusters[0];
+      expect(first?.term).toBeTruthy();
+      expect(Array.isArray(first?.files)).toBe(true);
+      expect(first?.count).toBe(first?.files.length);
+    }
+  });
+
   test('evidence: true returns line-anchored snippets for flagged files', async () => {
     const result = await review({
       query: 'lock cache',

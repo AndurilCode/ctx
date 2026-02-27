@@ -1,6 +1,7 @@
 import { relative, resolve } from 'node:path';
 import type {
   EvidenceLine,
+  ReviewCluster,
   ReviewFileResult,
   ReviewOptions,
   ReviewResult,
@@ -124,6 +125,21 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
   const twoPassTokens = pass1Used + pass2Used;
   const savedTokens = fullTokens - twoPassTokens;
 
+  let clusters: ReviewCluster[] | undefined;
+  if (options.cluster) {
+    const termMap = new Map<string, string[]>();
+    for (const f of files) {
+      if (!f.flagged || f.matchedRiskTerms.length === 0) continue;
+      const term = f.matchedRiskTerms[0] as string;
+      const existing = termMap.get(term) ?? [];
+      existing.push(f.file);
+      termMap.set(term, existing);
+    }
+    clusters = [...termMap.entries()]
+      .map(([term, fileList]) => ({ term, files: fileList, count: fileList.length }))
+      .sort((a, b) => b.count - a.count);
+  }
+
   return {
     query: options.query,
     root,
@@ -138,5 +154,6 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
       savedTokens,
       reductionPercent: computeReductionPercent(savedTokens, fullTokens),
     },
+    ...(clusters !== undefined ? { clusters } : {}),
   };
 }

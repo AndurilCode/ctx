@@ -17,6 +17,7 @@ export interface ReviewToolInput {
   evidence?: boolean;
   changedFiles?: string[];
   diffBase?: string;
+  cluster?: boolean;
 }
 
 export async function runReviewTool(input: ReviewToolInput): Promise<CallToolResult> {
@@ -43,6 +44,7 @@ export function registerReviewTool(server: McpServer): void {
         evidence: z.boolean().optional().describe('Include line-anchored evidence snippets for flagged files (default: false)'),
         changedFiles: z.array(z.string()).optional().describe('File paths to boost in ranking (e.g. from active diff)'),
         diffBase: z.string().optional().describe('Git ref to derive changed files from (e.g. "HEAD~1", "main")'),
+        cluster: z.boolean().optional().describe('Group flagged files by matched risk term (default: false)'),
       },
     },
     async (input) => runReviewTool(input),

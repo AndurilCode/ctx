@@ -11,6 +11,7 @@ export interface ReviewOptions {
   evidence?: boolean;
   changedFiles?: string[];  // absolute or relative paths to boost
   diffBase?: string;        // git ref to derive changedFiles from (e.g. 'HEAD~1', 'main')
+  cluster?: boolean;
 }
 
 export interface EvidenceLine {
@@ -42,10 +43,17 @@ export interface ReviewTotals {
   reductionPercent: number;
 }
 
+export interface ReviewCluster {
+  term: string;
+  files: string[];
+  count: number;
+}
+
 export interface ReviewResult {
   query: string;
   root: string;
   glob: string;
   files: ReviewFileResult[];
   totals: ReviewTotals;
+  clusters?: ReviewCluster[];
 }

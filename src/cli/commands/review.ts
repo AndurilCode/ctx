@@ -68,6 +68,12 @@ export const reviewCommand = defineCommand({
       required: false,
       description: 'Git ref to derive changed files from (e.g. HEAD~1)',
     },
+    cluster: {
+      type: 'boolean',
+      required: false,
+      default: false,
+      description: 'Group flagged files by matched risk term',
+    },
   },
   async run({ args }) {
     const riskTerms = args.riskTerms
@@ -88,6 +94,7 @@ export const reviewCommand = defineCommand({
       maxPass2Files: Number(args.maxPass2Files),
       riskTerms,
       evidence: args.evidence === true,
+      cluster: args.cluster === true,
       changedFiles: args.changedFiles
         ? String(args.changedFiles)
             .split(',')
