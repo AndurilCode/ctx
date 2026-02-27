@@ -1,16 +1,16 @@
 ---
-name: compact-explore
-description: Explore documentation and code using compact.md tools for token-aware navigation. Use when understanding files, researching a topic, or onboarding to a codebase.
+name: ctx-explore
+description: Explore documentation and code using ctx tools for token-aware navigation. Use when understanding files, researching a topic, or onboarding to a codebase.
 argument-hint: "[question, topic, or file path]"
 ---
 
-# Compact Explore
+# Ctx Explore
 
 Navigate docs/code with a strict breadth-first flow and seeded context.
 
 ## Tools
 
-Use `npx @anduril-code/compact.md` CLI commands.
+Use `npx @anduril-code/ctx` CLI commands.
 
 | Command | Input | Purpose |
 |---|---|---|
@@ -27,7 +27,7 @@ Use `npx @anduril-code/compact.md` CLI commands.
 | `extract [--only <heading>] [--strip <heading>] <FILE>` | Markdown | Extract exact section content |
 | `locate <QUERY> [FILES...]` | Markdown | Find headings matching a query across files |
 
-All commands are invoked as `npx @anduril-code/compact.md <command>`.
+All commands are invoked as `npx @anduril-code/ctx <command>`.
 
 ## Default seed set
 
