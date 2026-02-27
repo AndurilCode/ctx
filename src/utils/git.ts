@@ -9,6 +9,7 @@ export function getChangedFiles(root: string, diffBase: string): string[] {
   const result = spawnSync('git', ['diff', '--name-only', diffBase], {
     cwd: resolve(root),
     encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024,
   });
   if (result.status !== 0 || !result.stdout) return [];
   return result.stdout

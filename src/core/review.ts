@@ -81,7 +81,7 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
 
   const rawChanged =
     options.changedFiles ?? (options.diffBase ? getChangedFiles(root, options.diffBase) : []);
-  const changedSet = new Set(rawChanged.map((f) => resolve(f)));
+  const changedSet = new Set(rawChanged.map((f) => resolve(root, f)));
 
   const CHANGED_BOOST = 2;
   const candidates =
