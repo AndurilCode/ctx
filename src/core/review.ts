@@ -1,12 +1,17 @@
 import { relative, resolve } from 'node:path';
 import type {
   EvidenceLine,
+  ReviewCacheMetadata,
   ReviewCluster,
   ReviewFileResult,
   ReviewOptions,
   ReviewResult,
 } from '../types/review.js';
-import { discoverFilesCached } from '../utils/discovery-cache.js';
+import {
+  computeDiscoveryCacheKey,
+  discoverFilesCached,
+  getDiscoveryCacheStats,
+} from '../utils/discovery-cache.js';
 import { extractEvidence } from '../utils/evidence.js';
 import { getChangedFiles } from '../utils/git.js';
 import { resolveProfile } from '../utils/review-profiles.js';
@@ -55,11 +60,17 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
   const maxPass2Files = options.maxPass2Files ?? DEFAULT_MAX_PASS2_FILES;
   const riskTerms = normalizeRiskTerms(options.riskTerms);
 
+  const statsBefore = getDiscoveryCacheStats();
   const relFiles = await discoverFilesCached({
     root,
     globPattern,
     ignore,
   });
+  const statsAfter = getDiscoveryCacheStats();
+  const cacheMetadata: ReviewCacheMetadata = {
+    hit: statsAfter.hits > statsBefore.hits,
+    key: computeDiscoveryCacheKey(root, globPattern, ignore),
+  };
   const absFiles = relFiles.map((file) => resolve(root, file));
 
   const ranked = await relevance({
@@ -155,5 +166,6 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
       reductionPercent: computeReductionPercent(savedTokens, fullTokens),
     },
     ...(clusters !== undefined ? { clusters } : {}),
+    cacheMetadata,
   };
 }

@@ -49,6 +49,11 @@ export interface ReviewCluster {
   count: number;
 }
 
+export interface ReviewCacheMetadata {
+  hit: boolean;
+  key: string;
+}
+
 export interface ReviewResult {
   query: string;
   root: string;
@@ -56,4 +61,5 @@ export interface ReviewResult {
   files: ReviewFileResult[];
   totals: ReviewTotals;
   clusters?: ReviewCluster[];
+  cacheMetadata?: ReviewCacheMetadata;
 }

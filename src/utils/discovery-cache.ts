@@ -173,3 +173,17 @@ export function _resetDiscoveryCacheForTesting(path?: string): void {
 export function _getDiscoveryCacheStatsForTesting(): { hits: number; misses: number } {
   return { ...stats };
 }
+
+/** Public API: cumulative cache hit/miss counts for this process invocation. */
+export function getDiscoveryCacheStats(): { hits: number; misses: number } {
+  return { ...stats };
+}
+
+/** Public API: compute the cache lookup key for a root/glob/ignore combination. */
+export function computeDiscoveryCacheKey(
+  root: string,
+  globPattern: string,
+  ignore: string[],
+): string {
+  return cacheKey(root, globPattern, ignore);
+}

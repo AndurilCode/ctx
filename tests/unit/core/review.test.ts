@@ -65,6 +65,17 @@ describe('review', () => {
     }
   });
 
+  test('result includes cache metadata', async () => {
+    const result = await review({
+      query: 'lock cache',
+      glob: 'src/utils/*cache.ts',
+      maxResults: 2,
+    });
+    expect(result.cacheMetadata).toBeDefined();
+    expect(typeof result.cacheMetadata!.hit).toBe('boolean');
+    expect(result.cacheMetadata!.key).toBeTruthy();
+  });
+
   test('evidence: true returns line-anchored snippets for flagged files', async () => {
     const result = await review({
       query: 'lock cache',
