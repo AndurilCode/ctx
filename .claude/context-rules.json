@@ -1,1 +1,80 @@
-[]
+[
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit",
+      "path": "src/stages/**"
+    },
+    "inject": {
+      "text": "AGENTS.md @Map: stages/ must operate on AST nodes ONLY. NEVER manipulate raw strings here; string ops belong in src/utils/text.ts."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit",
+      "path": "src/core/compact.ts"
+    },
+    "inject": {
+      "text": "AGENTS.md @Map: src/core/compact.ts is WIRING ONLY. NEVER add business logic here; it belongs in stages/ or parser/."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit",
+      "path": "src/core/expand.ts"
+    },
+    "inject": {
+      "text": "AGENTS.md @Map: src/core/expand.ts is WIRING ONLY. NEVER add business logic here; it belongs in stages/ or parser/."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit",
+      "path": "src/{cli,mcp}/**"
+    },
+    "inject": {
+      "text": "AGENTS.md @Rules: cli/ and mcp/ are THIN ADAPTERS only. NEVER add business logic here. Keep core/ zero-dep; no runtime dependencies."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit",
+      "path": "src/{core,stages,parser,types}/**"
+    },
+    "inject": {
+      "text": "AGENTS.md @Rules: NEVER import from cli/ or mcp/ inside core/, stages/, parser/, or types/. Reverse imports cause silent circular dependency failures."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit",
+      "path": ".claude/hooks/**"
+    },
+    "inject": {
+      "text": "AGENTS.md PITFALL: PostToolUse hook additionalContext at top level is silently ignored. FIX: wrap in hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: '...' }."
+    }
+  },
+  {
+    "on": "UserPromptSubmit",
+    "when": {
+      "prompt": "expand|compact|round.trip|lossless|round_trip"
+    },
+    "inject": {
+      "text": "AGENTS.md @Context: Primary invariant is lossless round-trip: expand(compact(md)) === md for ALL inputs. Prefer approaches that guarantee round-trip over higher compression."
+    }
+  },
+  {
+    "on": "UserPromptSubmit",
+    "when": {
+      "prompt": "install|add.*dep|npm|yarn|pnpm|eslint|prettier"
+    },
+    "inject": {
+      "text": "AGENTS.md @Stack: Use BUN (not npm/pnpm/yarn). Use BIOME for linting/formatting (not eslint+prettier). Do not add those tools."
+    }
+  }
+]
