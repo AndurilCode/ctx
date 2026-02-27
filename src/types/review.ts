@@ -8,6 +8,8 @@ export interface ReviewOptions {
   maxPass2Files?: number;
   riskTerms?: string[];
   evidence?: boolean;
+  changedFiles?: string[];  // absolute or relative paths to boost
+  diffBase?: string;        // git ref to derive changedFiles from (e.g. 'HEAD~1', 'main')
 }
 
 export interface EvidenceLine {

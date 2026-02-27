@@ -21,6 +21,17 @@ describe('review', () => {
     expect(result.root.length).toBeGreaterThan(0);
   });
 
+  test('changedFiles boosts matching files in results', async () => {
+    const result = await review({
+      query: 'lock cache',
+      glob: 'src/utils/*cache.ts',
+      maxResults: 5,
+      changedFiles: ['src/utils/discovery-cache.ts'],
+    });
+    const changed = result.files.find((f) => f.file.includes('discovery-cache'));
+    expect(changed).toBeDefined();
+  });
+
   test('evidence: true returns line-anchored snippets for flagged files', async () => {
     const result = await review({
       query: 'lock cache',

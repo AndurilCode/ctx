@@ -4,6 +4,7 @@ import { relevance } from './relevance.js';
 import type { EvidenceLine, ReviewFileResult, ReviewOptions, ReviewResult } from '../types/review.js';
 import { discoverFilesCached } from '../utils/discovery-cache.js';
 import { extractEvidence } from '../utils/evidence.js';
+import { getChangedFiles } from '../utils/git.js';
 
 const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx}';
 const DEFAULT_IGNORE = ['node_modules/**', 'dist/**', '.git/**'];
@@ -60,11 +61,21 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
     maxResults,
   });
 
+  const rawChanged = options.changedFiles ?? (options.diffBase ? getChangedFiles(root, options.diffBase) : []);
+  const changedSet = new Set(rawChanged.map((f) => resolve(f)));
+
+  const CHANGED_BOOST = 2;
+  const candidates = changedSet.size > 0
+    ? [...ranked.results]
+        .map((r) => ({ ...r, score: changedSet.has(r.file) ? r.score * CHANGED_BOOST : r.score }))
+        .sort((a, b) => b.score - a.score)
+    : ranked.results;
+
   const cwd = resolve('.');
   const files: ReviewFileResult[] = [];
   let pass2Count = 0;
 
-  for (const candidate of ranked.results) {
+  for (const candidate of candidates) {
     const displayFile = relative(cwd, candidate.file);
     const pass1 = await budgetedRead({ file: candidate.file, maxTokens: pass1Tokens });
     const matched = matchedRiskTerms(pass1.content, riskTerms);

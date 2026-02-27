@@ -14,6 +14,8 @@ export interface ReviewToolInput {
   maxPass2Files?: number;
   riskTerms?: string[];
   evidence?: boolean;
+  changedFiles?: string[];
+  diffBase?: string;
 }
 
 export async function runReviewTool(input: ReviewToolInput): Promise<CallToolResult> {
@@ -37,6 +39,8 @@ export function registerReviewTool(server: McpServer): void {
         maxPass2Files: z.number().int().min(0).optional().describe('Max files to escalate to pass-2 (default: 3)'),
         riskTerms: z.array(z.string()).optional().describe('Override risk terms used for pass-2 escalation'),
         evidence: z.boolean().optional().describe('Include line-anchored evidence snippets for flagged files (default: false)'),
+        changedFiles: z.array(z.string()).optional().describe('File paths to boost in ranking (e.g. from active diff)'),
+        diffBase: z.string().optional().describe('Git ref to derive changed files from (e.g. "HEAD~1", "main")'),
       },
     },
     async (input) => runReviewTool(input),
