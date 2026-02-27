@@ -73,23 +73,39 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
   };
   const absFiles = relFiles.map((file) => resolve(root, file));
 
+  // Resolve changed files before relevance so they're in the candidate pool
+  const rawChanged =
+    options.changedFiles ?? (options.diffBase ? getChangedFiles(root, options.diffBase) : []);
+  const changedSet = new Set(rawChanged.map((f) => resolve(root, f)));
+
+  // Merge changed files into discovery set so relevance() can score them
+  const absFileSet = new Set(absFiles);
+  for (const cf of changedSet) {
+    if (!absFileSet.has(cf)) absFiles.push(cf);
+  }
+
   const ranked = await relevance({
     query: options.query,
     files: absFiles,
     maxResults,
   });
 
-  const rawChanged =
-    options.changedFiles ?? (options.diffBase ? getChangedFiles(root, options.diffBase) : []);
-  const changedSet = new Set(rawChanged.map((f) => resolve(root, f)));
-
+  const CHANGED_FLOOR = 0.1;
   const CHANGED_BOOST = 2;
+
+  // Inject changed files that were filtered out by relevance (scored 0)
+  const rankedSet = new Set(ranked.results.map((r) => r.file));
+  const injected = [...changedSet]
+    .filter((f) => !rankedSet.has(f))
+    .map((f) => ({ file: f, score: CHANGED_FLOOR, matches: [] }));
+  const allCandidates = [...ranked.results, ...injected];
+
   const candidates =
     changedSet.size > 0
-      ? [...ranked.results]
+      ? allCandidates
           .map((r) => ({ ...r, score: changedSet.has(r.file) ? r.score * CHANGED_BOOST : r.score }))
           .sort((a, b) => b.score - a.score)
-      : ranked.results;
+      : allCandidates;
 
   const cwd = resolve('.');
   const files: ReviewFileResult[] = [];

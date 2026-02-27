@@ -32,6 +32,17 @@ describe('review', () => {
     expect(changed).toBeDefined();
   });
 
+  test('changedFiles with zero query overlap still appear in results', async () => {
+    const result = await review({
+      query: 'completely unrelated xyzzy query',
+      glob: 'src/utils/review-profiles.ts',
+      maxResults: 5,
+      changedFiles: ['src/utils/review-profiles.ts'],
+    });
+    const changed = result.files.find((f) => f.file.includes('review-profiles'));
+    expect(changed).toBeDefined();
+  });
+
   test('profile: docs restricts results to markdown files', async () => {
     const result = await review({
       query: 'study plan',
