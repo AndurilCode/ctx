@@ -1,0 +1,11 @@
+{
+  "name": "@andurilcode/hooks",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Agent hooks — portable across any project",
+  "dependencies": {
+    "@anduril-code/compact.md": "^0.1.4",
+    "@toon-format/toon": "^2.1.0"
+  }
+}

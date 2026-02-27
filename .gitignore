@@ -7,6 +7,5 @@ coverage/
 .env.*
 !.env.example
 .cursor/
-.claude/
 docs/
 .serena/

@@ -1,0 +1,58 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/pretool-check-loc.mjs",
+            "cwd": ".",
+            "statusMessage": "Checking projected line count…"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/pretool-diff.mjs",
+            "cwd": ".",
+            "statusMessage": "Rewriting diff commands through compact.md…"
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/pretool-prune-log.mjs",
+            "cwd": ".",
+            "statusMessage": "Rewriting noisy commands through compact.md prune…"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp_.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/mcp-to-toon.mjs",
+            "cwd": ".",
+            "statusMessage": "Converting MCP output to TOON…"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/mcp-to-toon.mjs",
+            "cwd": ".",
+            "statusMessage": "Converting JSON output to TOON…"
+          }
+        ]
+      }
+    ]
+  }
+}
