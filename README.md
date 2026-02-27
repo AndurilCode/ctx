@@ -1,39 +1,16 @@
 # ctx
 
-Token-efficient Markdown compression and document intelligence for agent pipelines.
+Token-aware context management for AI agents.
 
 [![npm version](https://img.shields.io/npm/v/@anduril-code/ctx)](https://www.npmjs.com/package/@anduril-code/ctx)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![node >=20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
-[![bun >=1.3](https://img.shields.io/badge/bun-%3E%3D1.3-brightgreen)](package.json)
 
 ---
 
-## Why ctx
+**ctx** gives AI agents a token-aware view of any codebase or document set. Instead of dumping raw files into a context window, agents can navigate structure, rank by relevance, extract only what they need, and compress what they carry — all through a single tool.
 
-Markdown has become the lingua franca of AI agents, but it wastes 30–50% of tokens on formatting syntax: table borders, heading markers, repetitive delimiters, whitespace padding. Every token spent on structure is a token not spent on content.
-
-**ctx** gives agents a spectrum of strategies for fitting more useful content into a context window:
-
-- **Lossless compression** — `compact()`/`expand()` deterministically encode and decode Markdown with zero information loss. `expand(compact(md)) === md`, always.
-- **Targeted extraction** — pull out only the sections an agent needs, with optional truncation limits.
-- **AI summarization** — abstractive LLM summaries (~200 tokens by default) for breadth-first exploration of large docs, with results cached so repeated calls are free.
-
-The library and CLI expose the lossless path. The MCP server exposes all three.
-
----
-
-## Features
-
-- **Lossless round-trip** — `expand(compact(md)) === md`, always, verified by property tests
-- **30–50% token reduction** on typical agent documents (lossless path)
-- **Zero runtime dependencies** for the core encode/decode path
-- **Library + CLI + MCP server** — one package, three interfaces
-- **Stage-based pipeline** — structural, whitespace, dedup, and semantic stages, each independently toggleable
-- **Readable without expansion** — compact format is parseable by LLMs even before expanding
-- **Section navigation** — list document structure with per-section token counts before loading any content
-- **Targeted extraction** — retrieve specific sections verbatim with character/row/item truncation limits
-- **AI summarization** — LLM-powered abstractive summaries with `docType`-aware prompts and in-process caching
+It ships as a library, CLI, MCP server, and Claude Code skills.
 
 ---
 
@@ -47,134 +24,27 @@ bun add @anduril-code/ctx
 
 ---
 
-## Quick Start
+## Library
 
 ```typescript
 import { compact, expand, verify } from '@anduril-code/ctx';
 
-const md = `# Project Status
+const result = compact(md);          // compress
+const restored = expand(result.output); // restore — identical to input
+verify(md);                          // true
 
-## Tasks
-
-- [x] Database migration
-- [ ] Frontend integration
-
-| Name  | Role    | Status |
-|-------|---------|--------|
-| Alice | Lead    | Active |
-| Bob   | Backend | Active |
-`;
-
-const result = compact(md);
-console.log(result.output);
-// # Project Status
-// ## Tasks
-// [x] Database migration
-// [] Frontend integration
-// |: Name, Role, Status
-// | Alice, Lead, Active
-// | Bob, Backend, Active
-
-const restored = expand(result.output);
-// restored === md  ✓
-
-console.log(verify(md)); // true
+// With options
+const { output, stats } = compact(md, { dedup: true, semantic: true, stats: true });
+console.log(stats.savings);          // e.g. 0.38 (38% fewer tokens)
 ```
 
-**With options and stats:**
+**Key exports:** `compact` · `expand` · `verify` · `compactDiff` · `pruneLog` · `createPipeline`
 
-```typescript
-const { output, stats } = compact(md, {
-  dedup: true,
-  semantic: true,
-  stats: true,
-});
-
-console.log(stats.savings); // e.g. 0.38 (38% fewer tokens)
-```
+See TypeScript types for full option references — all options have JSDoc descriptions.
 
 ---
 
-## API Reference
-
-### Library
-
-```typescript
-import { compact, compactDiff, expand, pruneLog, verify, createPipeline } from '@anduril-code/ctx';
-```
-
-#### `compact(markdown, options?): CompactResult`
-
-Compresses a Markdown string. Returns `{ output: string, stats? }`.
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `dedup` | `boolean` | `false` | Enable deduplication stage (dictionary substitution for repeated substrings) |
-| `semantic` | `boolean` | `false` | Enable semantic stage (strip redundant markup, normalize unicode punctuation) |
-| `keepComments` | `boolean` | `false` | Preserve HTML comments (stripped by default) |
-| `onlySections` | `string[]` | — | Keep only the listed heading sections |
-| `stripSections` | `string[]` | — | Remove the listed heading sections |
-| `unwrapLines` | `boolean` | `false` | Join soft-wrapped paragraph lines into a single line |
-| `tableDelimiter` | `string` | `","` | Cell delimiter used in compact table rows |
-| `versionMarker` | `boolean` | `false` | Prepend `%ctx:1` version header |
-| `stats` | `boolean` | `false` | Compute and return token-saving statistics |
-
-#### `expand(compactText, options?): string`
-
-Expands compact format back to standard Markdown.
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `tableDelimiter` | `string` | `","` | Cell delimiter used when reading compact table rows |
-
-#### `verify(markdown, options?): boolean`
-
-Returns `true` if `expand(compact(markdown)) === markdown`.
-
-#### `compactDiff(diffText, options?): string`
-
-Compresses unified git diff text (lossy, one-way). Useful for PR review and change analysis.
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `context` | `number` | `1` | Context lines to keep around changed lines (`0` strips all context) |
-| `compactHeaders` | `boolean` | `true` | Replace `diff/index/---/+++` header block with `=== path` |
-| `changesOnly` | `boolean` | `false` | Emit only file path + changed lines (`+`/`-`) |
-
-#### `pruneLog(logText, options?): LogPruneResult`
-
-Lossy log/terminal output pruning for test, build, and CI output.
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `stripAnsi` | `boolean` | `true` | Strip ANSI and terminal control sequences |
-| `foldProgress` | `boolean` | `true` | Fold spinner/progress runs |
-| `stripTimestamps` | `'auto' \| 'strip' \| 'keep'` | `'auto'` | Timestamp pruning mode |
-| `elidePassingTests` | `boolean` | `true` | Remove passing tests when failures exist |
-| `foldDebugLines` | `boolean` | `true` | Fold debug-level log lines into a summary count |
-| `elideHealthChecks` | `boolean` | `true` | Remove `/health`/`/readyz`-style noise |
-| `foldJsonLines` | `boolean` | `true` | Aggregate JSON-per-line logs by severity |
-| `foldFrameworkStartup` | `boolean` | `true` | Fold startup banner and boot boilerplate |
-| `stripUserAgents` | `boolean` | `true` | Replace long user-agent strings with `<ua>` |
-| `dedupeStackTraces` | `boolean` | `true` | Collapse repeated stack traces in retry loops |
-| `foldRepeatedLines` | `boolean` | `true` | Fold repetitive normalized lines |
-| `foldGlobalRepeats` | `boolean` | `true` | Fold non-consecutive repeated normalized lines |
-| `allowTokenExpansion` | `boolean` | `false` | Keep transformed output even if token count increases |
-| `thresholdTokens` | `number` | — | Optional token gate threshold metadata |
-| `profile` | `'test' \| 'ci' \| 'lint' \| 'runtime'` | — | Preset pruning strategy; can be overridden by explicit options |
-| `customRules` | `LogCustomRule[]` | — | Optional strip/fold/block rules |
-
-`pruneLog()` also accepts an optional `tokenCounter` (`{ count(text): number }`) for custom tokenization parity in no-regression decisions.
-
-#### `createPipeline(stages): Pipeline`
-
-Assembles a custom pipeline from an ordered array of `Stage` objects for advanced use cases.
-
----
-
-### CLI
-
-Install globally or run via `npx`:
+## CLI
 
 ```bash
 npx @anduril-code/ctx <command> [options]
@@ -182,43 +52,38 @@ npx @anduril-code/ctx <command> [options]
 
 | Command | Description |
 |---|---|
-| `compact` | Compress a Markdown file to compact format |
-| `changes` | Compress unified diff output for lower token usage |
-| `prune` | Lossy prune of terminal/log output |
-| `expand` | Expand a compact format file back to Markdown |
-| `extract` | Extract and compress specific sections only |
+| `compact` | Compress a Markdown file (lossless) |
+| `expand` | Restore compact format back to Markdown |
 | `verify` | Assert lossless round-trip for a file |
 | `metrics` | Report token savings without writing output |
-| `sections` | List the heading sections in a document |
+| `changes` | Compress unified diff output |
+| `prune` | Lossy pruning for terminal/log/test output |
+| `sections` | List document sections with per-section token counts |
 | `locate` | Search sections by keyword |
+| `extract` | Pull specific sections verbatim |
+| `outline` | Structural code outline with line numbers |
+| `gather` | Auto-discover and assemble token-budgeted context |
+| `rank` | Rank files by relevance to a query |
+| `context` | Assemble context from an explicit file list |
+| `review` | Two-pass risk triage across ranked files |
+| `tree` | Directory tree with per-file token counts |
+| `imports` | Show import graph edges for a file |
+| `symbols` | Find symbol definitions and usage sites |
+| `summarize` | Abstractive LLM summary of a document |
+| `batch` | Summarize multiple files in one call |
 
 ```bash
-# Compress
-ctx compact input.md -o output.cmd
-
-# Expand
-ctx expand output.cmd -o restored.md
-
-# Verify round-trip
-ctx verify input.md
-
-# Stats only
-ctx metrics input.md
-
-# Pipe-friendly
+# Common patterns
 cat doc.md | ctx compact > compressed.cmd
 git diff | ctx changes --changes-only
-cat test-output.log | ctx prune --stats
-cat lint.log | ctx prune --profile lint --stats
-cat server.log | ctx prune --profile runtime
-
-# With options
-ctx compact input.md --dedup --semantic --stats
+cat test.log | ctx prune --profile test --stats
+ctx gather "authentication flow" --maxTokens 2000
+ctx review "security issues" --diffBase main --evidence
 ```
 
 ---
 
-### MCP Server
+## MCP Server
 
 Add to your MCP client config:
 
@@ -233,94 +98,63 @@ Add to your MCP client config:
 }
 ```
 
-The MCP server exposes a spectrum of token-reduction strategies. Tools are grouped below by fidelity tier — from lossless to AI-summarized:
+Tools are grouped by fidelity — use the lowest fidelity that answers your question:
 
-**Lossless compression**
+**Lossless** — `ctx_compact` · `ctx_expand` · `ctx_verify` · `ctx_metrics` · `ctx_changes` · `ctx_prune`
 
-| Tool | Description |
-|---|---|
-| `ctx_compact` | Compress Markdown to compact format — fully reversible |
-| `ctx_expand` | Expand compact format back to standard Markdown |
-| `ctx_verify` | Assert that round-trip is lossless for a given input |
-| `ctx_metrics` | Report token savings without writing any output |
-| `ctx_changes` | Compress unified git diff text (one-way, lossy) |
-| `ctx_prune` | Lossy pruning for logs/terminal output with token gate + optional summarize fallback |
+**Navigation** _(start here for unknown documents)_ — `ctx_sections` · `ctx_locate`
 
-**Section navigation** _(start here for unknown documents)_
+**Extraction** _(verbatim, optionally truncated)_ — `ctx_extract`
 
-| Tool | Description |
-|---|---|
-| `ctx_sections` | List the section TOC with per-section token counts — use this first to budget context before loading content |
-| `ctx_locate` | Search sections by keyword to find relevant content without reading the whole document |
+**Code intelligence** — `ctx_outline` · `ctx_gather` · `ctx_context` · `ctx_rank` · `ctx_review` · `ctx_tree` · `ctx_imports` · `ctx_symbols`
 
-**Targeted extraction** _(verbatim content, optionally truncated)_
+**AI summarization** _(lossy, cached)_ — `ctx_summarize` · `ctx_batch`
 
-| Tool | Description |
-|---|---|
-| `ctx_extract` | Retrieve exact section content, with optional `maxChars` / `maxListItems` / `maxTableRows` truncation |
-
-**AI summarization** _(lossy, cached, higher token reduction)_
-
-| Tool | Description |
-|---|---|
-| `ctx_summarize` | Abstractive LLM summary (~200 tokens by default). Supports `docType`: `auto` \| `guide` \| `reference` \| `spec`. Results are cached — repeated calls on unchanged files are instant. |
-| `ctx_batch` | Summarize multiple files in parallel in a single round-trip. Ideal for repo onboarding. |
-
-**Recommended agent workflow**
-
+**Recommended reading workflow:**
 ```
-1. ctx_sections          → see document structure + token sizes
-2a. doc is small (<500 tokens)  → read it directly
-2b. need a high-level gist      → ctx_summarize
-2c. need a specific section     → ctx_extract with onlySections
-2d. need compressed full doc    → ctx_compact
+ctx_sections → ctx_extract (specific section) | ctx_summarize (gist) | ctx_compact (full doc)
 ```
 
 ---
 
-## Compact Format Reference
+## Claude Code Skills
 
-Every transformation is lossless and reverses exactly on `expand`. Most of the token savings come from tables, list syntax, and tight block packing — not from rewriting every construct.
+Three slash commands wire ctx into your Claude Code workflow:
+
+| Skill | Command | When to use |
+|---|---|---|
+| `ctx-explore` | `/ctx-explore [question or path]` | Codebase navigation, onboarding, topic search |
+| `ctx-review` | `/ctx-review [branch or range]` | Code review — compress diffs, surface risks |
+| `ctx-test` | `/ctx-test [command or file]` | Test runs — prune noisy output, highlight failures |
+
+Skills are installed automatically when you add ctx as a dependency. Each skill uses `npx @anduril-code/ctx` commands with a deterministic breadth-first flow.
+
+---
+
+## Compact Format
+
+What changes: table separators and padding removed, ordered list numbers (`1.` → `+`), nested list indentation (spaces → `..` per level), task list brackets (`- [ ]` → `[]`), blank lines between consecutive blocks collapsed.
+
+What passes through unchanged: headings, code blocks, paragraphs, blockquotes, inline formatting, links, images, frontmatter.
 
 | Construct | Standard Markdown | ctx output |
 |---|---|---|
-| Heading | `## Section` | `## Section` _(unchanged)_ |
 | Ordered list item | `1. First` | `+ First` |
-| Nested unordered item | `··- Nested` _(2-space indent)_ | `..- Nested` |
-| Table header row | `\| A \| B \|` + `\|---|---|` separator | `\|: A, B` |
-| Table data row | `\| 1 \| 2 \|` | `\| 1, 2` |
-| Task list (incomplete) | `- [ ] Todo` | `[] Todo` |
-| Task list (complete) | `- [x] Done` | `[x] Done` |
-| Code fence | ` ```python … ``` ` | ` ```python … ``` ` _(unchanged)_ |
-| Horizontal rule | `---` | `---` _(unchanged)_ |
-| Version marker (optional) | — | `%ctx:1` |
-
-**What changes:** tables (separator row and padding eliminated), ordered list numbers (`1.` → `+`), nested list indentation (spaces → `..` per level), and task list brackets (`- [ ]` → `[]`). Consecutive compact blocks (headings, tables, HR) are also tightly packed with a single newline between them instead of a blank line.
-
-**What passes through unchanged:** headings, code blocks, horizontal rules, paragraphs, blockquotes, bold, italic, inline code, links, images, and frontmatter.
-
-> **Note:** The parser also accepts a shorthand heading syntax (`:1 Title`, `:2 Section`, …) and single-backtick code fences (`` `python … ` ``) for manually authored compact input, but `compact()` does not produce these forms.
-
-### Dedup dictionary
-
-When `dedup: true` and savings exceed 5%, repeated substrings are replaced with `§N` tokens and a dictionary is prepended:
-
-```
-§1=repeated substring here
-§2=another repeated phrase
-§§
-(rest of compact content)
-```
+| Nested list item | `··- Nested` | `..- Nested` |
+| Table header | `\| A \| B \|` + separator | `\|: A, B` |
+| Table row | `\| 1 \| 2 \|` | `\| 1, 2` |
+| Task (open) | `- [ ] Todo` | `[] Todo` |
+| Task (done) | `- [x] Done` | `[x] Done` |
 
 ---
 
 ## Development
 
 ```bash
-bun install         # install dependencies
-bun test            # run tests
-bun run build       # compile ESM + CJS + type declarations
-bun run lint        # biome check (lint + format)
+bun install
+bun test
+bun run build       # ESM + CJS + type declarations
+bun run lint        # biome check
 bun run typecheck   # tsc --noEmit
 ```
 
@@ -328,12 +162,10 @@ bun run typecheck   # tsc --noEmit
 
 ## Contributing
 
-Read [`AGENTS.md`](AGENTS.md) before contributing — it documents the architecture invariants, the one-way dependency graph, and the rules that keep files small and the core zero-dependency.
+Read [`AGENTS.md`](AGENTS.md) before contributing — it documents the architecture, one-way dependency graph, and file-size rules.
 
-The primary invariant is **lossless round-trip**: `expand(compact(md)) === md` for all inputs, always. When in doubt between two approaches, prefer the one that makes this guarantee easier to maintain.
+The compression path guarantees **lossless round-trip**: `expand(compact(md)) === md` for all inputs. When in doubt between two approaches, prefer the one that makes this easier to maintain.
 
 ---
-
-## License
 
 MIT
