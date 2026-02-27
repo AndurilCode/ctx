@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { autoContext } from '../../../src/core/auto-context.js';
@@ -64,6 +64,30 @@ describe('autoContext', () => {
       const utilEntry = result.selectedFiles.find((f) => f.file.includes('util'));
       expect(utilEntry).toBeDefined();
       expect(utilEntry?.priority).toBe('low');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('directory seed expands without EISDIR', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'compact-md-dir-seed-'));
+    const sub = join(dir, 'sub');
+    await mkdir(sub, { recursive: true });
+    await writeFile(join(sub, 'alpha.ts'), 'export function alpha() {}', 'utf8');
+    await writeFile(join(sub, 'beta.ts'), 'export function beta() {}', 'utf8');
+    try {
+      const result = await autoContext({
+        query: 'alpha',
+        path: dir,
+        seeds: ['sub'],
+        maxTokens: 5000,
+        glob: '**/*.ts',
+      });
+      const expanded = result.expandedSeeds;
+      expect(expanded).toBeDefined();
+      expect(expanded!.length).toBeGreaterThan(0);
+      expect(expanded![0]!.original).toBe('sub');
+      expect(expanded![0]!.files.length).toBeGreaterThan(0);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

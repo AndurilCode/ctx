@@ -1,5 +1,12 @@
+import { stat } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
-import type { AutoContextOptions, AutoContextResult, SelectedFile } from '../types/auto-context.js';
+import fg from 'fast-glob';
+import type {
+  AutoContextOptions,
+  AutoContextResult,
+  ExpandedSeed,
+  SelectedFile,
+} from '../types/auto-context.js';
 import type { ContextSource } from '../types/context.js';
 import { discoverFilesCached } from '../utils/discovery-cache.js';
 import { extractOutgoingEdges } from '../utils/import-resolver.js';
@@ -108,8 +115,44 @@ export async function autoContext(options: AutoContextOptions): Promise<AutoCont
 
   const fileMap = new Map<string, RankedCandidate>();
 
+  const expandedSeeds: ExpandedSeed[] = [];
+
   for (const seed of options.seeds ?? []) {
-    fileMap.set(resolve(root, seed), { score: 100, priority: 'high' });
+    const absSeed = resolve(root, seed);
+    let isDir = false;
+    try {
+      const s = await stat(absSeed);
+      isDir = s.isDirectory();
+    } catch {
+      // Non-existent or unreadable — treat as file
+    }
+
+    if (isDir) {
+      const relFiles = await fg(globPattern, {
+        cwd: absSeed,
+        ignore: DEFAULT_IGNORE,
+        onlyFiles: true,
+      });
+      const absFiles = relFiles.map((f) => resolve(absSeed, f));
+      if (absFiles.length > 0) {
+        const { results: ranked } = await relevance({
+          query: options.query,
+          files: absFiles,
+          maxResults: absFiles.length,
+        });
+        for (const match of ranked) {
+          if (!fileMap.has(match.file)) {
+            fileMap.set(match.file, {
+              score: Math.max(match.score, HIGH_SCORE_THRESHOLD),
+              priority: 'high',
+            });
+          }
+        }
+        expandedSeeds.push({ original: seed, files: absFiles });
+      }
+    } else {
+      fileMap.set(absSeed, { score: 100, priority: 'high' });
+    }
   }
 
   for (const match of scored) {
@@ -144,5 +187,6 @@ export async function autoContext(options: AutoContextOptions): Promise<AutoCont
     ...context,
     query: options.query,
     selectedFiles,
+    ...(expandedSeeds.length > 0 ? { expandedSeeds } : {}),
   };
 }

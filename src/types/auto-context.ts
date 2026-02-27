@@ -16,6 +16,11 @@ export interface SelectedFile {
   priority: 'high' | 'normal' | 'low';
 }
 
+export interface ExpandedSeed {
+  original: string; // the directory path that was expanded
+  files: string[]; // absolute paths of files found inside
+}
+
 export interface AutoContextResult {
   content: string;
   totalTokens: number;
@@ -23,4 +28,5 @@ export interface AutoContextResult {
   query: string;
   sources: ContextSourceResult[];
   selectedFiles: SelectedFile[];
+  expandedSeeds?: ExpandedSeed[];
 }
