@@ -1,19 +1,19 @@
-# compact.md
+# ctx
 
 Token-efficient Markdown compression and document intelligence for agent pipelines.
 
-[![npm version](https://img.shields.io/npm/v/compact.md)](https://www.npmjs.com/package/compact.md)
+[![npm version](https://img.shields.io/npm/v/@anduril-code/ctx)](https://www.npmjs.com/package/@anduril-code/ctx)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![node >=20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
 [![bun >=1.3](https://img.shields.io/badge/bun-%3E%3D1.3-brightgreen)](package.json)
 
 ---
 
-## Why compact.md
+## Why ctx
 
 Markdown has become the lingua franca of AI agents, but it wastes 30–50% of tokens on formatting syntax: table borders, heading markers, repetitive delimiters, whitespace padding. Every token spent on structure is a token not spent on content.
 
-**compact.md** gives agents a spectrum of strategies for fitting more useful content into a context window:
+**ctx** gives agents a spectrum of strategies for fitting more useful content into a context window:
 
 - **Lossless compression** — `compact()`/`expand()` deterministically encode and decode Markdown with zero information loss. `expand(compact(md)) === md`, always.
 - **Targeted extraction** — pull out only the sections an agent needs, with optional truncation limits.
@@ -40,9 +40,9 @@ The library and CLI expose the lossless path. The MCP server exposes all three.
 ## Installation
 
 ```bash
-npm install compact.md
+npm install @anduril-code/ctx
 # or
-bun add compact.md
+bun add @anduril-code/ctx
 ```
 
 ---
@@ -50,7 +50,7 @@ bun add compact.md
 ## Quick Start
 
 ```typescript
-import { compact, expand, verify } from 'compact.md';
+import { compact, expand, verify } from '@anduril-code/ctx';
 
 const md = `# Project Status
 
@@ -100,7 +100,7 @@ console.log(stats.savings); // e.g. 0.38 (38% fewer tokens)
 ### Library
 
 ```typescript
-import { compact, compactDiff, expand, pruneLog, verify, createPipeline } from 'compact.md';
+import { compact, compactDiff, expand, pruneLog, verify, createPipeline } from '@anduril-code/ctx';
 ```
 
 #### `compact(markdown, options?): CompactResult`
@@ -116,12 +116,12 @@ Compresses a Markdown string. Returns `{ output: string, stats? }`.
 | `stripSections` | `string[]` | — | Remove the listed heading sections |
 | `unwrapLines` | `boolean` | `false` | Join soft-wrapped paragraph lines into a single line |
 | `tableDelimiter` | `string` | `","` | Cell delimiter used in compact table rows |
-| `versionMarker` | `boolean` | `false` | Prepend `%compact.md:1` version header |
+| `versionMarker` | `boolean` | `false` | Prepend `%ctx:1` version header |
 | `stats` | `boolean` | `false` | Compute and return token-saving statistics |
 
 #### `expand(compactText, options?): string`
 
-Expands compact.md format back to standard Markdown.
+Expands compact format back to standard Markdown.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -177,15 +177,15 @@ Assembles a custom pipeline from an ordered array of `Stage` objects for advance
 Install globally or run via `npx`:
 
 ```bash
-npx compact.md <command> [options]
+npx @anduril-code/ctx <command> [options]
 ```
 
 | Command | Description |
 |---|---|
-| `compact` | Compress a Markdown file to compact.md format |
+| `compact` | Compress a Markdown file to compact format |
 | `changes` | Compress unified diff output for lower token usage |
 | `prune` | Lossy prune of terminal/log output |
-| `expand` | Expand a compact.md file back to Markdown |
+| `expand` | Expand a compact format file back to Markdown |
 | `extract` | Extract and compress specific sections only |
 | `verify` | Assert lossless round-trip for a file |
 | `metrics` | Report token savings without writing output |
@@ -194,26 +194,26 @@ npx compact.md <command> [options]
 
 ```bash
 # Compress
-compact.md compact input.md -o output.cmd
+ctx compact input.md -o output.cmd
 
 # Expand
-compact.md expand output.cmd -o restored.md
+ctx expand output.cmd -o restored.md
 
 # Verify round-trip
-compact.md verify input.md
+ctx verify input.md
 
 # Stats only
-compact.md metrics input.md
+ctx metrics input.md
 
 # Pipe-friendly
-cat doc.md | compact.md compact > compressed.cmd
-git diff | compact.md changes --changes-only
-cat test-output.log | compact.md prune --stats
-cat lint.log | compact.md prune --profile lint --stats
-cat server.log | compact.md prune --profile runtime
+cat doc.md | ctx compact > compressed.cmd
+git diff | ctx changes --changes-only
+cat test-output.log | ctx prune --stats
+cat lint.log | ctx prune --profile lint --stats
+cat server.log | ctx prune --profile runtime
 
 # With options
-compact.md compact input.md --dedup --semantic --stats
+ctx compact input.md --dedup --semantic --stats
 ```
 
 ---
@@ -225,9 +225,9 @@ Add to your MCP client config:
 ```json
 {
   "mcpServers": {
-    "compact-md": {
+    "ctx": {
       "command": "npx",
-      "args": ["compact-md-mcp"]
+      "args": ["ctx-mcp"]
     }
   }
 }
@@ -239,41 +239,41 @@ The MCP server exposes a spectrum of token-reduction strategies. Tools are group
 
 | Tool | Description |
 |---|---|
-| `compact_md_compact` | Compress Markdown to compact.md format — fully reversible |
-| `compact_md_expand` | Expand compact.md format back to standard Markdown |
-| `compact_md_verify` | Assert that round-trip is lossless for a given input |
-| `compact_md_metrics` | Report token savings without writing any output |
-| `compact_md_changes` | Compress unified git diff text (one-way, lossy) |
-| `compact_md_prune` | Lossy pruning for logs/terminal output with token gate + optional summarize fallback |
+| `ctx_compact` | Compress Markdown to compact format — fully reversible |
+| `ctx_expand` | Expand compact format back to standard Markdown |
+| `ctx_verify` | Assert that round-trip is lossless for a given input |
+| `ctx_metrics` | Report token savings without writing any output |
+| `ctx_changes` | Compress unified git diff text (one-way, lossy) |
+| `ctx_prune` | Lossy pruning for logs/terminal output with token gate + optional summarize fallback |
 
 **Section navigation** _(start here for unknown documents)_
 
 | Tool | Description |
 |---|---|
-| `compact_md_sections` | List the section TOC with per-section token counts — use this first to budget context before loading content |
-| `compact_md_locate` | Search sections by keyword to find relevant content without reading the whole document |
+| `ctx_sections` | List the section TOC with per-section token counts — use this first to budget context before loading content |
+| `ctx_locate` | Search sections by keyword to find relevant content without reading the whole document |
 
 **Targeted extraction** _(verbatim content, optionally truncated)_
 
 | Tool | Description |
 |---|---|
-| `compact_md_extract` | Retrieve exact section content, with optional `maxChars` / `maxListItems` / `maxTableRows` truncation |
+| `ctx_extract` | Retrieve exact section content, with optional `maxChars` / `maxListItems` / `maxTableRows` truncation |
 
 **AI summarization** _(lossy, cached, higher token reduction)_
 
 | Tool | Description |
 |---|---|
-| `compact_md_summarize` | Abstractive LLM summary (~200 tokens by default). Supports `docType`: `auto` \| `guide` \| `reference` \| `spec`. Results are cached — repeated calls on unchanged files are instant. |
-| `compact_md_batch` | Summarize multiple files in parallel in a single round-trip. Ideal for repo onboarding. |
+| `ctx_summarize` | Abstractive LLM summary (~200 tokens by default). Supports `docType`: `auto` \| `guide` \| `reference` \| `spec`. Results are cached — repeated calls on unchanged files are instant. |
+| `ctx_batch` | Summarize multiple files in parallel in a single round-trip. Ideal for repo onboarding. |
 
 **Recommended agent workflow**
 
 ```
-1. compact_md_sections          → see document structure + token sizes
+1. ctx_sections          → see document structure + token sizes
 2a. doc is small (<500 tokens)  → read it directly
-2b. need a high-level gist      → compact_md_summarize
-2c. need a specific section     → compact_md_extract with onlySections
-2d. need compressed full doc    → compact_md_compact
+2b. need a high-level gist      → ctx_summarize
+2c. need a specific section     → ctx_extract with onlySections
+2d. need compressed full doc    → ctx_compact
 ```
 
 ---
@@ -282,7 +282,7 @@ The MCP server exposes a spectrum of token-reduction strategies. Tools are group
 
 Every transformation is lossless and reverses exactly on `expand`. Most of the token savings come from tables, list syntax, and tight block packing — not from rewriting every construct.
 
-| Construct | Standard Markdown | compact.md output |
+| Construct | Standard Markdown | ctx output |
 |---|---|---|
 | Heading | `## Section` | `## Section` _(unchanged)_ |
 | Ordered list item | `1. First` | `+ First` |
@@ -293,7 +293,7 @@ Every transformation is lossless and reverses exactly on `expand`. Most of the t
 | Task list (complete) | `- [x] Done` | `[x] Done` |
 | Code fence | ` ```python … ``` ` | ` ```python … ``` ` _(unchanged)_ |
 | Horizontal rule | `---` | `---` _(unchanged)_ |
-| Version marker (optional) | — | `%compact.md:1` |
+| Version marker (optional) | — | `%ctx:1` |
 
 **What changes:** tables (separator row and padding eliminated), ordered list numbers (`1.` → `+`), nested list indentation (spaces → `..` per level), and task list brackets (`- [ ]` → `[]`). Consecutive compact blocks (headings, tables, HR) are also tightly packed with a single newline between them instead of a blank line.
 

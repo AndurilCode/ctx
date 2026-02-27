@@ -51,9 +51,9 @@ Token-efficient Markdown compression library. The primary invariant is **lossles
 
 ## @HighSignal
 
-Default to `compact_md_*` tools before raw file reads. Keep first-pass context small, then expand only where blocked.
+Default to `ctx_*` tools before raw file reads. Keep first-pass context small, then expand only where blocked.
 
-### Seed set (use first in `compact_md_gather` / `compact_md_context`)
+### Seed set (use first in `ctx_gather` / `ctx_context`)
 
 - `AGENTS.md`
 - `src/core/compact.ts`
@@ -81,8 +81,8 @@ Default to `compact_md_*` tools before raw file reads. Keep first-pass context s
 
 ### Evidence policy
 
-- Use `compact_md_read` for triage only
-- For claims/findings, require line-anchored evidence via `compact_md_code_outline` or `rg -n` + `sed -n`
+- Use `ctx_read` for triage only
+- For claims/findings, require line-anchored evidence via `ctx_code_outline` or `rg -n` + `sed -n`
 - Prefer `rg -F` for literal snippets (especially escaped text like `\\n`); use `-U/--multiline` only for true multiline regex
 - No recommendation without file path and line reference
 
@@ -96,13 +96,13 @@ Default to `compact_md_*` tools before raw file reads. Keep first-pass context s
 
 ## @Skills
 
-Three agent skills in `.claude/skills/` expose compact.md workflows as slash commands. Each skill uses `npx @anduril-code/compact.md` CLI commands.
+Three agent skills in `.claude/skills/` expose ctx workflows as slash commands. Each skill uses `npx @anduril-code/ctx` CLI commands.
 
 | Skill | Slash command | When to use | Key CLI commands |
 |---|---|---|---|
-| `compact-review` | `/compact-review [branch\|range]` | Code review — compress diffs, outline changed files, surface risks | `changes`, `outline`, `review`, `imports`, `symbols` |
-| `compact-test` | `/compact-test [cmd\|file]` | Test runs — prune noisy output, highlight failures with structural context | `prune`, `outline`, `symbols` |
-| `compact-explore` | `/compact-explore [question\|path]` | Codebase navigation — token-aware reading, onboarding, topic search | `gather`, `rank`, `outline`, `sections`, `extract`, `locate`, `imports`, `symbols` |
+| `ctx-review` | `/ctx-review [branch\|range]` | Code review — compress diffs, outline changed files, surface risks | `changes`, `outline`, `review`, `imports`, `symbols` |
+| `ctx-test` | `/ctx-test [cmd\|file]` | Test runs — prune noisy output, highlight failures with structural context | `prune`, `outline`, `symbols` |
+| `ctx-explore` | `/ctx-explore [question\|path]` | Codebase navigation — token-aware reading, onboarding, topic search | `gather`, `rank`, `outline`, `sections`, `extract`, `locate`, `imports`, `symbols` |
 
 ## @Memory
 
