@@ -39,7 +39,7 @@ describe('review', () => {
       maxResults: 5,
     });
     // When profile is 'docs', the effective glob should only match markdown
-    expect(result.glob).toMatch(/\.md/);
+    expect(result.glob).toContain('md');
     // If any files are found, they should all be markdown
     for (const file of result.files) {
       expect(file.file).toMatch(/\.(md|mdx|markdown)$/);

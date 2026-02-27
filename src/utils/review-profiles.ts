@@ -15,7 +15,7 @@ const PROFILES: Record<ReviewProfile, ProfileConfig> = {
     extraIgnore: [],
   },
   docs: {
-    glob: '**/*.md',
+    glob: '**/*.{md,mdx,markdown}',
     extraIgnore: [],
   },
 };
