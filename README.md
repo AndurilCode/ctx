@@ -24,7 +24,15 @@ The fastest way to get started. Three slash commands cover the main agent workfl
 | `/ctx-review [branch or range]` | Code review — compress diffs, outline changed files, surface risks |
 | `/ctx-test [command or file]` | Run tests — prune noisy output, highlight failures with structural context |
 
-Skills are installed automatically when you add ctx as a dependency.
+**Install via add-skill:**
+
+```bash
+# All ctx skills
+npx add-skill AndurilCode/ctx
+
+# Or pick specific ones
+npx add-skill AndurilCode/ctx --skill ctx-explore --skill ctx-review --skill ctx-test
+```
 
 ---
 
