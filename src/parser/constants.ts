@@ -1,1 +1,1 @@
-export const VERSION_MARKER = '%compact.md:1';
+export const VERSION_MARKER = '%ctx:1';
