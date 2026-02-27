@@ -1,13 +1,16 @@
 import { relative, resolve } from 'node:path';
-import { budgetedRead } from './read.js';
-import { relevance } from './relevance.js';
-import type { EvidenceLine, ReviewFileResult, ReviewOptions, ReviewResult } from '../types/review.js';
+import type {
+  EvidenceLine,
+  ReviewFileResult,
+  ReviewOptions,
+  ReviewResult,
+} from '../types/review.js';
 import { discoverFilesCached } from '../utils/discovery-cache.js';
 import { extractEvidence } from '../utils/evidence.js';
 import { getChangedFiles } from '../utils/git.js';
 import { resolveProfile } from '../utils/review-profiles.js';
-
-const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx}';
+import { budgetedRead } from './read.js';
+import { relevance } from './relevance.js';
 const DEFAULT_IGNORE = ['node_modules/**', 'dist/**', '.git/**'];
 const DEFAULT_MAX_RESULTS = 10;
 const DEFAULT_PASS1_TOKENS = 600;
@@ -64,15 +67,17 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
     maxResults,
   });
 
-  const rawChanged = options.changedFiles ?? (options.diffBase ? getChangedFiles(root, options.diffBase) : []);
+  const rawChanged =
+    options.changedFiles ?? (options.diffBase ? getChangedFiles(root, options.diffBase) : []);
   const changedSet = new Set(rawChanged.map((f) => resolve(f)));
 
   const CHANGED_BOOST = 2;
-  const candidates = changedSet.size > 0
-    ? [...ranked.results]
-        .map((r) => ({ ...r, score: changedSet.has(r.file) ? r.score * CHANGED_BOOST : r.score }))
-        .sort((a, b) => b.score - a.score)
-    : ranked.results;
+  const candidates =
+    changedSet.size > 0
+      ? [...ranked.results]
+          .map((r) => ({ ...r, score: changedSet.has(r.file) ? r.score * CHANGED_BOOST : r.score }))
+          .sort((a, b) => b.score - a.score)
+      : ranked.results;
 
   const cwd = resolve('.');
   const files: ReviewFileResult[] = [];

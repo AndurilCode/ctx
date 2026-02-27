@@ -8,17 +8,66 @@ export const reviewCommand = defineCommand({
   },
   args: {
     query: { type: 'positional', required: true, description: 'Task or review query' },
-    path: { type: 'string', required: false, description: 'Root directory to search (default: cwd)' },
-    glob: { type: 'string', required: false, description: 'File pattern (default: **/*.{ts,tsx,js,jsx})' },
-    profile: { type: 'string', required: false, description: 'Scope preset: code (default), full, docs' },
-    maxResults: { type: 'string', required: false, default: '10', description: 'Max ranked files to review' },
-    pass1Tokens: { type: 'string', required: false, default: '600', description: 'Pass-1 token budget per file' },
-    pass2Tokens: { type: 'string', required: false, default: '2000', description: 'Pass-2 token budget per file' },
-    maxPass2Files: { type: 'string', required: false, default: '3', description: 'Max files to escalate to pass-2' },
-    riskTerms: { type: 'string', required: false, description: 'Comma-separated risk terms override' },
-    evidence: { type: 'boolean', required: false, default: false, description: 'Include line-anchored evidence for flagged files' },
-    changedFiles: { type: 'string', required: false, description: 'Comma-separated changed file paths to boost' },
-    diffBase: { type: 'string', required: false, description: 'Git ref to derive changed files from (e.g. HEAD~1)' },
+    path: {
+      type: 'string',
+      required: false,
+      description: 'Root directory to search (default: cwd)',
+    },
+    glob: {
+      type: 'string',
+      required: false,
+      description: 'File pattern (default: **/*.{ts,tsx,js,jsx})',
+    },
+    profile: {
+      type: 'string',
+      required: false,
+      description: 'Scope preset: code (default), full, docs',
+    },
+    maxResults: {
+      type: 'string',
+      required: false,
+      default: '10',
+      description: 'Max ranked files to review',
+    },
+    pass1Tokens: {
+      type: 'string',
+      required: false,
+      default: '600',
+      description: 'Pass-1 token budget per file',
+    },
+    pass2Tokens: {
+      type: 'string',
+      required: false,
+      default: '2000',
+      description: 'Pass-2 token budget per file',
+    },
+    maxPass2Files: {
+      type: 'string',
+      required: false,
+      default: '3',
+      description: 'Max files to escalate to pass-2',
+    },
+    riskTerms: {
+      type: 'string',
+      required: false,
+      description: 'Comma-separated risk terms override',
+    },
+    evidence: {
+      type: 'boolean',
+      required: false,
+      default: false,
+      description: 'Include line-anchored evidence for flagged files',
+    },
+    changedFiles: {
+      type: 'string',
+      required: false,
+      description: 'Comma-separated changed file paths to boost',
+    },
+    diffBase: {
+      type: 'string',
+      required: false,
+      description: 'Git ref to derive changed files from (e.g. HEAD~1)',
+    },
   },
   async run({ args }) {
     const riskTerms = args.riskTerms
@@ -39,7 +88,12 @@ export const reviewCommand = defineCommand({
       maxPass2Files: Number(args.maxPass2Files),
       riskTerms,
       evidence: args.evidence === true,
-      changedFiles: args.changedFiles ? String(args.changedFiles).split(',').map((f) => f.trim()).filter(Boolean) : undefined,
+      changedFiles: args.changedFiles
+        ? String(args.changedFiles)
+            .split(',')
+            .map((f) => f.trim())
+            .filter(Boolean)
+        : undefined,
       diffBase: args.diffBase ? String(args.diffBase) : undefined,
     });
 
