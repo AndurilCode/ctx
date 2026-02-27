@@ -63,14 +63,15 @@ implicit AND), and an `inject` payload (exactly one key).
 
 Runs by default (and always first, even when invoked with `add`).
 
-1. Read `AGENTS.md` — extract `@Rules`, `@Map`, `@HighSignal` sections.
-2. Run `npx @anduril-code/ctx tree --depth 2` for source layout.
-3. Run `npx @anduril-code/ctx rank "architecture constraints" --maxResults 5` for key docs.
-4. Read `.claude/hooks/` — list existing hooks to avoid duplicating covered behavior.
-5. Derive candidate rules by looking for these signals:
-   - `@Map` constraints tied to directories → `PreToolUse` text rules on matching paths
-   - Docs files adjacent to source dirs → `PostToolUse` hint rules
-   - Test invariants mentioned in `AGENTS.md` → `PreToolUse` Bash reminder rules
+1. **Understand the project layout** — read `README.md`, `CLAUDE.md`, `AGENTS.md`, or any top-level doc file that exists. Extract architecture constraints, module boundaries, invariants, and conventions (whatever format the project uses).
+2. **Map the source tree** — run `npx @anduril-code/ctx tree --depth 2` to see directory structure and identify key source dirs, doc dirs, and config dirs.
+3. **Find key docs** — run `npx @anduril-code/ctx rank "architecture constraints" --maxResults 5` to surface high-signal documentation.
+4. **List existing hooks** — read `.claude/hooks/` to understand what is already covered and avoid duplicating it.
+5. **Derive candidate rules** by looking for these generic signals:
+   - Directories described as having specific constraints (e.g. "no side effects here", "read-only", "thin adapter") → `PreToolUse` text rules on matching paths
+   - Doc files that are clearly about specific source dirs (e.g. `docs/parser.md` next to `src/parser/`) → `PostToolUse` hint rules triggered when those source files are read
+   - Core invariants mentioned in docs (test contracts, data format guarantees, encoding rules) → `UserPromptSubmit` rules matching relevant keywords
+   - Stack/toolchain constraints (which package manager, linter, formatter, test runner) → `UserPromptSubmit` rules matching alternative tool names
 6. Present a numbered list with one-line rationale per candidate rule.
 7. Ask: **"Accept all (a), pick by number (e.g. 1,3), or skip (s)?"**
 8. Write accepted rules to `.claude/context-rules.json` (create if absent, merge if exists).
