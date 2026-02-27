@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-const DEFAULT_CACHE_PATH = join(homedir(), '.cache', 'compact-md', 'summary-cache.json');
+const DEFAULT_CACHE_PATH = join(homedir(), '.cache', 'ctx', 'summary-cache.json');
 
 let activeCachePath = DEFAULT_CACHE_PATH;
 

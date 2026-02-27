@@ -4,7 +4,7 @@ import { open, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
-const DEFAULT_CACHE_PATH = join(tmpdir(), 'compact-md', 'relevance-cache.json');
+const DEFAULT_CACHE_PATH = join(tmpdir(), 'ctx', 'relevance-cache.json');
 
 interface RelevanceCacheEntry {
   mtimeNs: string;

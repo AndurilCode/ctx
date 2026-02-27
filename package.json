@@ -1,5 +1,5 @@
 {
-  "name": "@anduril-code/compact.md",
+  "name": "@anduril-code/ctx",
   "version": "0.1.6",
   "description": "Token-efficient, context-aware compression for agent pipelines.",
   "license": "MIT",
@@ -19,8 +19,8 @@
     }
   },
   "bin": {
-    "compact-md-mcp": "./dist/mcp/server.js",
-    "compact.md": "./dist/cli/index.js"
+    "ctx-mcp": "./dist/mcp/server.js",
+    "ctx": "./dist/cli/index.js"
   },
   "files": ["dist"],
   "scripts": {

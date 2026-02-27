@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import fg from 'fast-glob';
 import { mapLimit } from './async.js';
 
-const DEFAULT_CACHE_PATH = join(tmpdir(), 'compact-md', 'discovery-cache.json');
+const DEFAULT_CACHE_PATH = join(tmpdir(), 'ctx', 'discovery-cache.json');
 const STAT_CONCURRENCY = 64;
 
 interface DiscoveryCacheEntry {
