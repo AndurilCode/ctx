@@ -12,8 +12,6 @@ import { registerReadTool } from './read.js';
 import { registerRelevanceTool } from './relevance.js';
 import { registerReviewTool } from './review.js';
 import { registerSectionsTool } from './sections.js';
-import { registerSummarizeBatchTool } from './summarize-batch.js';
-import { registerSummarizeTool } from './summarize.js';
 import { registerUnpackTool } from './unpack.js';
 import { registerTreeTool } from './tree.js';
 
@@ -25,8 +23,6 @@ export function registerCompactMdTools(server: McpServer): void {
   registerExtractTool(server);
   registerUnpackTool(server);
   registerSectionsTool(server);
-  registerSummarizeTool(server);
-  registerSummarizeBatchTool(server);
   registerTreeTool(server);
   registerReadTool(server);
   registerRelevanceTool(server);
