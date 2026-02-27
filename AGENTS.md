@@ -83,6 +83,7 @@ Default to `compact_md_*` tools before raw file reads. Keep first-pass context s
 
 - Use `compact_md_read` for triage only
 - For claims/findings, require line-anchored evidence via `compact_md_code_outline` or `rg -n` + `sed -n`
+- Prefer `rg -F` for literal snippets (especially escaped text like `\\n`); use `-U/--multiline` only for true multiline regex
 - No recommendation without file path and line reference
 
 ## @Rules
