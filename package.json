@@ -30,7 +30,8 @@
     "format": "biome format --write .",
     "typecheck": "bun run tsc --noEmit",
     "test": "bun test",
-    "test:watch": "bun test --watch"
+    "test:watch": "bun test --watch",
+    "postinstall": "mkdir -p node_modules/.bin && ln -sf ../../dist/cli/index.js node_modules/.bin/ctx && ln -sf ../../dist/mcp/server.js node_modules/.bin/ctx-mcp"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.0",

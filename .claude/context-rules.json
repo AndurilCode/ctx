@@ -32,7 +32,7 @@
   {
     "on": "PreToolUse",
     "when": {
-      "tool": "Write",
+      "tool": "Write|Edit|MultiEdit",
       "path": "src/{core,stages,parser,types,utils}/**"
     },
     "inject": {
@@ -86,6 +86,55 @@
     },
     "inject": {
       "text": "WRONG TOOL: use BIOME for linting/formatting, not eslint/prettier."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit",
+      "path": "package.json"
+    },
+    "inject": {
+      "text": "Package manager is BUN. Use 'bun add' to install deps. Keep dependencies minimal — core/ must stay zero-dep. Prefer peerDependencies for optional integrations (e.g. tiktoken)."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit",
+      "path": "src/mcp/tools/*.ts"
+    },
+    "inject": {
+      "text": "Every MCP tool MUST have a corresponding CLI command in src/cli/commands/. If adding a new MCP tool, also add its CLI counterpart."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit",
+      "path": "src/cli/commands/*.ts"
+    },
+    "inject": {
+      "text": "Every CLI command MUST have a corresponding MCP tool in src/mcp/tools/. If adding a new CLI command, also add its MCP counterpart."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit",
+      "path": "src/mcp/tools/index.ts"
+    },
+    "inject": {
+      "text": "These tools are intentionally EXCLUDED from MCP registration: ctx_verify, ctx_metrics, ctx_tokens, ctx_locate. Do NOT re-register them without explicit approval."
+    }
+  },
+  {
+    "on": "UserPromptSubmit",
+    "when": {
+      "prompt": "expand.*diff|expand.*log|round.trip.*diff|round.trip.*log|lossless.*diff|lossless.*log"
+    },
+    "inject": {
+      "text": "Only markdown compact/expand is lossless round-trip. Diff compression, log pruning, and code outline are intentionally ONE-WAY and LOSSY. Do not attempt to add expand/round-trip for these formats."
     }
   }
 ]

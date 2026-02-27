@@ -63,18 +63,151 @@ implicit AND), and an `inject` payload (exactly one key).
 
 Runs by default (and always first, even when invoked with `add`).
 
-1. **Understand the project layout** — read `README.md`, `CLAUDE.md`, `AGENTS.md`, or any top-level doc file that exists. Extract architecture constraints, module boundaries, invariants, and conventions (whatever format the project uses).
-2. **Map the source tree** — run `npx @anduril-code/ctx tree --depth 2` to see directory structure and identify key source dirs, doc dirs, and config dirs.
-3. **Find key docs** — run `npx @anduril-code/ctx rank "architecture constraints" --maxResults 5` to surface high-signal documentation.
-4. **List existing hooks** — read `.claude/hooks/` to understand what is already covered and avoid duplicating it.
-5. **Derive candidate rules** by looking for these generic signals:
-   - Directories described as having specific constraints (e.g. "no side effects here", "read-only", "thin adapter") → `PreToolUse` text rules on matching paths
-   - Doc files that are clearly about specific source dirs (e.g. `docs/parser.md` next to `src/parser/`) → `PostToolUse` hint rules triggered when those source files are read
-   - Core invariants mentioned in docs (test contracts, data format guarantees, encoding rules) → `UserPromptSubmit` rules matching relevant keywords
-   - Stack/toolchain constraints (which package manager, linter, formatter, test runner) → `UserPromptSubmit` rules matching alternative tool names
-6. Present a numbered list with one-line rationale per candidate rule.
-7. Ask: **"Accept all (a), pick by number (e.g. 1,3), or skip (s)?"**
-8. Write accepted rules to `.claude/context-rules.json` (create if absent, merge if exists).
+Discovery proceeds in five layers dispatched to **subagents** to keep the
+main context clean. Only structured summaries flow back.
+**Do not propose rules until all layers complete.**
+
+### Dispatch plan
+
+```
+Batch 1 (parallel):   Layer 1 · Layer 2 · Layer 3
+Batch 2 (sequential): Layer 4  — needs Layer 3 output
+Batch 3 (sequential): Layer 5  — needs Layer 4 output
+```
+
+Create a tracked task for each batch (not each layer).
+
+---
+
+### Batch 1 — Gather project data (3 parallel subagents)
+
+Dispatch three `general-purpose` Task subagents **in a single message**.
+Each prompt must include the project root path and end with:
+**"Return a structured summary only — not raw file contents."**
+
+#### Subagent → Layer 1: Project identity & toolchain
+
+Prompt must instruct the subagent to:
+
+1. Glob `*.md` at project root and read each file — extract purpose,
+   guidelines, invariants.
+2. Read the package manifest (`package.json`, `pyproject.toml`,
+   `Cargo.toml`, or equivalent) — extract scripts, runtime, key deps.
+3. Read config files (`biome.json`, `.eslintrc*`, `tsconfig.json`,
+   `prettier.config.*`, etc.) — note codified conventions.
+
+**Expected return:**
+- Purpose (one sentence)
+- Runtime & package manager
+- Key dependencies (name → role)
+- Codified conventions (list)
+
+#### Subagent → Layer 2: Architecture map
+
+Prompt must instruct the subagent to:
+
+1. Run `npx @anduril-code/ctx tree --depth 3` — identify source, doc,
+   config, and test dirs.
+2. Glob `src/**/index.{ts,js}` (or language equivalent) — read barrel
+   files for module boundaries and public surfaces.
+3. Check for `types/`, `interfaces/`, or similar dirs — confirm whether
+   pure declarations (no runtime code, no cross-imports).
+
+**Expected return:**
+- Directory roles (table: dir → purpose)
+- Module boundaries (what each barrel exports)
+- Type-only directories (if any)
+
+#### Subagent → Layer 3: Documentation deep-dive
+
+Prompt must instruct the subagent to:
+
+1. Run `npx @anduril-code/ctx rank "architecture constraints invariants" --maxResults 10`.
+   Read every result — do not guess from filenames.
+2. Glob `docs/**/*.md` and read all remaining docs (token-budget per file
+   if needed). For each doc extract:
+   - Module boundary / responsibility constraints
+   - Dependency flow rules
+   - Data invariants (round-trip, encoding, schema)
+   - Naming, style, or toolchain conventions
+3. Build a **constraint inventory** — numbered list:
+   `N. <constraint description> — source: <file>`
+
+**Expected return:**
+- Constraint inventory (the numbered list with source attribution)
+
+**Wait for all three subagents.** Collect their outputs.
+
+---
+
+### Batch 2 — Audit enforcement (1 subagent)
+
+Dispatch one `general-purpose` Task subagent.
+**Paste the constraint inventory from Layer 3 into the prompt.**
+
+#### Subagent → Layer 4: Enforcement audit
+
+Prompt must instruct the subagent to:
+
+1. Read every file in `.claude/hooks/` — source code, not just filenames.
+   Understand what each hook enforces (blocks, rewrites, denies, injects).
+2. Read `.claude/context-rules.json` if it exists — list every rule.
+3. Cross-reference each constraint from the inventory against existing
+   hooks and rules. Mark each as:
+   - **Enforced** — already covered → skip
+   - **Unenforced** — no coverage → candidate
+   - **Partial** — partially covered → may need complementary rule
+
+**Expected return:**
+- Existing hooks summary (what each enforces)
+- Existing rules list
+- Constraint status table (constraint → Enforced / Unenforced / Partial)
+
+**Wait for completion.**
+
+---
+
+### Batch 3 — Verify & derive candidates (1 subagent)
+
+Dispatch one `general-purpose` Task subagent.
+**Paste the unenforced / partial constraints from Layer 4 into the prompt.**
+
+#### Subagent → Layer 5: Verification & candidate derivation
+
+Prompt must instruct the subagent to:
+
+1. For every unenforced constraint that asserts a codebase property
+   (e.g. "types/ is pure", "no imports from cli/"), use Grep to confirm
+   it actually holds. Drop any constraint that does not hold.
+2. Derive candidate rules from verified constraints using these mappings:
+   - Directory responsibility → `PreToolUse` text on
+     `Write|Edit|MultiEdit` matching that path
+   - Doc tied to source dir → `PostToolUse` hint when source read
+   - Data invariant → `UserPromptSubmit` text matching keywords
+   - Toolchain constraint → `PreToolUse` command rule
+   - Design doc for module → `PostToolUse` hint when module read
+3. Format each candidate as a JSON rule object.
+
+**Expected return:**
+- Verified constraints (with Grep evidence)
+- Candidate rules (JSON array, each annotated with source + verification)
+
+**Wait for completion.**
+
+---
+
+### Presentation
+
+Use the Layer 5 output to present a numbered table of candidate rules.
+Each row must include:
+- The rule (compact JSON or summary)
+- **Source** — which doc/file established the constraint
+- **Verification** — what Grep/check confirmed it
+
+Ask: **"Accept all (a), pick by number (e.g. 1,3), or skip (s)?"**
+
+Write accepted rules to `.claude/context-rules.json` (create if absent,
+merge if exists).
 
 ## Phase 2 — User Additions
 
