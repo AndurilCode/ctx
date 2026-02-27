@@ -8,7 +8,7 @@ type SectionsRunInput = Parameters<NonNullable<typeof sectionsCommand.run>>[0];
 
 describe('sections command', () => {
   test('lists headings with depth and token counts', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const inputPath = join(dir, 'input.md');
 
     await writeFile(

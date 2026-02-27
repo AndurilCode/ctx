@@ -8,7 +8,7 @@ describe('astToCompact', () => {
     const ast = markdownToAst(markdown);
     const compact = astToCompact(ast);
 
-    expect(compact).not.toContain('%compact.md:1');
+    expect(compact).not.toContain('%ctx:1');
     expect(compact).toContain('# Title');
     expect(compact).toContain('[] todo');
     expect(compact).toContain('|: A, B');

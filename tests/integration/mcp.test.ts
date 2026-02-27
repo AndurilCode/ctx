@@ -29,7 +29,7 @@ function textFromToolResult(result: { content: Array<{ type: string; text?: stri
 
 describe('mcp tools integration', () => {
   beforeEach(() => {
-    const tmpPath = join(mkdtempSync(join(tmpdir(), 'compact-md-mcp-test-')), 'cache.json');
+    const tmpPath = join(mkdtempSync(join(tmpdir(), 'ctx-mcp-test-')), 'cache.json');
     _resetForTesting(tmpPath);
   });
 
@@ -37,7 +37,7 @@ describe('mcp tools integration', () => {
     _resetForTesting();
   });
 
-  test('compact_md_compact returns compacted markdown text', async () => {
+  test('ctx_compact returns compacted markdown text', async () => {
     const markdown = '# Title\n\n- [ ] todo item\n';
     const result = await runPackTool({ markdown });
     const output = textFromToolResult(result);
@@ -46,7 +46,7 @@ describe('mcp tools integration', () => {
     expect(output).toBe(expected);
   });
 
-  test('compact_md_compact supports section elision options', async () => {
+  test('ctx_compact supports section elision options', async () => {
     const markdown = '# Intro\n\nhello\n\n# Keep\n\nvalue\n';
     const result = await runPackTool({ markdown, onlySections: ['keep'] });
     const compactText = textFromToolResult(result);
@@ -56,7 +56,7 @@ describe('mcp tools integration', () => {
     expect(restored).not.toContain('# Intro');
   });
 
-  test('compact_md_expand restores markdown from compact text', async () => {
+  test('ctx_expand restores markdown from compact text', async () => {
     const markdown = '# Title\n\nParagraph text.\n';
     const compactText = compact(markdown).output;
     const result = await runUnpackTool({ compact: compactText });
@@ -66,7 +66,7 @@ describe('mcp tools integration', () => {
     expect(output).toBe(expected);
   });
 
-  test('compact_md_metrics returns JSON stats payload', async () => {
+  test('ctx_metrics returns JSON stats payload', async () => {
     const markdown = '# Title\n\nParagraph text.\n';
     const result = await runStatsTool({ markdown });
     const output = textFromToolResult(result);
@@ -76,7 +76,7 @@ describe('mcp tools integration', () => {
     expect(parsed.compactTokens).toBeGreaterThan(0);
   });
 
-  test('compact_md_sections returns headings and token counts', async () => {
+  test('ctx_sections returns headings and token counts', async () => {
     const markdown = '# Intro\n\nhello\n\n## Child\n\nworld\n';
     const result = await runSectionsTool({ markdown });
     const output = textFromToolResult(result);
@@ -86,7 +86,7 @@ describe('mcp tools integration', () => {
     expect(output).toMatch(/\(\d+ tokens\)/);
   });
 
-  test('compact_md_verify returns validation result', async () => {
+  test('ctx_verify returns validation result', async () => {
     const markdown = '# Title\n\nParagraph text.\n';
     const result = await runVerifyTool({ markdown });
     const output = textFromToolResult(result);
@@ -107,7 +107,7 @@ describe('mcp tools integration', () => {
     ).rejects.toThrow(/mutually exclusive/i);
   });
 
-  test('compact_md_changes compacts unified diff input', async () => {
+  test('ctx_changes compacts unified diff input', async () => {
     const diff = [
       'diff --git a/src/app.ts b/src/app.ts',
       'index 1..2 100644',
@@ -129,7 +129,7 @@ describe('mcp tools integration', () => {
     expect(output).toContain('+const newFlag = true;');
   });
 
-  test('compact_md_prune prunes noisy logs', async () => {
+  test('ctx_prune prunes noisy logs', async () => {
     const log = ['✓ test one', '✓ test two', '✗ test three', 'Tests: 2 passed, 1 failed'].join(
       '\n',
     );
@@ -142,7 +142,7 @@ describe('mcp tools integration', () => {
     expect(parsed.summaryUsed).toBe(false);
   });
 
-  test('compact_md_prune applies runtime profile defaults', async () => {
+  test('ctx_prune applies runtime profile defaults', async () => {
     const log = ['2026-02-25T10:00:00Z GET /users 200', '2026-02-25T10:00:01Z GET /users 500'].join(
       '\n',
     );
@@ -153,7 +153,7 @@ describe('mcp tools integration', () => {
     expect(parsed.output).not.toContain('2026-02-25T10:00:01Z');
   });
 
-  test('compact_md_prune applies lint profile defaults', async () => {
+  test('ctx_prune applies lint profile defaults', async () => {
     const log = [
       '$ biome check .',
       './src/a.ts format',
@@ -171,7 +171,7 @@ describe('mcp tools integration', () => {
     expect(parsed.output).not.toContain('10 10 │ a');
   });
 
-  test('compact_md_prune summarizes when over threshold and sampling enabled', async () => {
+  test('ctx_prune summarizes when over threshold and sampling enabled', async () => {
     const server = {
       server: {
         createMessage: async () => ({
@@ -197,9 +197,9 @@ describe('mcp tools integration', () => {
   });
 
   describe('file path support', () => {
-    test('compact_md_compact reads from file when file param provided', async () => {
+    test('ctx_compact reads from file when file param provided', async () => {
       const markdown = '# Title\n\nParagraph text.\n';
-      const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
+      const dir = await mkdtemp(join(tmpdir(), 'ctx-test-'));
       const filePath = join(dir, 'test.md');
       await writeFile(filePath, markdown);
 
@@ -210,9 +210,9 @@ describe('mcp tools integration', () => {
       expect(output).toBe(expected);
     });
 
-    test('compact_md_metrics reads from file when file param provided', async () => {
+    test('ctx_metrics reads from file when file param provided', async () => {
       const markdown = '# Title\n\nParagraph text.\n';
-      const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
+      const dir = await mkdtemp(join(tmpdir(), 'ctx-test-'));
       const filePath = join(dir, 'test.md');
       await writeFile(filePath, markdown);
 
@@ -224,9 +224,9 @@ describe('mcp tools integration', () => {
       expect(parsed.compactTokens).toBeGreaterThan(0);
     });
 
-    test('compact_md_sections reads from file when file param provided', async () => {
+    test('ctx_sections reads from file when file param provided', async () => {
       const markdown = '# Intro\n\nhello\n\n## Child\n\nworld\n';
-      const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
+      const dir = await mkdtemp(join(tmpdir(), 'ctx-test-'));
       const filePath = join(dir, 'test.md');
       await writeFile(filePath, markdown);
 
@@ -237,9 +237,9 @@ describe('mcp tools integration', () => {
       expect(output).toContain('## Child');
     });
 
-    test('compact_md_verify reads from file when file param provided', async () => {
+    test('ctx_verify reads from file when file param provided', async () => {
       const markdown = '# Title\n\nParagraph text.\n';
-      const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
+      const dir = await mkdtemp(join(tmpdir(), 'ctx-test-'));
       const filePath = join(dir, 'test.md');
       await writeFile(filePath, markdown);
 
@@ -250,7 +250,7 @@ describe('mcp tools integration', () => {
       expect(parsed.valid).toBe(verify(markdown));
     });
 
-    test('compact_md_changes reads from file when file param provided', async () => {
+    test('ctx_changes reads from file when file param provided', async () => {
       const diff = [
         'diff --git a/src/app.ts b/src/app.ts',
         'index 1..2 100644',
@@ -260,7 +260,7 @@ describe('mcp tools integration', () => {
         '-old',
         '+new',
       ].join('\n');
-      const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
+      const dir = await mkdtemp(join(tmpdir(), 'ctx-test-'));
       const filePath = join(dir, 'test.diff');
       await writeFile(filePath, diff);
 
@@ -272,9 +272,9 @@ describe('mcp tools integration', () => {
       expect(output).toContain('+new');
     });
 
-    test('compact_md_prune reads from file when file param provided', async () => {
+    test('ctx_prune reads from file when file param provided', async () => {
       const log = ['2026-02-25T10:00:00Z info line', '2026-02-25T10:00:01Z info line'].join('\n');
-      const dir = await mkdtemp(join(tmpdir(), 'compact-md-test-'));
+      const dir = await mkdtemp(join(tmpdir(), 'ctx-test-'));
       const filePath = join(dir, 'test.log');
       await writeFile(filePath, log);
 
@@ -303,7 +303,7 @@ describe('mcp tools integration', () => {
     });
   });
 
-  test('compact_md_extract truncates prose structures', async () => {
+  test('ctx_extract truncates prose structures', async () => {
     const markdown = [
       '# Title',
       '',
@@ -333,7 +333,7 @@ describe('mcp tools integration', () => {
     expect(output).toContain('... 1 more rows');
   });
 
-  test('compact_md_summarize delegates to MCP sampling', async () => {
+  test('ctx_summarize delegates to MCP sampling', async () => {
     const markdown = '# Keep\n\nuseful details\n\n# Drop\n\nnoise\n';
     let prompt = '';
 
@@ -362,7 +362,7 @@ describe('mcp tools integration', () => {
     expect(prompt).not.toContain('# Drop');
   });
 
-  test('compact_md_summarize falls back to extract when sampling is unavailable', async () => {
+  test('ctx_summarize falls back to extract when sampling is unavailable', async () => {
     const markdown = '# Keep\n\nuseful details\n\n# Drop\n\nnoise\n';
     const server = {
       server: {
@@ -383,7 +383,7 @@ describe('mcp tools integration', () => {
     expect(output).not.toContain('# Drop');
   });
 
-  describe('compact_md_summarize caching', () => {
+  describe('ctx_summarize caching', () => {
     test('second call with identical content skips sampling', async () => {
       const markdown = '# Topic\n\ncontent\n';
       let calls = 0;

@@ -7,7 +7,7 @@ import { _resetForTesting, getCached, setCached } from '../../../src/utils/summa
 let tmpPath: string;
 
 beforeEach(() => {
-  tmpPath = join(mkdtempSync(join(tmpdir(), 'compact-md-cache-test-')), 'cache.json');
+  tmpPath = join(mkdtempSync(join(tmpdir(), 'ctx-cache-test-')), 'cache.json');
   _resetForTesting(tmpPath);
 });
 
@@ -65,7 +65,7 @@ describe('persistence across reloads', () => {
   });
 
   test('starts empty when cache file does not exist', () => {
-    const nonExistent = join(tmpdir(), `compact-md-no-file-${Date.now()}.json`);
+    const nonExistent = join(tmpdir(), `ctx-no-file-${Date.now()}.json`);
     _resetForTesting(nonExistent);
     expect(getCached('section-a', 'hash1')).toBeUndefined();
   });

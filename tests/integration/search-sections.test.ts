@@ -27,7 +27,7 @@ async function captureStdout(fn: () => Promise<void>): Promise<string> {
 
 describe('search-sections command', () => {
   test('finds matching sections across a single file', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const file = join(dir, 'doc.md');
 
     await writeFile(
@@ -61,7 +61,7 @@ describe('search-sections command', () => {
   });
 
   test('search is case-insensitive', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const file = join(dir, 'doc.md');
 
     await writeFile(file, '# Getting Started\n\nContent.\n', 'utf8');
@@ -75,7 +75,7 @@ describe('search-sections command', () => {
   });
 
   test('reports no matches when query is absent', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const file = join(dir, 'doc.md');
 
     await writeFile(file, '# Introduction\n\nText.\n', 'utf8');
@@ -90,7 +90,7 @@ describe('search-sections command', () => {
   });
 
   test('searches across multiple files and groups results by file', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const fileA = join(dir, 'a.md');
     const fileB = join(dir, 'b.md');
 
@@ -109,7 +109,7 @@ describe('search-sections command', () => {
   });
 
   test('skips unreadable files and continues', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const goodFile = join(dir, 'good.md');
     const badFile = join(dir, 'nonexistent.md');
 

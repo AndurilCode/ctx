@@ -4,7 +4,7 @@ import { compactToAst } from '../../../src/parser/compact-to-ast.js';
 
 describe('compactToAst', () => {
   test('parses compact syntax back into markdown AST', () => {
-    const compact = `%compact.md:1
+    const compact = `%ctx:1
 
 :1 Title
 
@@ -26,7 +26,7 @@ describe('compactToAst', () => {
   });
 
   test('parses compact text with single-newline boundaries between blocks', () => {
-    const compact = `%compact.md:1
+    const compact = `%ctx:1
 
 :1 Title
 :2 Section
@@ -44,7 +44,7 @@ describe('compactToAst', () => {
   });
 
   test('parses single-backtick code fence close marker', () => {
-    const compact = `%compact.md:1
+    const compact = `%ctx:1
 
 \`ts
 console.log("x");

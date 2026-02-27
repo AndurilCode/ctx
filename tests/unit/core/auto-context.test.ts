@@ -36,7 +36,7 @@ describe('autoContext', () => {
   });
 
   test('shared-dependency boost: utility imported by 2+ scored files is included', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-shared-dep-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-shared-dep-'));
     const utilFile = join(dir, 'util.ts');
     const fileA = join(dir, 'a.ts');
     const fileB = join(dir, 'b.ts');
@@ -70,7 +70,7 @@ describe('autoContext', () => {
   });
 
   test('directory seed expands without EISDIR', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-dir-seed-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-dir-seed-'));
     const sub = join(dir, 'sub');
     await mkdir(sub, { recursive: true });
     await writeFile(join(sub, 'alpha.ts'), 'export function alpha() {}', 'utf8');

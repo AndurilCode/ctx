@@ -66,7 +66,7 @@ function captureStderr(fn: () => Promise<void>): Promise<string> {
 
 describe('cli frontmatter', () => {
   test('sections prints frontmatter before TOC when present', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-cli-fm-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-cli-fm-'));
     const filePath = join(dir, 'input.md');
     await writeFile(filePath, markdownWithFrontmatter);
 
@@ -86,7 +86,7 @@ describe('cli frontmatter', () => {
   });
 
   test('sections omits frontmatter block when absent', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-cli-fm-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-cli-fm-'));
     const filePath = join(dir, 'input.md');
     await writeFile(filePath, '# Intro\n\nBody\n');
 
@@ -102,7 +102,7 @@ describe('cli frontmatter', () => {
   });
 
   test('stats JSON includes frontmatter key', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-cli-fm-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-cli-fm-'));
     const filePath = join(dir, 'input.md');
     await writeFile(filePath, markdownWithFrontmatter);
 
@@ -127,7 +127,7 @@ describe('cli frontmatter', () => {
   });
 
   test('pack writes frontmatter to stderr when present', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-cli-fm-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-cli-fm-'));
     const inputPath = join(dir, 'input.md');
     const outputPath = join(dir, 'output.cmd');
     await writeFile(inputPath, markdownWithFrontmatter);
@@ -156,7 +156,7 @@ describe('cli frontmatter', () => {
   });
 
   test('pack does not write frontmatter to stderr when absent', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-cli-fm-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-cli-fm-'));
     const inputPath = join(dir, 'input.md');
     const outputPath = join(dir, 'output.cmd');
     await writeFile(inputPath, '# Title\n\nNo frontmatter.\n');
@@ -184,7 +184,7 @@ describe('cli frontmatter', () => {
   });
 
   test('extract writes frontmatter to stderr when present', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-cli-fm-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-cli-fm-'));
     const inputPath = join(dir, 'input.md');
     const outputPath = join(dir, 'output.md');
     await writeFile(inputPath, markdownWithFrontmatter);

@@ -8,7 +8,7 @@ type OutlineRunInput = Parameters<NonNullable<typeof codeOutlineCommand.run>>[0]
 
 describe('cli code-outline', () => {
   test('writes outline output to file', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-outline-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-outline-'));
     const inputPath = join(dir, 'sample.ts');
     const outputPath = join(dir, 'outline.txt');
     await writeFile(

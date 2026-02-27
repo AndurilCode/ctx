@@ -15,7 +15,7 @@ describe('relevance cache', () => {
   });
 
   test('returns cached metadata for unchanged file', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-relcache-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-relcache-'));
     const cachePath = join(dir, 'cache.json');
     const file = join(dir, 'sample.ts');
 
@@ -34,7 +34,7 @@ describe('relevance cache', () => {
   });
 
   test('invalidates metadata after file changes', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-relcache-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-relcache-'));
     const cachePath = join(dir, 'cache.json');
     const file = join(dir, 'sample.ts');
 

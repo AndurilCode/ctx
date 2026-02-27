@@ -34,7 +34,7 @@ describe('relevance', () => {
   });
 
   test('keeps content-only matches even without filename/symbol/heading matches', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-relevance-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-relevance-'));
     const fileA = join(dir, 'alpha.ts');
     const fileB = join(dir, 'beta.ts');
 
@@ -52,7 +52,7 @@ describe('relevance', () => {
   });
 
   test('BM25: shorter file with same term count ranks above longer file', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-bm25-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-bm25-'));
     const shortFile = join(dir, 'short.ts');
     const longFile = join(dir, 'long.ts');
     try {

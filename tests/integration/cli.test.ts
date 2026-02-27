@@ -14,7 +14,7 @@ type PruneLogRunInput = Parameters<NonNullable<typeof pruneLogCommand.run>>[0];
 
 describe('cli integration', () => {
   test('pack then unpack from files', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const inputPath = join(dir, 'input.md');
     const compactPath = join(dir, 'output.cmd');
     const restoredPath = join(dir, 'restored.md');
@@ -43,7 +43,7 @@ describe('cli integration', () => {
 
     const compactText = await readFile(compactPath, 'utf8');
     expect(compactText).toContain('# Title');
-    expect(compactText).not.toContain('%compact.md:1');
+    expect(compactText).not.toContain('%ctx:1');
 
     await runExpand({
       args: {
@@ -59,7 +59,7 @@ describe('cli integration', () => {
   });
 
   test('pack supports section-only filtering', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const inputPath = join(dir, 'input.md');
     const compactPath = join(dir, 'output.cmd');
 
@@ -97,7 +97,7 @@ describe('cli integration', () => {
   });
 
   test('diff command compacts unified diffs', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const inputPath = join(dir, 'input.diff');
     const outputPath = join(dir, 'output.diff');
     await writeFile(
@@ -140,7 +140,7 @@ describe('cli integration', () => {
   });
 
   test('prune-log command reduces noisy test output', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const inputPath = join(dir, 'input.log');
     const outputPath = join(dir, 'output.log');
 
@@ -183,7 +183,7 @@ describe('cli integration', () => {
   });
 
   test('prune-log runtime profile strips timestamps by default', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const inputPath = join(dir, 'runtime.log');
     const outputPath = join(dir, 'runtime.out.log');
     await writeFile(
@@ -213,7 +213,7 @@ describe('cli integration', () => {
   });
 
   test('prune-log lint profile folds diagnostics', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-'));
     const inputPath = join(dir, 'lint.log');
     const outputPath = join(dir, 'lint.out.log');
     await writeFile(

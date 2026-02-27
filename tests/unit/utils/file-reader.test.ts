@@ -10,7 +10,7 @@ describe('readFileText cache', () => {
   });
 
   test('returns latest content after file changes', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-reader-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-reader-'));
     const file = join(dir, 'sample.txt');
 
     try {

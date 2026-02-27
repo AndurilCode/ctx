@@ -14,8 +14,8 @@ describe('discovery cache', () => {
   });
 
   test('hits cache on repeated calls with unchanged tree', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-discovery-'));
-    const cachePath = join(tmpdir(), `compact-md-discovery-cache-${Date.now()}-1.json`);
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-discovery-'));
+    const cachePath = join(tmpdir(), `ctx-discovery-cache-${Date.now()}-1.json`);
 
     try {
       await mkdir(join(dir, 'src'));
@@ -44,8 +44,8 @@ describe('discovery cache', () => {
   });
 
   test('invalidates when a new file is added', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'compact-md-discovery-'));
-    const cachePath = join(tmpdir(), `compact-md-discovery-cache-${Date.now()}-2.json`);
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-discovery-'));
+    const cachePath = join(tmpdir(), `ctx-discovery-cache-${Date.now()}-2.json`);
 
     try {
       await mkdir(join(dir, 'src'));

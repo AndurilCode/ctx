@@ -9,11 +9,11 @@ describe('MCP tool surface', () => {
     };
     registerCompactMdTools(fakeServer as any);
     expect(registered.length).toBeLessThanOrEqual(15);
-    expect(registered).not.toContain('compact_md_verify');
-    expect(registered).not.toContain('compact_md_metrics');
-    expect(registered).not.toContain('compact_md_tokens');
-    expect(registered).not.toContain('compact_md_locate');
-    expect(registered).not.toContain('compact_md_summarize');
-    expect(registered).not.toContain('compact_md_batch');
+    expect(registered).not.toContain('ctx_verify');
+    expect(registered).not.toContain('ctx_metrics');
+    expect(registered).not.toContain('ctx_tokens');
+    expect(registered).not.toContain('ctx_locate');
+    expect(registered).not.toContain('ctx_summarize');
+    expect(registered).not.toContain('ctx_batch');
   });
 });
