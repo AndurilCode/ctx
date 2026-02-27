@@ -25,7 +25,7 @@ export async function runDiffTool(input: DiffToolInput): Promise<CallToolResult>
 
 export function registerDiffTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_changes',
+    'ctx_changes',
     {
       description:
         'Compress unified diff text for lower token use. Use when patch output is too large; do not use when you need raw unchanged diff fidelity.',

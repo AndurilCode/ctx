@@ -54,10 +54,10 @@ export async function runSummarizeBatchTool(
 
 export function registerSummarizeBatchTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_batch',
+    'ctx_batch',
     {
       description:
-        'Summarize multiple files in one call for breadth-first scanning. Use for repo onboarding; do not use when you need exact section text (use compact_md_extract).',
+        'Summarize multiple files in one call for breadth-first scanning. Use for repo onboarding; do not use when you need exact section text (use ctx_extract).',
       inputSchema: {
         files: z.array(z.string()).describe('Markdown file paths to summarize (.md/.mdx/.markdown).'),
         ...summarizeLikeInputSchema,

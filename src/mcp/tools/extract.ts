@@ -19,10 +19,10 @@ export async function runExtractTool(input: ExtractToolInput): Promise<CallToolR
 
 export function registerExtractTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_extract',
+    'ctx_extract',
     {
       description:
-        'Retrieve verbatim section content with optional truncation controls. Use when exact section text is required; do not use for high-level gist (use compact_md_summarize).',
+        'Retrieve verbatim section content with optional truncation controls. Use when exact section text is required; do not use for high-level gist (use ctx_summarize).',
       inputSchema: {
         ...markdownOrFileSchema,
         onlySections: z.array(z.string()).optional(),

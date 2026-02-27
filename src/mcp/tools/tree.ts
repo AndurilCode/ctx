@@ -20,10 +20,10 @@ export async function runTreeTool(input: TreeToolInput): Promise<CallToolResult>
 
 export function registerTreeTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_tree',
+    'ctx_tree',
     {
       description:
-        'Show a directory tree with per-file token counts. Use to budget navigation at repo scale; do not use for semantic relevance ranking (use compact_md_rank).',
+        'Show a directory tree with per-file token counts. Use to budget navigation at repo scale; do not use for semantic relevance ranking (use ctx_rank).',
       inputSchema: {
         path: z.string().optional().describe('Directory path (default: cwd)'),
         glob: z.string().optional().describe('Filter pattern, e.g. "**/*.ts"'),

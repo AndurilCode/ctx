@@ -27,10 +27,10 @@ export async function runReviewTool(input: ReviewToolInput): Promise<CallToolRes
 
 export function registerReviewTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_review',
+    'ctx_review',
     {
       description:
-        'Run two-pass token-aware code review triage with token accounting. Use for repo-level risk surfacing; do not use as final truth for one file (follow with compact_md_read or compact_md_outline).',
+        'Run two-pass token-aware code review triage with token accounting. Use for repo-level risk surfacing; do not use as final truth for one file (follow with ctx_read or ctx_outline).',
       inputSchema: {
         query: z.string().describe('Task description or review query'),
         path: z.string().optional().describe('Root directory to search (default: cwd)'),

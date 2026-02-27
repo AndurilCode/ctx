@@ -20,7 +20,7 @@ export async function runVerifyTool(input: VerifyToolInput): Promise<CallToolRes
 
 export function registerVerifyTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_verify',
+    'ctx_verify',
     {
       description:
         'Verify lossless round-trip for markdown input. Use to enforce fidelity guarantees; do not use as a compressor or reader.',

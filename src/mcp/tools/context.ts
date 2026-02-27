@@ -33,10 +33,10 @@ export async function runContextTool(input: ContextToolInput): Promise<CallToolR
 
 export function registerContextTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_context',
+    'ctx_context',
     {
       description:
-        'Assemble a token-budgeted context document from an explicit source list. Use when you already chose files; do not use for discovery (use compact_md_gather or compact_md_rank).',
+        'Assemble a token-budgeted context document from an explicit source list. Use when you already chose files; do not use for discovery (use ctx_gather or ctx_rank).',
       inputSchema: {
         sources: z.array(
           z.object({

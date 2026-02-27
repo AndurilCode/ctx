@@ -4,7 +4,7 @@ import { registerCompactMdTools } from './tools/index.js';
 
 async function main(): Promise<void> {
   const server = new McpServer({
-    name: 'compact-md',
+    name: 'ctx',
     version: '0.1.0',
   });
 
@@ -16,6 +16,6 @@ async function main(): Promise<void> {
 
 main().catch((error) => {
   const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`compact-md-mcp startup failed: ${message}\n`);
+  process.stderr.write(`ctx-mcp startup failed: ${message}\n`);
   process.exitCode = 1;
 });

@@ -23,10 +23,10 @@ export async function runSymbolsTool(input: SymbolsToolInput): Promise<CallToolR
 
 export function registerSymbolsTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_symbols',
+    'ctx_symbols',
     {
       description:
-        'Find symbol definitions and usage sites across files. Use for ownership and call-site tracing; do not use for module dependency flow (use compact_md_imports).',
+        'Find symbol definitions and usage sites across files. Use for ownership and call-site tracing; do not use for module dependency flow (use ctx_imports).',
       inputSchema: {
         query: z.string().describe('Symbol name to search for (exact or substring match)'),
         path: z.string().optional().describe('Directory to search (default: cwd)'),

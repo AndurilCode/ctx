@@ -70,7 +70,7 @@ export async function runPruneLogTool(
 
 export function registerPruneLogTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_prune',
+    'ctx_prune',
     {
       description:
         'Lossy pruning for terminal/test/build logs with token gating. Use to keep failures and actionable lines; do not use when exact full logs are required.',

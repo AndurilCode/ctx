@@ -17,7 +17,7 @@ export async function runRelevanceTool(input: RelevanceToolInput): Promise<CallT
 
 export function registerRelevanceTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_rank',
+    'ctx_rank',
     {
       description:
         'Rank candidate files by query relevance without an LLM. Use before reading to choose high-signal files; do not use when file candidates are already fixed.',

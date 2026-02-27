@@ -26,10 +26,10 @@ export async function runOutlineTool(input: OutlineToolInput): Promise<CallToolR
 
 export function registerOutlineTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_outline',
+    'ctx_outline',
     {
       description:
-        'Return a structural code outline with line numbers (classes/functions/types). Use for fast code navigation; do not use when exact source text is required (use compact_md_read).',
+        'Return a structural code outline with line numbers (classes/functions/types). Use for fast code navigation; do not use when exact source text is required (use ctx_read).',
       inputSchema: {
         ...codeOrFileSchema,
         language: z.string().optional(),

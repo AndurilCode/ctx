@@ -16,10 +16,10 @@ export async function runTokenCountTool(input: TokenCountToolInput): Promise<Cal
 
 export function registerTokenCountTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_tokens',
+    'ctx_tokens',
     {
       description:
-        'Count tokens for a file or string without returning content. Use to estimate cost before reading; do not use for retrieval (use compact_md_read).',
+        'Count tokens for a file or string without returning content. Use to estimate cost before reading; do not use for retrieval (use ctx_read).',
       inputSchema: {
         text: z.string().optional(),
         file: z.string().optional(),

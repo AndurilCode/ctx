@@ -16,10 +16,10 @@ export function runUnpackTool(input: UnpackToolInput): CallToolResult {
 
 export function registerUnpackTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_expand',
+    'ctx_expand',
     {
       description:
-        'Expand compact.md text back to markdown. Use after compact_md_compact; do not use for arbitrary non-compact text.',
+        'Expand compact.md text back to markdown. Use after ctx_compact; do not use for arbitrary non-compact text.',
       inputSchema: {
         compact: z.string(),
         tableDelimiter: z.string().optional(),

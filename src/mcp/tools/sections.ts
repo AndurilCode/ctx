@@ -36,10 +36,10 @@ export async function runSectionsTool(input: SectionsToolInput): Promise<CallToo
 
 export function registerSectionsTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_sections',
+    'ctx_sections',
     {
       description:
-        'List markdown headings with per-section token costs. Use first to budget exploration; do not use for section text retrieval (use compact_md_extract).',
+        'List markdown headings with per-section token costs. Use first to budget exploration; do not use for section text retrieval (use ctx_extract).',
       inputSchema: {
         markdown: z.string().optional().describe('Markdown source text (Markdown-only).'),
         file: z.string().optional().describe('Path to a markdown file (.md/.mdx/.markdown).'),

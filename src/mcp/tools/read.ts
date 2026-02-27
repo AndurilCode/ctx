@@ -38,10 +38,10 @@ export async function runReadTool(input: ReadToolInput): Promise<CallToolResult>
 
 export function registerReadTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_read',
+    'ctx_read',
     {
       description:
-        'Read one file within a token budget using strategy-aware compression. Use for targeted single-file access; do not use to build multi-file context (use compact_md_context or compact_md_gather).',
+        'Read one file within a token budget using strategy-aware compression. Use for targeted single-file access; do not use to build multi-file context (use ctx_context or ctx_gather).',
       inputSchema: {
         file: z.string().describe('File path to read'),
         maxTokens: z.number().int().min(1).optional().describe('Token budget (omit for full content)'),

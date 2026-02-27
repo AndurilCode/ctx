@@ -18,10 +18,10 @@ export async function runImportsTool(input: ImportsToolInput): Promise<CallToolR
 
 export function registerImportsTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_imports',
+    'ctx_imports',
     {
       description:
-        'Show incoming and outgoing import edges for a file. Use for dependency flow analysis; do not use for symbol-level usages (use compact_md_symbols).',
+        'Show incoming and outgoing import edges for a file. Use for dependency flow analysis; do not use for symbol-level usages (use ctx_symbols).',
       inputSchema: {
         file: z.string().describe('File path to analyze'),
         direction: z

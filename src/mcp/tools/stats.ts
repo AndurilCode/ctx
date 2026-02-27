@@ -27,10 +27,10 @@ export async function runStatsTool(input: StatsToolInput): Promise<CallToolResul
 
 export function registerStatsTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_metrics',
+    'ctx_metrics',
     {
       description:
-        'Compute compression and token metrics for markdown input. Use to measure savings; do not use to generate compact output (use compact_md_compact).',
+        'Compute compression and token metrics for markdown input. Use to measure savings; do not use to generate compact output (use ctx_compact).',
       inputSchema: packLikeInputSchema,
     },
     async (input) => runStatsTool(input),

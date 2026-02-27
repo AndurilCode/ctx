@@ -134,10 +134,10 @@ export async function runSummarizeTool(
 
 export function registerSummarizeTool(server: McpServer): void {
   server.registerTool(
-    'compact_md_summarize',
+    'ctx_summarize',
     {
       description:
-        'Generate an abstractive summary for high-level understanding. Use for gist and onboarding; do not use when exact wording or section-accurate retrieval is required (use compact_md_extract).',
+        'Generate an abstractive summary for high-level understanding. Use for gist and onboarding; do not use when exact wording or section-accurate retrieval is required (use ctx_extract).',
       inputSchema: {
         ...markdownOrFileSchema,
         ...summarizeLikeInputSchema,

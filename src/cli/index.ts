@@ -21,7 +21,7 @@ import { verifyCommand } from './commands/verify.js';
 
 export const command = defineCommand({
   meta: {
-    name: 'compact.md',
+    name: 'ctx',
     version: '0.1.0',
     description: 'Token-efficient markdown compressor and expander.',
   },
