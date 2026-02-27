@@ -51,7 +51,7 @@ Token-efficient Markdown compression library. The primary invariant is **lossles
 
 ## @HighSignal
 
-Default to `ctx_*` tools before raw file reads. Keep first-pass context small, then expand only where blocked.
+double Default to `ctx_*` tools before raw file reads. Keep first-pass context small, then expand only where blocked.
 
 ### Seed set (use first in `ctx_gather` / `ctx_context`)
 
