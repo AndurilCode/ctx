@@ -51,6 +51,23 @@ describe('relevance', () => {
     }
   });
 
+  test('determinism: content-only match found in all trials with 30+ files', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'ctx-determinism-'));
+    const target = join(dir, 'nope.ts');
+    const fillers = Array.from({ length: 30 }, (_, i) => join(dir, `filler${i}.ts`));
+    try {
+      await writeFile(target, 'const note = "zzzdeterminism only in content";', 'utf8');
+      await Promise.all(fillers.map((f) => writeFile(f, 'export const x = 1;', 'utf8')));
+      const allFiles = [target, ...fillers];
+      for (let trial = 0; trial < 5; trial++) {
+        const result = await relevance({ query: 'zzzdeterminism', files: allFiles });
+        expect(result.results.some((m) => m.file === target)).toBe(true);
+      }
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   test('BM25: shorter file with same term count ranks above longer file', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'ctx-bm25-'));
     const shortFile = join(dir, 'short.ts');

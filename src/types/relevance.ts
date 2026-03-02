@@ -2,7 +2,6 @@ export interface RelevanceOptions {
   query: string;
   files: string[];
   maxResults?: number;
-  contentScanMultiplier?: number;
 }
 
 export interface RelevanceMatch {

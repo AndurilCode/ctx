@@ -1,5 +1,5 @@
 ## @Skills
-Use these instead of raw file reads or manual tool invocations.
+You MUST use these skills instead of raw file reads or manual tool invocations.
 
 | Skill | When to use |
 |---|---|

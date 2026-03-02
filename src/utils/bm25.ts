@@ -1,17 +1,20 @@
 /**
  * BM25 probabilistic relevance scorer.
  * k1=1.5 (TF saturation), b=0.75 (length normalisation).
+ * Document length and TF use word-boundary matching so code files
+ * with long identifiers are not unfairly penalised.
  */
 
-import { countOccurrences } from './relevance.js';
+import { countWordOccurrences } from './relevance.js';
+
+function countWords(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
+}
 
 /**
  * BM25 term-frequency/IDF content scorer.
  * k1=1.5 (TF saturation), b=0.75 (length normalisation).
  * Returns 0 when content is empty or avgdl is zero.
- * NOTE: document length is measured in characters, not word tokens.
- * This is a reasonable proxy for homogeneous corpora but may under-score
- * code files with long identifiers relative to short-word prose files.
  */
 export function scoreContentTermsBM25(
   terms: string[],
@@ -22,12 +25,12 @@ export function scoreContentTermsBM25(
   if (!content || avgdl === 0) return 0;
   const k1 = 1.5;
   const b = 0.75;
-  const docLen = content.length;
+  const docLen = countWords(content);
   const contentLower = content.toLowerCase();
   let score = 0;
   for (const term of terms) {
     if (!term) continue;
-    const tf = countOccurrences(contentLower, term);
+    const tf = countWordOccurrences(contentLower, term);
     if (tf === 0) continue;
     const idf = idfMap.get(term) ?? Math.log(1.5); // fallback: modest IDF
     const tfNorm = (tf * (k1 + 1)) / (tf + k1 * (1 - b + b * (docLen / avgdl)));
@@ -50,10 +53,10 @@ export function computeIdfMap(
   const df = new Map<string, number>();
   let totalLen = 0;
   for (const content of contents) {
-    totalLen += content.length;
+    totalLen += countWords(content);
     const lower = content.toLowerCase();
     for (const term of terms) {
-      if (term && lower.includes(term)) {
+      if (term && countWordOccurrences(lower, term) > 0) {
         df.set(term, (df.get(term) ?? 0) + 1);
       }
     }

@@ -172,21 +172,12 @@ export function countOccurrences(text: string, term: string): number {
   return count;
 }
 
-export function extractSymbolNames(content: string): string[] {
-  const pattern = /(?:export\s+)?(?:function|const|let|var|class|interface|type|enum)\s+(\w+)/g;
-  const names: string[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = pattern.exec(content)) !== null) {
-    names.push(m[1] as string);
-  }
-  return names;
-}
-
-export function extractHeadings(content: string): string[] {
-  const headings: string[] = [];
-  for (const line of content.split('\n')) {
-    const m = line.match(/^#{1,6}\s+(.+)/);
-    if (m) headings.push(m[1] as string);
-  }
-  return headings;
+export function countWordOccurrences(text: string, term: string): number {
+  if (!term) return 0;
+  const re = termRegex(term);
+  if (!re) return countOccurrences(text, term);
+  const g = new RegExp(re.source, 'gi');
+  let count = 0;
+  while (g.exec(text) !== null) count++;
+  return count;
 }

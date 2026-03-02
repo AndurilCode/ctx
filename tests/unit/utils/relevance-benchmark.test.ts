@@ -114,10 +114,11 @@ describe('BM25 content scoring', () => {
   test('shorter document scores higher than longer for same term count', () => {
     const terms = ['compact'];
     const idfMap = new Map([['compact', Math.log(2)]]);
-    const avgdl = 275; // midpoint between 50 and 500
+    // short: 3 "compact" + 5 filler = 8 words; long: 3 "compact" + 50 filler = 53 words
+    const avgdl = 30; // midpoint between 8 and 53
 
-    const shortContent = `compact compact compact ${'x'.repeat(47)}`; // ~71 chars
-    const longContent = `compact compact compact ${'x'.repeat(497)}`; // ~521 chars
+    const shortContent = `compact compact compact ${'filler '.repeat(5).trim()}`;
+    const longContent = `compact compact compact ${'filler '.repeat(50).trim()}`;
 
     const shortScore = scoreContentTermsBM25(terms, shortContent, idfMap, avgdl);
     const longScore = scoreContentTermsBM25(terms, longContent, idfMap, avgdl);
@@ -127,7 +128,7 @@ describe('BM25 content scoring', () => {
 
   test('high-IDF term contributes more than low-IDF term', () => {
     const content = 'import compact import compact import compact';
-    const avgdl = content.length;
+    const avgdl = 6; // 6 words
     // "import" appears in 9 of 10 docs (common), "compact" in 1 of 10 (rare)
     const N = 10;
     const idfMap = new Map([
@@ -165,14 +166,14 @@ describe('BM25 content scoring', () => {
     expect(rareIdf).toBeGreaterThan(commonIdf);
   });
 
-  test('computeIdfMap avgdl is mean char length of contents', () => {
-    const { avgdl } = computeIdfMap([], ['ab', 'abcd']); // lengths 2 and 4
+  test('computeIdfMap avgdl is mean word count of contents', () => {
+    const { avgdl } = computeIdfMap([], ['hello world', 'one two three four']); // 2 and 4 words
     expect(avgdl).toBe(3);
   });
 
   test('fallback IDF is used when term is not in idfMap', () => {
     // Term 'rare' not in idfMap — fallback IDF (Math.log(1.5)) should still produce a positive score
-    const score = scoreContentTermsBM25(['rare'], 'rare rare rare', new Map(), 14);
+    const score = scoreContentTermsBM25(['rare'], 'rare rare rare', new Map(), 3);
     expect(score).toBeGreaterThan(0);
   });
 
