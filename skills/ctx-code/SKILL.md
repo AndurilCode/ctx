@@ -43,7 +43,7 @@ If you get `STALE_READ` — the file changed since you read it. The error return
 
 **Line-hash mode** (symbol >= 50 lines, change <= 5 lines):
 
-Use `ctx read --lineHashes` to see per-line 2-char hashes, then target specific lines:
+Use `ctx read --lineHashes` to see per-line 4-char hashes, then target specific lines:
 ```json
 {
   "file": "src/utils.ts",
@@ -55,7 +55,7 @@ Use `ctx read --lineHashes` to see per-line 2-char hashes, then target specific 
 }
 ```
 
-> **Line hashes are content-based.** The 2-char hash is derived from the line's text content (trimmed, normalized), not its position. The same line content always produces the same hash regardless of where it appears. `ctx read --lineHashes` shows file-level line numbers for orientation, but `ctx patch` matches by hash alone — line numbers are ignored. This means you can read line hashes from the full file and use them directly in symbol-scoped or file-scoped patches.
+> **Line hashes include position.** The 4-char hash is derived from `lineNumber + lineText`, so identical line text at different lines yields different hashes. Generate hashes from the same content block you plan to patch (symbol body for symbol-scoped edits, full file for hashline mode).
 
 **Multi-symbol atomic batch** (related changes):
 ```json
@@ -70,7 +70,7 @@ Use `ctx read --lineHashes` to see per-line 2-char hashes, then target specific 
 
 **Hashline fallback** (unparseable files — config, prose, unsupported languages):
 
-Use `ctx read --lineHashes` to get per-line hashes, then edit without a symbol. Hashes match on content so no symbol/outline is needed:
+Use `ctx read --lineHashes` to get per-line hashes, then edit without a symbol. Hashes are line-number scoped to that file content, so no symbol/outline is needed:
 ```json
 {
   "file": "config.yaml",

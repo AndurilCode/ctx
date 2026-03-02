@@ -108,13 +108,13 @@ describe('replaceSymbolBody', () => {
 });
 
 describe('computeLineHashes', () => {
-  test('returns 2-char hashes for each line', async () => {
+  test('returns 4-char hashes for each line', async () => {
     const loc = await locateSymbol(SAMPLE, 'greet', { language: 'typescript' });
     const body = SAMPLE.slice(loc!.startIndex, loc!.endIndex);
     const hashes = computeLineHashes(body);
     expect(hashes.length).toBeGreaterThan(0);
     for (const h of hashes) {
-      expect(h.hash).toMatch(/^[0-9a-f]{2}$/);
+      expect(h.hash).toMatch(/^[0-9a-f]{4}$/);
       expect(h.line).toBeDefined();
     }
   });
@@ -124,6 +124,11 @@ describe('computeLineHashes', () => {
     expect(hashes[0]!.lineNumber).toBe(1);
     expect(hashes[1]!.lineNumber).toBe(2);
     expect(hashes[2]!.lineNumber).toBe(3);
+  });
+
+  test('same content on different lines yields different hashes', () => {
+    const hashes = computeLineHashes('dup\ndup');
+    expect(hashes[0]!.hash).not.toBe(hashes[1]!.hash);
   });
 });
 

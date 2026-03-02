@@ -60,7 +60,7 @@ export function registerReadTool(server: McpServer): void {
           .boolean()
           .optional()
           .describe(
-            'Annotate each line with 2-char content hash for use with ctx_patch line-hash mode',
+            'Annotate each line with a 4-char hash derived from line number + content for ctx_patch line-hash mode',
           ),
       },
     },

@@ -3,7 +3,8 @@ import type { PatchLineEdit } from '../types/patch.js';
 import { shortHash } from '../utils/hash.js';
 
 /**
- * Compute a 2-char hash for each line in the given body text.
+ * Compute a 4-char hash for each line in the given body text.
+ * The hash is derived from both 1-based line number and line content.
  */
 export function computeLineHashes(body: string): LineHash[] {
   const lines = body.split('\n');
@@ -12,14 +13,15 @@ export function computeLineHashes(body: string): LineHash[] {
     body.endsWith('\n') && lines[lines.length - 1] === '' ? lines.slice(0, -1) : lines;
 
   return effectiveLines.map((line, i) => ({
-    hash: shortHash(line, 2),
+    hash: shortHash(`${i + 1}:${line}`, 4),
     line,
     lineNumber: i + 1,
   }));
 }
 
 /**
- * Apply line-level edits to a body. Each edit targets a line by its 2-char hash.
+ * Apply line-level edits to a body. Each edit targets a line by its 4-char hash.
+ * Hashes include line number, so edits recompute hashes after each mutation.
  *
  * Supported operations:
  * - `replace`: replace the matched line's content
@@ -33,7 +35,8 @@ export function applyLineEdits(body: string, edits: PatchLineEdit[]): string {
   const lines = body.split('\n');
   const trailingNewline = body.endsWith('\n') && lines[lines.length - 1] === '';
   const effectiveLines = trailingNewline ? lines.slice(0, -1) : [...lines];
-  const lineHashes = effectiveLines.map((line) => shortHash(line, 2));
+  const buildLineHashes = () => effectiveLines.map((line, i) => shortHash(`${i + 1}:${line}`, 4));
+  let lineHashes = buildLineHashes();
 
   for (const edit of edits) {
     const idx = lineHashes.findIndex((h) => h === edit.hash);
@@ -46,22 +49,20 @@ export function applyLineEdits(body: string, edits: PatchLineEdit[]): string {
 
     if (edit.delete) {
       effectiveLines.splice(idx, 1);
-      lineHashes.splice(idx, 1);
     } else if (edit.replace !== undefined) {
       effectiveLines[idx] = edit.replace;
-      lineHashes[idx] = shortHash(edit.replace, 2);
     }
 
     if (edit.after !== undefined) {
       const insertIdx = edit.delete ? idx : idx + 1;
       effectiveLines.splice(insertIdx, 0, edit.after);
-      lineHashes.splice(insertIdx, 0, shortHash(edit.after, 2));
     }
 
     if (edit.before !== undefined) {
       effectiveLines.splice(idx, 0, edit.before);
-      lineHashes.splice(idx, 0, shortHash(edit.before, 2));
     }
+
+    lineHashes = buildLineHashes();
   }
 
   return trailingNewline ? `${effectiveLines.join('\n')}\n` : effectiveLines.join('\n');

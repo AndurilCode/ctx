@@ -19,7 +19,7 @@ export const readCommand = defineCommand({
     lineHashes: {
       type: 'boolean',
       required: false,
-      description: 'Annotate each line with 2-char content hash',
+      description: 'Annotate each line with 4-char hash derived from line number + content',
     },
   },
   async run({ args }) {
@@ -32,7 +32,7 @@ export const readCommand = defineCommand({
     process.stdout.write(result.content);
     if (!result.content.endsWith('\n')) process.stdout.write('\n');
     process.stderr.write(
-      JSON.stringify(
+      `${JSON.stringify(
         {
           strategy: result.strategy,
           totalTokens: result.totalTokens,
@@ -41,7 +41,7 @@ export const readCommand = defineCommand({
         },
         null,
         2,
-      ) + '\n',
+      )}\n`,
     );
   },
 });

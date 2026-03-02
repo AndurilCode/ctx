@@ -65,7 +65,7 @@ describe('budgetedRead', () => {
     expect(lines).toHaveLength(3);
     // Each line should match the format: padded_number:hash| content
     for (const line of lines) {
-      expect(line).toMatch(/^\s*\d+:[a-f0-9]{2}\| /);
+      expect(line).toMatch(/^\s*\d+:[a-f0-9]{4}\| /);
     }
   });
 
@@ -77,8 +77,8 @@ describe('budgetedRead', () => {
       lineHashes: true,
     });
     const lines = result.content.split('\n');
-    expect(lines[0]).toMatch(/^1:[a-f0-9]{2}\| alpha$/);
-    expect(lines[1]).toMatch(/^2:[a-f0-9]{2}\| beta$/);
+    expect(lines[0]).toMatch(/^1:[a-f0-9]{4}\| alpha$/);
+    expect(lines[1]).toMatch(/^2:[a-f0-9]{4}\| beta$/);
   });
 
   test('lineHashes match computeLineHashes output', async () => {
@@ -106,7 +106,7 @@ describe('budgetedRead', () => {
     });
     const lines = result.content.split('\n');
     // 12 lines → 2-digit padding, so line 1 should be padded
-    expect(lines[0]).toMatch(/^ 1:[a-f0-9]{2}\| /);
-    expect(lines[11]).toMatch(/^12:[a-f0-9]{2}\| /);
+    expect(lines[0]).toMatch(/^ 1:[a-f0-9]{4}\| /);
+    expect(lines[11]).toMatch(/^12:[a-f0-9]{4}\| /);
   });
 });

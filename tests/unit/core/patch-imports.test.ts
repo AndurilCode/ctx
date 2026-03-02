@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { patch } from '../../../src/core/patch.js';
 import { locateSymbol } from '../../../src/parser/patch-engine.js';
-import { shortHash } from '../../../src/utils/hash.js';
+import { computeLineHashes } from '../../../src/parser/patch-line-edits.js';
 
 async function hashOf(source: string, name: string): Promise<string> {
   const loc = await locateSymbol(source, name, { language: 'ts' });
@@ -74,7 +74,9 @@ describe('patch — imports and line edits', () => {
   test('hashline fallback: applies line edits directly to full file', async () => {
     const src = ['const x = 1;', 'const y = 2;', 'const z = 3;', ''].join('\n');
     await setup(src);
-    const yLineHash = shortHash('const y = 2;', 2);
+    const yLine = computeLineHashes(src).find((h) => h.line === 'const y = 2;');
+    expect(yLine).toBeDefined();
+    const yLineHash = yLine?.hash ?? '';
     const result = await patch({
       file: filePath,
       lines: [{ hash: yLineHash, replace: 'const y = 42;' }],

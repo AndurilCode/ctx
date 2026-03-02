@@ -4,7 +4,7 @@ import { patch } from '../../core/patch.js';
 import { textResult } from './common.js';
 
 const lineEditSchema = z.object({
-  hash: z.string().describe('2-char content hash of the line'),
+  hash: z.string().describe('4-char hash of the line (derived from line number + content)'),
   replace: z.string().optional().describe('Replace the line with this content'),
   after: z.string().optional().describe('Insert this content after the matched line'),
   before: z.string().optional().describe('Insert this content before the matched line'),
