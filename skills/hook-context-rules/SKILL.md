@@ -270,11 +270,25 @@ Prompt must instruct the subagent to:
 
 Use the Layer 5 output to present a numbered table of candidate rules.
 Each row must include:
+- **Scope** — the path glob this rule targets
 - The rule (compact JSON or summary)
-- **Source** — which doc/file established the constraint
+- **Source** — which doc/file and section established the constraint
 - **Verification** — what Grep/check confirmed it
+- **Flags** — `broad` or `no match` if applicable
+
+```
+#  on          scope              inject                          source
+───────────────────────────────────────────────────────────────────────────
+0  PreToolUse  src/api/**         text: "API Design: Use camel…"  docs/style.md §API Design
+1  PreToolUse  src/components/**  text: "Components: Functional…" docs/style.md §Components
+2  PreToolUse  **/*.test.*        text: "Test Patterns: descri…"  docs/style.md §Test Patterns
+3  PreToolUse  src/**  (broad)    text: "Naming: Use snake_cas…"  docs/style.md §Naming
+```
 
 Ask: **"Accept all (a), pick by number (e.g. 1,3), or skip (s)?"**
+
+For rules flagged `(no match)`, prompt: **"No matching code found for
+'<section>'. Assign a path glob or skip? (glob / s)"**
 
 Write accepted rules to `.claude/context-rules.json` (create if absent,
 merge if exists).
