@@ -16,13 +16,14 @@ It ships as Claude Code skills, an MCP server, a CLI, and a library.
 
 ## Claude Code Skills
 
-The fastest way to get started. Three slash commands cover the main agent workflows:
+The fastest way to get started. Four skills cover the main agent workflows:
 
-| Command | When to use |
+| Skill | When to use |
 |---|---|
-| `/ctx-explore [question or path]` | Navigate a codebase, research a topic, onboard to a new repo |
-| `/ctx-review [branch or range]` | Code review — compress diffs, outline changed files, surface risks |
-| `/ctx-test [command or file]` | Run tests — prune noisy output, highlight failures with structural context |
+| `/ctx-search [question or path]` | Navigate a codebase, research a topic, onboard to a new repo |
+| `/ctx-code [file::symbol]` | Make changes — patch, insert, or rename symbols using read-patch cycle |
+| `/ctx-verify [file or command]` | Review diffs, run tests, check correctness after changes |
+| `/rules-to-hook` | Author and maintain context-injection rules |
 
 **Install via add-skill:**
 
@@ -31,7 +32,7 @@ The fastest way to get started. Three slash commands cover the main agent workfl
 npx add-skill AndurilCode/ctx
 
 # Or pick specific ones
-npx add-skill AndurilCode/ctx --skill ctx-explore --skill ctx-review --skill ctx-test
+npx add-skill AndurilCode/ctx --skill ctx-search --skill ctx-code --skill ctx-verify
 ```
 
 ---
@@ -54,16 +55,16 @@ For any MCP-compatible client (Claude Desktop, Cursor, etc.):
 Use the lowest-fidelity tool that answers your question:
 
 **Navigation** _(start here for unknown documents)_
-`ctx_sections` · `ctx_locate`
+`ctx_sections` · `ctx_read`
 
 **Code intelligence**
-`ctx_tree` · `ctx_rank` · `ctx_gather` · `ctx_context` · `ctx_outline` · `ctx_imports` · `ctx_symbols` · `ctx_review` · `ctx_focus` · `ctx_verify`
+`ctx_tree` · `ctx_rank` · `ctx_gather` · `ctx_context` · `ctx_outline` · `ctx_imports` · `ctx_symbols` · `ctx_review` · `ctx_focus` · `ctx_verify` · `ctx_roundtrip_verify`
 
 **Extraction & compression**
 `ctx_extract` · `ctx_compact` · `ctx_expand` · `ctx_changes` · `ctx_prune`
 
-**AI summarization** _(lossy, cached)_
-`ctx_summarize` · `ctx_batch`
+**Code editing**
+`ctx_patch` · `ctx_insert` · `ctx_rename`
 
 **Typical agent reading flow:**
 ```
@@ -84,21 +85,30 @@ npx @anduril-code/ctx <command> [options]
 # Context assembly
 ctx gather "authentication flow" --maxTokens 2000
 ctx rank "error handling" --glob "**/*.ts"
+ctx context src/core/patch.ts src/core/focus.ts --maxTokens 3000
 ctx tree src/ --depth 3
+ctx read src/core/compact.ts --maxTokens 500
+ctx tokens src/core/compact.ts
 
 # Code intelligence
 ctx outline src/core/compact.ts
-ctx imports src/stages/tables.ts
+ctx imports src/core/imports.ts
 ctx symbols "compact" --kind function
 ctx review "security" --diffBase main --evidence
 ctx focus src/core/patch.ts::patch
 ctx verify src/core/patch.ts --symbol patch --since a3b2
 ctx verify src/core/patch.ts --exec
 
+# Code editing
+ctx patch src/utils/text.ts --symbol normalize --hash a3f2 --body '...'
+ctx insert src/utils/text.ts --position after:normalize --anchor-hash a3f2 --body '...'
+ctx rename src/utils/text.ts --symbol normalize --hash a3f2 --to normalizeText
+
 # Document navigation
-ctx sections docs/api.md
-ctx extract docs/api.md --onlySections "Authentication"
-ctx summarize docs/api.md
+ctx sections README.md
+ctx locate "authentication" README.md AGENTS.md
+ctx extract README.md --onlySections "CLI"
+ctx metrics README.md
 
 # Compression
 git diff | ctx changes --changes-only
@@ -118,7 +128,12 @@ npm install @anduril-code/ctx
 ```
 
 ```typescript
-import { compact, expand, pruneLog, compactDiff } from '@anduril-code/ctx';
+import {
+  compact, expand, pruneLog, compactDiff,
+  codeOutline, tree, budgetedRead, relevance, review,
+  autoContext, assembleContext, fileImports, symbols, focus,
+  patch, insert, rename,
+} from '@anduril-code/ctx';
 
 // Lossless Markdown compression — expand(compact(md)) === md, always
 const { output, stats } = compact(md, { dedup: true, stats: true });
@@ -129,6 +144,14 @@ const { output: pruned } = pruneLog(testOutput, { profile: 'test' });
 
 // Diff compression
 const compressed = compactDiff(gitDiff, { changesOnly: true });
+
+// Code intelligence
+const outline = await codeOutline('src/index.ts');
+const ranked = await relevance('error handling', { glob: '**/*.ts' });
+const context = await autoContext('auth flow', { maxTokens: 2000 });
+
+// Symbol-anchored editing
+const result = await patch({ file: 'src/utils.ts', symbol: 'parse', hash: 'a3f2', body: '...' });
 ```
 
 See TypeScript types for full option references.
