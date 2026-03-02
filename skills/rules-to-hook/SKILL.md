@@ -1,9 +1,9 @@
 ---
-name: hook-context-rules
+name: rules-to-hook
 description: >
   Author and maintain .claude/context-rules.json — the declarative config for the
   context-inject hook. Scans the codebase to propose an initial rule set, then guides
-  interactive rule addition. Use with /hook-context-rules.
+  interactive rule addition. Use with /rules-to-hook.
 argument-hint: "[add | list | remove <index>]"
 ---
 
@@ -76,11 +76,11 @@ If **all three** pass → skip to Phase 1.
 If **any** is missing → run the installer:
 
 ```bash
-node skills/hook-context-rules/install.mjs
+node skills/rules-to-hook/install.mjs
 ```
 
 The installer is idempotent. It:
-- Creates `.claude/hooks/` and copies the engine from `skills/hook-context-rules/engine.mjs`
+- Creates `.claude/hooks/` and copies the engine from `skills/rules-to-hook/engine.mjs`
 - Ensures `package.json` has `minimatch` and installs dependencies
 - Merges hook registrations into `.claude/settings.json` (all 3 events, `.*` matcher)
 - Seeds an empty `.claude/context-rules.json` if absent

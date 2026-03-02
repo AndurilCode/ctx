@@ -6,7 +6,7 @@ You MUST use these skills instead of raw file reads or manual tool invocations.
 | `ctx-search` | Understand codebase — token-aware reading, onboarding, topic search |
 | `ctx-code` | Make changes — patch, insert, rename symbols using read-patch cycle |
 | `ctx-verify` | Check changes — review diffs, run tests, trace blast radius |
-| `hook-context-rules` | Author and maintain context-injection rules |
+| `rules-to-hook` | Author and maintain context-injection rules |
 
 ## @Memory
 ```

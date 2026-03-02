@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Idempotent installer for the context-inject hook engine.
-// Run from project root: node skills/hook-context-rules/install.mjs
+// Run from project root: node skills/rules-to-hook/install.mjs
 //
 // What it does:
 //   1. Creates .claude/hooks/ directory
