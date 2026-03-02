@@ -59,6 +59,37 @@ implicit AND), and an `inject` payload (exactly one key).
 | `hint` | Prefixed with `"Related: "` — agent decides whether to read |
 | `shell` | Command stdout captured and injected; must be fast (<100 ms); no `;` or `&&` |
 
+## Phase 0 — Bootstrap
+
+Runs **before any other phase**, every time the skill is invoked.
+
+### Detection
+
+Check whether the hook engine is installed:
+
+1. `.claude/hooks/context-inject.mjs` exists
+2. `.claude/settings.json` has `context-inject.mjs` registered in all three events
+3. `.claude/hooks/node_modules/minimatch` exists (dependency installed)
+
+If **all three** pass → skip to Phase 1.
+
+If **any** is missing → run the installer:
+
+```bash
+node skills/hook-context-rules/install.mjs
+```
+
+The installer is idempotent. It:
+- Creates `.claude/hooks/` and copies the engine from `skills/hook-context-rules/engine.mjs`
+- Ensures `package.json` has `minimatch` and installs dependencies
+- Merges hook registrations into `.claude/settings.json` (all 3 events, `.*` matcher)
+- Seeds an empty `.claude/context-rules.json` if absent
+
+After the installer completes, confirm:
+**"Hook engine installed. Proceeding to auto-discovery."**
+
+If the installer fails, stop and report the error — do not continue to later phases.
+
 ## Phase 1 — Auto-discovery
 
 Runs by default (and always first, even when invoked with `add`).
@@ -267,4 +298,4 @@ Apply before writing any rule:
 - Prefer `hint` over `text` for long or optional context — it costs fewer tokens.
 - `shell` output is injected verbatim; keep commands deterministic and side-effect-free.
 - The hook fires on every matching tool call — keep `when` filters targeted.
-- This skill never modifies `context-inject.mjs` or `settings.json`.
+- Phase 0 may create `context-inject.mjs` and modify `settings.json` — only during initial bootstrap.
