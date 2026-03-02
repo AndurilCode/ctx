@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Hook engine: inject additionalContext based on .claude/context-rules.json
 
-import { readFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { minimatch } from 'minimatch';
 
 const chunks = [];
@@ -15,10 +15,36 @@ try {
   process.exit(0);
 }
 
-const event = input?.hook_event_name ?? '';
-const toolName = input?.tool_name ?? '';
-const toolInput = input?.tool_input ?? {};
-const prompt = input?.prompt ?? '';
+function detectPlatform(payload) {
+  if (payload?.hook_event_name || payload?.tool_name || payload?.tool_input) return 'claude';
+  if (payload?.hookEventName || payload?.toolName || payload?.toolInput) return 'vscode';
+  return 'claude';
+}
+
+function pickString(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.length > 0) return value;
+  }
+  return '';
+}
+
+function pickObject(...values) {
+  for (const value of values) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) return value;
+  }
+  return {};
+}
+
+const platform = detectPlatform(input);
+const event = pickString(input?.hook_event_name, input?.hookEventName);
+const toolName = pickString(input?.tool_name, input?.toolName, input?.tool?.name);
+const toolInput = pickObject(
+  input?.tool_input,
+  input?.toolInput,
+  input?.tool?.input,
+  input?.toolArguments,
+);
+const prompt = pickString(input?.prompt, input?.userPrompt, input?.message);
 
 const configCandidates = [
   `${process.cwd()}/.claude/context-rules.json`,
@@ -37,10 +63,10 @@ try {
 
 if (!Array.isArray(rules)) process.exit(0);
 
-const rawPath = toolInput.file_path ?? toolInput.path ?? '';
+const rawPath = pickString(toolInput.file_path, toolInput.path, toolInput.filePath);
 const cwd = process.cwd();
 const filePath = rawPath.startsWith(cwd) ? rawPath.slice(cwd.length + 1) : rawPath;
-const command = toolInput.command ?? toolInput.cmd ?? '';
+const command = pickString(toolInput.command, toolInput.cmd, toolInput.shellCommand);
 
 function safeRegex(pattern) {
   try {
@@ -87,17 +113,30 @@ function resolveInject(inject) {
 }
 
 const matched = rules
-  .filter((r) => r.on === event && r.when && r.inject && matchesWhen(r.when))
+  .filter((r) => r.on === event && r.inject && matchesWhen(r.when ?? {}))
   .map((r) => resolveInject(r.inject))
   .filter(Boolean);
 
 if (matched.length === 0) process.exit(0);
 
-process.stdout.write(
-  JSON.stringify({
+function buildOutput(eventName, additionalContext) {
+  if (platform === 'vscode') {
+    return {
+      continue: true,
+      systemMessage: additionalContext,
+      hookSpecificOutput: {
+        hookEventName: eventName,
+        additionalContext,
+      },
+    };
+  }
+
+  return {
     hookSpecificOutput: {
-      hookEventName: event,
-      additionalContext: matched.join('\n'),
+      hookEventName: eventName,
+      additionalContext,
     },
-  }),
-);
+  };
+}
+
+process.stdout.write(JSON.stringify(buildOutput(event, matched.join('\n'))));

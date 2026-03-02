@@ -10,6 +10,7 @@ argument-hint: "[add | list | remove <index>]"
 # Hook Context Rules
 
 Author and maintain `.claude/context-rules.json` for the `context-inject.mjs` hook.
+The engine supports Claude Code and VS Code hook payload formats in Phase 1.
 
 ## Config Format
 
