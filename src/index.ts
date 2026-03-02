@@ -40,3 +40,19 @@ export { fileImports } from './core/imports.js';
 export type { ImportEdge, ImportsOptions, ImportsResult } from './types/imports.js';
 export { symbols } from './core/symbols.js';
 export type { SymbolDefinition, SymbolsOptions, SymbolsResult, SymbolUsage } from './types/symbols.js';
+export { patch } from './core/patch.js';
+export { insert } from './core/insert.js';
+export { rename } from './core/rename.js';
+export type {
+  PatchInput,
+  PatchResult,
+  PatchSuccess,
+  PatchFailure,
+  PatchError,
+  PatchErrorCode,
+  InsertInput,
+  RenameInput,
+  RenameResult,
+  SinglePatchOp,
+  PatchLineEdit,
+} from './types/patch.js';
