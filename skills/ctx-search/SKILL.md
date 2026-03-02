@@ -64,9 +64,9 @@ All commands are invoked as `npx @anduril-code/ctx <command>`.
 
 ## Hashes and editing
 
-`outline` output includes `hash:xxxx` for every symbol. These hashes are used by the editing tools (`ctx_patch`, `ctx_insert`, `ctx_rename`).
+`outline` output includes `hash:xxxx` for every symbol. These hashes are used by the editing tools (`ctx patch`, `ctx insert`, `ctx rename`).
 
-`read --lineHashes` annotates each line with `lineNo:hash| content` — use these 2-char hashes for `ctx_patch` line-hash mode or hashline fallback. Line hashes are **content-based** (derived from trimmed line text, not position), so the same content always produces the same hash. The line numbers are for orientation only — `ctx_patch` matches by hash alone.
+`read --lineHashes` annotates each line with `lineNo:hash| content` — use these 2-char hashes for `ctx patch` line-hash mode or hashline fallback. Line hashes are **content-based** (derived from trimmed line text, not position), so the same content always produces the same hash. The line numbers are for orientation only — `ctx patch` matches by hash alone.
 
 When you identify what needs to change, hand off to **ctx-code**.
 
