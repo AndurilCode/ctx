@@ -175,10 +175,29 @@ Prompt must instruct the subagent to:
 
 ---
 
-### Batch 2 — Audit enforcement (1 subagent)
+### Batch 2 — Path affinity + enforcement audit (2 parallel subagents)
 
-Dispatch one `general-purpose` Task subagent.
-**Paste the constraint inventory from Layer 3 into the prompt.**
+Dispatch two `general-purpose` Task subagents **in a single message**.
+**Paste the section records from Layer 3 into both prompts.**
+
+#### Subagent → Layer 3.5: Path affinity via codebase grep
+
+Prompt must instruct the subagent to:
+
+1. For each section record, Grep the codebase for each keyword.
+2. For each keyword hit, note which top-level source directory contains it
+   (e.g. `src/api`, `src/components`, `tests`).
+3. Rank directories by **hit density**: hits for this section's keywords
+   divided by total files in the directory.
+4. Assign the top 1-3 directories as path globs (e.g. `src/api/**`).
+5. If a section's keywords match across 5+ top-level directories with no
+   clear winner (no directory has >30% of hits), assign `src/**` and flag
+   as `broad: true`.
+6. If a section's keywords produce zero hits, flag as `noMatch: true`.
+
+**Expected return:**
+- Enriched section records: original fields plus `paths` (string array of
+  globs) and optional `broad` / `noMatch` flags
 
 #### Subagent → Layer 4: Enforcement audit
 
@@ -187,7 +206,7 @@ Prompt must instruct the subagent to:
 1. Read every file in `.claude/hooks/` — source code, not just filenames.
    Understand what each hook enforces (blocks, rewrites, denies, injects).
 2. Read `.claude/context-rules.json` if it exists — list every rule.
-3. Cross-reference each constraint from the inventory against existing
+3. Cross-reference each section record from Layer 3 against existing
    hooks and rules. Mark each as:
    - **Enforced** — already covered → skip
    - **Unenforced** — no coverage → candidate
@@ -196,9 +215,9 @@ Prompt must instruct the subagent to:
 **Expected return:**
 - Existing hooks summary (what each enforces)
 - Existing rules list
-- Constraint status table (constraint → Enforced / Unenforced / Partial)
+- Section status table (section → Enforced / Unenforced / Partial)
 
-**Wait for completion.**
+**Wait for both subagents.** Collect their outputs.
 
 ---
 
