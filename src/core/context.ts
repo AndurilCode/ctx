@@ -73,18 +73,25 @@ export async function assembleContext(options: ContextOptions): Promise<ContextR
     }
   }
 
+  const readResults = await Promise.all(
+    allocations.map(({ m, allocated }) =>
+      budgetedRead({
+        file: m.source.file,
+        maxTokens: allocated,
+        strategy,
+        content: m.content,
+        totalTokens: m.totalTokens,
+      }),
+    ),
+  );
+
   const parts: string[] = [];
   const sourceResults: ContextSourceResult[] = [];
   let usedTokens = 0;
 
-  for (const { m, allocated } of allocations) {
-    const result = await budgetedRead({
-      file: m.source.file,
-      maxTokens: allocated,
-      strategy,
-      content: m.content,
-      totalTokens: m.totalTokens,
-    });
+  for (let i = 0; i < allocations.length; i++) {
+    const { m } = allocations[i];
+    const result = readResults[i];
     parts.push(
       `## ${m.source.file} (${result.strategy}, ${result.returnedTokens}t of ${m.totalTokens}t)\n\n${result.content}`,
     );

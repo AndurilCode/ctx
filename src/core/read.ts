@@ -65,7 +65,7 @@ async function runAutoStrategy(
     }
   }
 
-  if (isMarkdownFile(file)) {
+  if (isMarkdownFile(file) && totalTokens <= maxTokens * 5) {
     try {
       const result = await applyStrategy(
         'sections',
@@ -119,7 +119,7 @@ async function applyStrategy(
   }
 
   // Default: truncate
-  const truncated = truncateToTokenBudget(content, maxTokens, counter);
+  const truncated = truncateToTokenBudget(content, maxTokens, totalTokens, counter);
   const tokens = counter.count(truncated);
   return {
     content: truncated,
@@ -130,10 +130,29 @@ async function applyStrategy(
   };
 }
 
-function truncateToTokenBudget(content: string, maxTokens: number, counter: TokenCounter): string {
+function truncateToTokenBudget(
+  content: string,
+  maxTokens: number,
+  totalTokens: number,
+  counter: TokenCounter,
+): string {
   const lines = content.split('\n');
+
+  // Narrow the search range using character estimate (~5 chars/token, generous)
+  // to avoid tokenizing huge slices in early binary-search iterations.
+  const charBudget = maxTokens * 5;
+  let upperBound = lines.length;
+  let charCount = 0;
+  for (let i = 0; i < lines.length; i++) {
+    charCount += lines[i].length + 1;
+    if (charCount > charBudget) {
+      upperBound = i + 1;
+      break;
+    }
+  }
+
   let lo = 0;
-  let hi = lines.length;
+  let hi = upperBound;
   while (lo < hi) {
     const mid = (lo + hi + 1) >>> 1;
     const slice = lines.slice(0, mid).join('\n');
@@ -141,7 +160,7 @@ function truncateToTokenBudget(content: string, maxTokens: number, counter: Toke
     else hi = mid - 1;
   }
   const kept = lines.slice(0, lo).join('\n');
-  const remaining = counter.count(content) - counter.count(kept);
+  const remaining = totalTokens - counter.count(kept);
   return `${kept}\n[...truncated, ~${remaining} more tokens]`;
 }
 
