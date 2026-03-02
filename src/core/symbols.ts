@@ -16,6 +16,12 @@ import { findUsagesInContent, flattenNodes } from '../utils/symbol-index.js';
 export async function symbols(options: SymbolsOptions): Promise<SymbolsResult> {
   const root = resolve(options.path ?? '.');
   const globPattern = options.glob ?? '**/*.{ts,tsx,js,jsx,py,rs,go}';
+  const escapedQuery = escapeRegex(options.query);
+  const usagePattern = new RegExp(`\\b${escapedQuery}\\b`);
+  const namePattern = new RegExp(
+    `(?:^|(?<=[^a-zA-Z0-9_]))${escapedQuery}(?=$|[^a-zA-Z0-9_])`,
+    'i',
+  );
 
   const files = await fg(globPattern, {
     cwd: root,
@@ -24,6 +30,7 @@ export async function symbols(options: SymbolsOptions): Promise<SymbolsResult> {
 
   const allDefinitions: SymbolDefinition[] = [];
   const allUsages: SymbolUsage[] = [];
+  const { codeOutline } = await import('./code-outline.js');
 
   await Promise.all(
     files.map(async (relFile) => {
@@ -36,15 +43,15 @@ export async function symbols(options: SymbolsOptions): Promise<SymbolsResult> {
         return;
       }
 
+      // Fast prefilter: skip costly parsing/scan if the query cannot appear in this file.
+      if (!usagePattern.test(content) && !namePattern.test(content)) {
+        return;
+      }
+
       // Find definitions via code-outline
       try {
-        const { codeOutline } = await import('./code-outline.js');
         const outlined = await codeOutline(content, { filePath: absFile });
         const defs = flattenNodes(outlined.nodes, workspaceRel, options.kind);
-        const namePattern = new RegExp(
-          `(?:^|(?<=[^a-zA-Z0-9_]))${escapeRegex(options.query)}(?=$|[^a-zA-Z0-9_])`,
-          'i',
-        );
         const matching = defs.filter((d) => namePattern.test(d.name));
         allDefinitions.push(...matching);
       } catch {
@@ -58,9 +65,13 @@ export async function symbols(options: SymbolsOptions): Promise<SymbolsResult> {
   );
 
   // Deduplicate usages (definition files will appear as usages too — that's fine)
-  const uniqueUsages = allUsages.filter(
-    (u, i, arr) => arr.findIndex((v) => v.file === u.file && v.line === u.line) === i,
-  );
+  const seenUsageLocations = new Set<string>();
+  const uniqueUsages = allUsages.filter((usage) => {
+    const key = `${usage.file}:${usage.line}`;
+    if (seenUsageLocations.has(key)) return false;
+    seenUsageLocations.add(key);
+    return true;
+  });
 
   const output = formatOutput(options.query, allDefinitions, uniqueUsages);
   return { query: options.query, definitions: allDefinitions, usages: uniqueUsages, output };
