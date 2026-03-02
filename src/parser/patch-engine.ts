@@ -14,7 +14,7 @@ function lineToIndex(source: string, line: number): number {
   const lines = source.split('\n');
   let index = 0;
   for (let i = 0; i < line - 1 && i < lines.length; i++) {
-    index += lines[i]!.length + 1; // +1 for \n
+    index += (lines[i]?.length ?? 0) + 1; // +1 for \n
   }
   return index;
 }
@@ -24,7 +24,7 @@ function lineEndToIndex(source: string, line: number): number {
   const lines = source.split('\n');
   let index = 0;
   for (let i = 0; i < line && i < lines.length; i++) {
-    index += lines[i]!.length + 1;
+    index += (lines[i]?.length ?? 0) + 1;
   }
   return Math.min(index - 1, source.length);
 }
@@ -45,7 +45,9 @@ function nodeToLocation(source: string, node: OutlineNode): SymbolLocation {
     name: node.name,
     hash:
       node.hash ??
-      shortHash(source.slice(lineToIndex(source, node.startLine), lineEndToIndex(source, node.endLine))),
+      shortHash(
+        source.slice(lineToIndex(source, node.startLine), lineEndToIndex(source, node.endLine)),
+      ),
     startLine: node.startLine,
     endLine: node.endLine,
     startIndex: lineToIndex(source, node.startLine),
@@ -68,14 +70,18 @@ export async function locateSymbol(
   const matches = collectMatches(nodes, symbolName);
   if (matches.length === 0) return undefined;
 
-  const location = nodeToLocation(source, matches[0]!);
+  const first = matches[0];
+  if (!first) return undefined;
+  const location = nodeToLocation(source, first);
 
   if (matches.length > 1) {
     location.ambiguous = matches.map((m) => ({
       name: m.name,
       hash:
         m.hash ??
-        shortHash(source.slice(lineToIndex(source, m.startLine), lineEndToIndex(source, m.endLine))),
+        shortHash(
+          source.slice(lineToIndex(source, m.startLine), lineEndToIndex(source, m.endLine)),
+        ),
       startLine: m.startLine,
       endLine: m.endLine,
     }));

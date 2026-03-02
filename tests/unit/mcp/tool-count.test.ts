@@ -5,7 +5,9 @@ describe('MCP tool surface', () => {
   test('registered tool count is at most 18', () => {
     const registered: string[] = [];
     const fakeServer = {
-      registerTool: (name: string) => { registered.push(name); },
+      registerTool: (name: string) => {
+        registered.push(name);
+      },
     };
     registerCompactMdTools(fakeServer as any);
     expect(registered.length).toBeLessThanOrEqual(18);

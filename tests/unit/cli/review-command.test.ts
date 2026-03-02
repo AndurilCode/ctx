@@ -36,7 +36,10 @@ describe('review command', () => {
       process.stdout.write = originalStdoutWrite;
     }
 
-    const parsed = JSON.parse(stdout) as { files: Array<{ file: string }>; totals: { fullTokens: number } };
+    const parsed = JSON.parse(stdout) as {
+      files: Array<{ file: string }>;
+      totals: { fullTokens: number };
+    };
     expect(parsed.files.length).toBeGreaterThan(0);
     expect(parsed.totals.fullTokens).toBeGreaterThan(0);
   });

@@ -6,7 +6,10 @@ import type { EvidenceLine } from '../types/review.js';
  * Returns lines containing any of the matched terms (case-insensitive).
  * Lines are labeled as "relevant" — not necessarily root cause.
  */
-export async function extractEvidence(file: string, matchedTerms: string[]): Promise<EvidenceLine[]> {
+export async function extractEvidence(
+  file: string,
+  matchedTerms: string[],
+): Promise<EvidenceLine[]> {
   let content: string;
   try {
     content = await readFile(file, 'utf8');

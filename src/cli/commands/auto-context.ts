@@ -9,11 +9,29 @@ export const autoContextCommand = defineCommand({
   args: {
     query: { type: 'positional', required: true, description: 'Task description or query' },
     maxTokens: { type: 'string', required: true, description: 'Total token budget' },
-    path: { type: 'string', required: false, description: 'Root directory to search (default: cwd)' },
+    path: {
+      type: 'string',
+      required: false,
+      description: 'Root directory to search (default: cwd)',
+    },
     seeds: { type: 'string', required: false, description: 'Comma-separated seed file paths' },
-    depth: { type: 'string', required: false, default: '1', description: 'Import graph hops (0 = none)' },
-    glob: { type: 'string', required: false, description: 'File pattern (default: **/*.{ts,tsx,js,jsx})' },
-    maxFiles: { type: 'string', required: false, default: '15', description: 'Max files to include' },
+    depth: {
+      type: 'string',
+      required: false,
+      default: '1',
+      description: 'Import graph hops (0 = none)',
+    },
+    glob: {
+      type: 'string',
+      required: false,
+      description: 'File pattern (default: **/*.{ts,tsx,js,jsx})',
+    },
+    maxFiles: {
+      type: 'string',
+      required: false,
+      default: '15',
+      description: 'Max files to include',
+    },
   },
   async run({ args }) {
     const seeds = args.seeds
@@ -37,7 +55,11 @@ export const autoContextCommand = defineCommand({
     if (!result.content.endsWith('\n')) process.stdout.write('\n');
     process.stderr.write(
       `${JSON.stringify(
-        { totalTokens: result.totalTokens, budget: result.budget, selectedFiles: result.selectedFiles },
+        {
+          totalTokens: result.totalTokens,
+          budget: result.budget,
+          selectedFiles: result.selectedFiles,
+        },
         null,
         2,
       )}\n`,

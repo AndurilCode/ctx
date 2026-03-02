@@ -1,25 +1,18 @@
 import { readFile } from 'node:fs/promises';
-import type {
-  PatchInput,
-  PatchResult,
-  SinglePatchOp,
-} from '../types/patch.js';
-import type { SymbolLocation } from '../types/patch-engine.js';
 import {
+  applyLineEdits,
   locateSymbol,
   locateSymbolByHash,
   replaceSymbolBody,
-  applyLineEdits,
 } from '../parser/patch-engine.js';
+import type { SymbolLocation } from '../types/patch-engine.js';
+import type { PatchInput, PatchResult, SinglePatchOp } from '../types/patch.js';
 import { atomicWrite } from '../utils/atomic-write.js';
 import { codeOutline } from './code-outline.js';
-import { injectImports, computeDiffSummary } from './patch-helpers.js';
+import { computeDiffSummary, injectImports } from './patch-helpers.js';
 
 /** Get a fresh outline string for error reporting. */
-async function freshOutline(
-  source: string,
-  language?: string,
-): Promise<string> {
+async function freshOutline(source: string, language?: string): Promise<string> {
   const result = await codeOutline(source, { language });
   return result.output;
 }
@@ -80,12 +73,7 @@ export async function patch(input: PatchInput): Promise<PatchResult> {
 
     if (loc.hash !== op.hash) {
       // Try disambiguation by hash
-      const byHash = await locateSymbolByHash(
-        source,
-        op.symbol,
-        op.hash,
-        { language: lang },
-      );
+      const byHash = await locateSymbolByHash(source, op.symbol, op.hash, { language: lang });
       if (byHash) {
         located.push({ op, location: byHash });
         continue;
@@ -116,18 +104,13 @@ export async function patch(input: PatchInput): Promise<PatchResult> {
 
   // ── Phase 2: Apply replacements (descending offset order) ──
   let newSource = source;
-  const sorted = [...located].sort(
-    (a, b) => b.location.startIndex - a.location.startIndex,
-  );
+  const sorted = [...located].sort((a, b) => b.location.startIndex - a.location.startIndex);
 
   for (const { op, location } of sorted) {
     if (op.body !== undefined) {
       newSource = replaceSymbolBody(newSource, location, op.body);
     } else if (op.lines) {
-      const symbolText = newSource.slice(
-        location.startIndex,
-        location.endIndex,
-      );
+      const symbolText = newSource.slice(location.startIndex, location.endIndex);
       const edited = applyLineEdits(symbolText, op.lines);
       newSource = replaceSymbolBody(newSource, location, edited);
     }

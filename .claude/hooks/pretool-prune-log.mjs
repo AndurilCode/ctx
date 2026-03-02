@@ -71,8 +71,7 @@ function isPruneCandidate(command) {
   const normalized = command.replace(/\s+/g, ' ').trim();
   if (!normalized) return false;
 
-  if (/ctx\s+prune/.test(normalized) || /ctx\s+changes/.test(normalized))
-    return false;
+  if (/ctx\s+prune/.test(normalized) || /ctx\s+changes/.test(normalized)) return false;
   if (/^git (diff|show)\b/.test(normalized)) return false;
 
   // Keep this conservative: skip commands where output piping could alter semantics.

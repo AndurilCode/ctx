@@ -44,11 +44,7 @@ export interface RenameInput {
   dryRun?: boolean;
 }
 
-export type PatchErrorCode =
-  | 'STALE_READ'
-  | 'SYMBOL_NOT_FOUND'
-  | 'PARSE_ERROR'
-  | 'AMBIGUOUS_SYMBOL';
+export type PatchErrorCode = 'STALE_READ' | 'SYMBOL_NOT_FOUND' | 'PARSE_ERROR' | 'AMBIGUOUS_SYMBOL';
 
 export interface PatchError {
   code: PatchErrorCode;

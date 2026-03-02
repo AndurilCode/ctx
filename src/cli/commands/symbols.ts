@@ -11,7 +11,11 @@ export const symbolsCommand = defineCommand({
     query: { type: 'positional', required: true, description: 'Symbol name to search for' },
     path: { type: 'string', required: false, description: 'Directory to search (default: cwd)' },
     glob: { type: 'string', required: false, description: 'File filter, e.g. "**/*.ts"' },
-    kind: { type: 'string', required: false, description: 'Filter by kind: function|class|interface|type|enum|variable' },
+    kind: {
+      type: 'string',
+      required: false,
+      description: 'Filter by kind: function|class|interface|type|enum|variable',
+    },
   },
   async run({ args }) {
     const result = await symbols({

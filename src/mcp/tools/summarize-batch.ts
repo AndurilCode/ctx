@@ -59,7 +59,9 @@ export function registerSummarizeBatchTool(server: McpServer): void {
       description:
         'Summarize multiple files in one call for breadth-first scanning. Use for repo onboarding; do not use when you need exact section text (use ctx_extract).',
       inputSchema: {
-        files: z.array(z.string()).describe('Markdown file paths to summarize (.md/.mdx/.markdown).'),
+        files: z
+          .array(z.string())
+          .describe('Markdown file paths to summarize (.md/.mdx/.markdown).'),
         ...summarizeLikeInputSchema,
       },
     },

@@ -23,14 +23,15 @@ export function registerInsertTool(server: McpServer): void {
       },
     },
     async (input) => {
-      const result = await insert(input as any);
+      const result = await insert(input as Parameters<typeof insert>[0]);
       if (result.ok) {
         const parts = [`${result.linesChanged} lines added`];
         if (result.updatedOutline) parts.push('', '--- Updated outline ---', result.updatedOutline);
         return textResult(parts.join('\n'));
       }
       const parts = [`ERROR: ${result.error.code} — ${result.error.message}`];
-      if (result.error.freshOutline) parts.push('', '--- Fresh outline ---', result.error.freshOutline);
+      if (result.error.freshOutline)
+        parts.push('', '--- Fresh outline ---', result.error.freshOutline);
       return textResult(parts.join('\n'));
     },
   );

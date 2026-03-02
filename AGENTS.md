@@ -3,9 +3,9 @@ Use these instead of raw file reads or manual tool invocations.
 
 | Skill | When to use |
 |---|---|
-| `ctx-review` | Code review — compress diffs, outline changed files, surface risks |
-| `ctx-test` | Test runs — prune noisy output, highlight failures with structural context |
-| `ctx-explore` | Codebase navigation — token-aware reading, onboarding, topic search |
+| `ctx-search` | Understand codebase — token-aware reading, onboarding, topic search |
+| `ctx-code` | Make changes — patch, insert, rename symbols using read-patch cycle |
+| `ctx-verify` | Check changes — review diffs, run tests, trace blast radius |
 | `hook-context-rules` | Author and maintain context-injection rules |
 
 ## @Memory

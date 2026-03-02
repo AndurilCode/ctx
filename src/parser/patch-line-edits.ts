@@ -1,5 +1,5 @@
-import type { PatchLineEdit } from '../types/patch.js';
 import type { LineHash } from '../types/patch-engine.js';
+import type { PatchLineEdit } from '../types/patch.js';
 import { shortHash } from '../utils/hash.js';
 
 /**
@@ -64,5 +64,5 @@ export function applyLineEdits(body: string, edits: PatchLineEdit[]): string {
     }
   }
 
-  return trailingNewline ? effectiveLines.join('\n') + '\n' : effectiveLines.join('\n');
+  return trailingNewline ? `${effectiveLines.join('\n')}\n` : effectiveLines.join('\n');
 }

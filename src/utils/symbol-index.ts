@@ -32,7 +32,13 @@ export function flattenNodes(
   function walk(nodeList: import('../types/outline.js').OutlineNode[]): void {
     for (const node of nodeList) {
       if (!kind || node.kind === kind) {
-        results.push({ file, name: node.name, kind: node.kind, startLine: node.startLine, endLine: node.endLine });
+        results.push({
+          file,
+          name: node.name,
+          kind: node.kind,
+          startLine: node.startLine,
+          endLine: node.endLine,
+        });
       }
       if (node.children) walk(node.children);
     }

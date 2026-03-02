@@ -9,9 +9,22 @@ export const insertCommand = defineCommand({
   },
   args: {
     file: { type: 'positional', required: true, description: 'Path to source file' },
-    position: { type: 'string', required: true, description: "'after:<symbol>', 'before:<symbol>', 'after-imports', 'end-of-file', 'start-of-file'" },
-    anchorHash: { type: 'string', required: false, description: 'Hash of anchor symbol from outline' },
-    body: { type: 'string', required: false, description: 'New symbol definition (or read from stdin if omitted)' },
+    position: {
+      type: 'string',
+      required: true,
+      description:
+        "'after:<symbol>', 'before:<symbol>', 'after-imports', 'end-of-file', 'start-of-file'",
+    },
+    anchorHash: {
+      type: 'string',
+      required: false,
+      description: 'Hash of anchor symbol from outline',
+    },
+    body: {
+      type: 'string',
+      required: false,
+      description: 'New symbol definition (or read from stdin if omitted)',
+    },
     dryRun: { type: 'boolean', default: false, description: 'Return diff without writing' },
   },
   async run({ args }) {
@@ -25,10 +38,12 @@ export const insertCommand = defineCommand({
     });
     if (result.ok) {
       process.stdout.write(`${result.linesChanged} lines added\n`);
-      if (result.updatedOutline) process.stdout.write('--- Updated outline ---\n' + result.updatedOutline + '\n');
+      if (result.updatedOutline)
+        process.stdout.write(`--- Updated outline ---\n${result.updatedOutline}\n`);
     } else {
       process.stderr.write(`ERROR: ${result.error.code} — ${result.error.message}\n`);
-      if (result.error.freshOutline) process.stderr.write('--- Fresh outline ---\n' + result.error.freshOutline + '\n');
+      if (result.error.freshOutline)
+        process.stderr.write(`--- Fresh outline ---\n${result.error.freshOutline}\n`);
       process.exit(1);
     }
   },

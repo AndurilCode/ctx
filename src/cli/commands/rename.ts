@@ -11,7 +11,11 @@ export const renameCommand = defineCommand({
     symbol: { type: 'string', required: true, description: 'Current symbol name' },
     hash: { type: 'string', required: true, description: 'Hash of the definition from outline' },
     to: { type: 'string', required: true, description: 'New symbol name' },
-    scope: { type: 'string', required: false, description: 'Glob to limit reference search (default: entire repo)' },
+    scope: {
+      type: 'string',
+      required: false,
+      description: 'Glob to limit reference search (default: entire repo)',
+    },
     dryRun: { type: 'boolean', default: false, description: 'Return summary without writing' },
   },
   async run({ args }) {
@@ -24,10 +28,11 @@ export const renameCommand = defineCommand({
       dryRun: args.dryRun,
     });
     if (result.ok) {
-      process.stdout.write(result.summary + '\n');
+      process.stdout.write(`${result.summary}\n`);
     } else {
       process.stderr.write(`ERROR: ${result.error.code} — ${result.error.message}\n`);
-      if (result.error.freshOutline) process.stderr.write('--- Fresh outline ---\n' + result.error.freshOutline + '\n');
+      if (result.error.freshOutline)
+        process.stderr.write(`--- Fresh outline ---\n${result.error.freshOutline}\n`);
       process.exit(1);
     }
   },

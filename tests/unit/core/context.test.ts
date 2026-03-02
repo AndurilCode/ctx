@@ -4,10 +4,7 @@ import { assembleContext } from '../../../src/core/context.js';
 describe('assembleContext', () => {
   test('assembles multiple files within budget', async () => {
     const result = await assembleContext({
-      sources: [
-        { file: 'src/types/diff.ts' },
-        { file: 'src/types/read.ts' },
-      ],
+      sources: [{ file: 'src/types/diff.ts' }, { file: 'src/types/read.ts' }],
       maxTokens: 10000,
     });
     expect(result.sources).toHaveLength(2);
@@ -18,10 +15,7 @@ describe('assembleContext', () => {
 
   test('respects the token budget', async () => {
     const result = await assembleContext({
-      sources: [
-        { file: 'src/core/compact.ts' },
-        { file: 'src/core/expand.ts' },
-      ],
+      sources: [{ file: 'src/core/compact.ts' }, { file: 'src/core/expand.ts' }],
       maxTokens: 100,
     });
     expect(result.totalTokens).toBeLessThanOrEqual(150); // allow some slack

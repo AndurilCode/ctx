@@ -88,7 +88,11 @@ export async function assembleContext(options: ContextOptions): Promise<ContextR
     parts.push(
       `## ${m.source.file} (${result.strategy}, ${result.returnedTokens}t of ${m.totalTokens}t)\n\n${result.content}`,
     );
-    sourceResults.push({ file: m.source.file, strategy: result.strategy, tokens: result.returnedTokens });
+    sourceResults.push({
+      file: m.source.file,
+      strategy: result.strategy,
+      tokens: result.returnedTokens,
+    });
     usedTokens += result.returnedTokens;
   }
 

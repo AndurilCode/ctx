@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { patch } from '../../../src/core/patch.js';
 import { locateSymbol } from '../../../src/parser/patch-engine.js';
 import { shortHash } from '../../../src/utils/hash.js';
@@ -67,15 +67,12 @@ describe('patch — imports and line edits', () => {
     });
     expect(result.ok).toBe(true);
     const content = await readFile(filePath, 'utf8');
-    const importCount =
-      content.split("import { foo } from './foo';").length - 1;
+    const importCount = content.split("import { foo } from './foo';").length - 1;
     expect(importCount).toBe(1);
   });
 
   test('hashline fallback: applies line edits directly to full file', async () => {
-    const src = ['const x = 1;', 'const y = 2;', 'const z = 3;', ''].join(
-      '\n',
-    );
+    const src = ['const x = 1;', 'const y = 2;', 'const z = 3;', ''].join('\n');
     await setup(src);
     const yLineHash = shortHash('const y = 2;', 2);
     const result = await patch({

@@ -32,7 +32,17 @@ export function registerSymbolsTool(server: McpServer): void {
         path: z.string().optional().describe('Directory to search (default: cwd)'),
         glob: z.string().optional().describe('File filter, e.g. "**/*.ts"'),
         kind: z
-          .enum(['function', 'class', 'method', 'interface', 'type', 'enum', 'variable', 'import', 'export'])
+          .enum([
+            'function',
+            'class',
+            'method',
+            'interface',
+            'type',
+            'enum',
+            'variable',
+            'import',
+            'export',
+          ])
           .optional()
           .describe('Filter by symbol kind'),
       },

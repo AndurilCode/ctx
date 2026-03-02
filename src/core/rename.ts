@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
-import { dirname, resolve, isAbsolute } from 'node:path';
+import { dirname, isAbsolute, resolve } from 'node:path';
 import fg from 'fast-glob';
-import type { RenameInput, RenameResult } from '../types/patch.js';
 import { locateSymbol } from '../parser/patch-engine.js';
+import type { RenameInput, RenameResult } from '../types/patch.js';
 import { atomicWrite } from '../utils/atomic-write.js';
 
 const DEFAULT_GLOB = '**/*.{ts,tsx,js,jsx,py,rs,go}';

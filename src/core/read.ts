@@ -46,7 +46,14 @@ async function runAutoStrategy(
 
   if (isMarkdownFile(file)) {
     try {
-      const result = await applyStrategy('sections', content, file, maxTokens, totalTokens, counter);
+      const result = await applyStrategy(
+        'sections',
+        content,
+        file,
+        maxTokens,
+        totalTokens,
+        counter,
+      );
       if (result.returnedTokens <= maxTokens) return result;
     } catch {
       // fall through
@@ -68,20 +75,38 @@ async function applyStrategy(
     const { codeOutline } = await import('./code-outline.js');
     const result = await codeOutline(content, { filePath: file });
     const tokens = counter.count(result.output);
-    return { content: result.output, strategy: 'outline', totalTokens, returnedTokens: tokens, truncated: true };
+    return {
+      content: result.output,
+      strategy: 'outline',
+      totalTokens,
+      returnedTokens: tokens,
+      truncated: true,
+    };
   }
 
   if (strategy === 'sections') {
     const { extract } = await import('./extract.js');
     const output = extract(content, { maxChars: maxTokens * 4 });
     const tokens = counter.count(output);
-    return { content: output, strategy: 'sections', totalTokens, returnedTokens: tokens, truncated: true };
+    return {
+      content: output,
+      strategy: 'sections',
+      totalTokens,
+      returnedTokens: tokens,
+      truncated: true,
+    };
   }
 
   // Default: truncate
   const truncated = truncateToTokenBudget(content, maxTokens, counter);
   const tokens = counter.count(truncated);
-  return { content: truncated, strategy: 'truncate', totalTokens, returnedTokens: tokens, truncated: true };
+  return {
+    content: truncated,
+    strategy: 'truncate',
+    totalTokens,
+    returnedTokens: tokens,
+    truncated: true,
+  };
 }
 
 function truncateToTokenBudget(content: string, maxTokens: number, counter: TokenCounter): string {
@@ -100,7 +125,9 @@ function truncateToTokenBudget(content: string, maxTokens: number, counter: Toke
 }
 
 function isCodeFile(path: string): boolean {
-  return /\.(ts|js|tsx|jsx|py|rs|go|java|c|cpp|rb|swift|kt|sh|yaml|yml|json|toml|css|scss)$/.test(path);
+  return /\.(ts|js|tsx|jsx|py|rs|go|java|c|cpp|rb|swift|kt|sh|yaml|yml|json|toml|css|scss)$/.test(
+    path,
+  );
 }
 
 function isMarkdownFile(path: string): boolean {

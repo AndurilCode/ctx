@@ -24,7 +24,12 @@ export function registerRelevanceTool(server: McpServer): void {
       inputSchema: {
         query: z.string().describe('Natural language task description or keyword(s)'),
         files: z.array(z.string()).describe('File paths to rank'),
-        maxResults: z.number().int().min(1).optional().describe('Maximum results to return (default: 10)'),
+        maxResults: z
+          .number()
+          .int()
+          .min(1)
+          .optional()
+          .describe('Maximum results to return (default: 10)'),
       },
     },
     async (input) => runRelevanceTool(input),

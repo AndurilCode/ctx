@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test';
-import { extractImportSpecifiers, extractOutgoingEdges } from '../../../src/utils/import-resolver.js';
+import {
+  extractImportSpecifiers,
+  extractOutgoingEdges,
+} from '../../../src/utils/import-resolver.js';
 
 describe('extractImportSpecifiers', () => {
   test('extracts named imports', () => {

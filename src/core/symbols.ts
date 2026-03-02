@@ -4,7 +4,12 @@ import fg from 'fast-glob';
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
-import type { SymbolDefinition, SymbolsOptions, SymbolsResult, SymbolUsage } from '../types/symbols.js';
+import type {
+  SymbolDefinition,
+  SymbolsOptions,
+  SymbolsResult,
+  SymbolUsage,
+} from '../types/symbols.js';
 import { readFileText } from '../utils/file-reader.js';
 import { findUsagesInContent, flattenNodes } from '../utils/symbol-index.js';
 

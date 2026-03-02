@@ -37,8 +37,18 @@ describe('context-inject hook', () => {
 
   test('injects text when tool and path match', () => {
     const result = runHook(
-      { hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: 'src/stages/fold.ts' } },
-      [{ on: 'PreToolUse', when: { tool: 'Read', path: 'src/stages/**' }, inject: { text: 'AST only!' } }],
+      {
+        hook_event_name: 'PreToolUse',
+        tool_name: 'Read',
+        tool_input: { file_path: 'src/stages/fold.ts' },
+      },
+      [
+        {
+          on: 'PreToolUse',
+          when: { tool: 'Read', path: 'src/stages/**' },
+          inject: { text: 'AST only!' },
+        },
+      ],
     );
     expect(result).not.toBeNull();
     expect(result.hookSpecificOutput.hookEventName).toBe('PreToolUse');
@@ -47,18 +57,36 @@ describe('context-inject hook', () => {
 
   test('injects hint with "Related:" prefix', () => {
     const result = runHook(
-      { hook_event_name: 'PostToolUse', tool_name: 'Read', tool_input: { file_path: 'src/parser/index.ts' } },
-      [{ on: 'PostToolUse', when: { tool: 'Read', path: 'src/parser/**' }, inject: { hint: 'docs/parser.md §Design' } }],
+      {
+        hook_event_name: 'PostToolUse',
+        tool_name: 'Read',
+        tool_input: { file_path: 'src/parser/index.ts' },
+      },
+      [
+        {
+          on: 'PostToolUse',
+          when: { tool: 'Read', path: 'src/parser/**' },
+          inject: { hint: 'docs/parser.md §Design' },
+        },
+      ],
     );
     expect(result).not.toBeNull();
     expect(result.hookSpecificOutput.hookEventName).toBe('PostToolUse');
-    expect(result.hookSpecificOutput.additionalContext).toContain('Related: docs/parser.md §Design');
+    expect(result.hookSpecificOutput.additionalContext).toContain(
+      'Related: docs/parser.md §Design',
+    );
   });
 
   test('matches UserPromptSubmit on prompt regex', () => {
     const result = runHook(
       { hook_event_name: 'UserPromptSubmit', prompt: 'how does the round-trip work?' },
-      [{ on: 'UserPromptSubmit', when: { prompt: 'round.trip|lossless' }, inject: { text: 'expand(compact(md)) === md' } }],
+      [
+        {
+          on: 'UserPromptSubmit',
+          when: { prompt: 'round.trip|lossless' },
+          inject: { text: 'expand(compact(md)) === md' },
+        },
+      ],
     );
     expect(result).not.toBeNull();
     expect(result.hookSpecificOutput.hookEventName).toBe('UserPromptSubmit');
@@ -67,9 +95,17 @@ describe('context-inject hook', () => {
 
   test('concatenates multiple matching rules', () => {
     const result = runHook(
-      { hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: 'src/stages/fold.ts' } },
+      {
+        hook_event_name: 'PreToolUse',
+        tool_name: 'Read',
+        tool_input: { file_path: 'src/stages/fold.ts' },
+      },
       [
-        { on: 'PreToolUse', when: { tool: 'Read', path: 'src/stages/**' }, inject: { text: 'Rule A' } },
+        {
+          on: 'PreToolUse',
+          when: { tool: 'Read', path: 'src/stages/**' },
+          inject: { text: 'Rule A' },
+        },
         { on: 'PreToolUse', when: { tool: 'Read', path: 'src/**' }, inject: { text: 'Rule B' } },
       ],
     );
@@ -90,8 +126,18 @@ describe('context-inject hook', () => {
 
   test('matches pipe-separated tool alternatives', () => {
     const result = runHook(
-      { hook_event_name: 'PreToolUse', tool_name: 'Edit', tool_input: { file_path: 'src/core/compact.ts' } },
-      [{ on: 'PreToolUse', when: { tool: 'Write|Edit|MultiEdit', path: 'src/core/**' }, inject: { text: 'core is zero-dep' } }],
+      {
+        hook_event_name: 'PreToolUse',
+        tool_name: 'Edit',
+        tool_input: { file_path: 'src/core/compact.ts' },
+      },
+      [
+        {
+          on: 'PreToolUse',
+          when: { tool: 'Write|Edit|MultiEdit', path: 'src/core/**' },
+          inject: { text: 'core is zero-dep' },
+        },
+      ],
     );
     expect(result).not.toBeNull();
     expect(result.hookSpecificOutput.hookEventName).toBe('PreToolUse');
@@ -100,8 +146,18 @@ describe('context-inject hook', () => {
 
   test('no injection when file is outside the rule path glob', () => {
     const result = runHook(
-      { hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: 'src/core/compact.ts' } },
-      [{ on: 'PreToolUse', when: { tool: 'Read', path: 'src/stages/**' }, inject: { text: 'stages only' } }],
+      {
+        hook_event_name: 'PreToolUse',
+        tool_name: 'Read',
+        tool_input: { file_path: 'src/core/compact.ts' },
+      },
+      [
+        {
+          on: 'PreToolUse',
+          when: { tool: 'Read', path: 'src/stages/**' },
+          inject: { text: 'stages only' },
+        },
+      ],
     );
     expect(result).toBeNull();
   });

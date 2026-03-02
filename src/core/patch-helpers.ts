@@ -7,7 +7,7 @@ export function injectImports(source: string, imports: string[]): string {
   const lines = source.split('\n');
   let lastImportIndex = -1;
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]!.trim();
+    const line = lines[i]?.trim() ?? '';
     if (line.startsWith('import ') || line.startsWith('import{')) {
       lastImportIndex = i;
     }

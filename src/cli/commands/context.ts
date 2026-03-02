@@ -11,11 +11,18 @@ export const contextCommand = defineCommand({
   args: {
     files: { type: 'positional', required: true, description: 'File paths (space-separated)' },
     maxTokens: { type: 'string', required: true, description: 'Total token budget' },
-    strategy: { type: 'string', required: false, default: 'auto', description: 'auto|truncate|outline|sections' },
+    strategy: {
+      type: 'string',
+      required: false,
+      default: 'auto',
+      description: 'auto|truncate|outline|sections',
+    },
   },
   async run({ args }) {
     // citty puts ALL positional args in args._ (including the first named one)
-    const fileList = Array.isArray(args._) ? (args._ as string[]).filter(Boolean) : [String(args.files)];
+    const fileList = Array.isArray(args._)
+      ? (args._ as string[]).filter(Boolean)
+      : [String(args.files)];
     const sources: ContextSource[] = fileList.map((f) => ({ file: String(f) }));
 
     const result = await assembleContext({
@@ -27,7 +34,11 @@ export const contextCommand = defineCommand({
     process.stdout.write(result.content);
     if (!result.content.endsWith('\n')) process.stdout.write('\n');
     process.stderr.write(
-      JSON.stringify({ totalTokens: result.totalTokens, budget: result.budget, sources: result.sources }, null, 2) + '\n',
+      JSON.stringify(
+        { totalTokens: result.totalTokens, budget: result.budget, sources: result.sources },
+        null,
+        2,
+      ) + '\n',
     );
   },
 });

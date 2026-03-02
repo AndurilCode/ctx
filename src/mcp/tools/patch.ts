@@ -35,13 +35,16 @@ export function registerPatchTool(server: McpServer): void {
           .optional()
           .describe('Line-hash edits (line-hash or hashline fallback mode)'),
         imports: z.array(z.string()).optional().describe('Import strings to inject/deduplicate'),
-        patches: z.array(singlePatchSchema).optional().describe('Batch of patches (multi-symbol mode)'),
+        patches: z
+          .array(singlePatchSchema)
+          .optional()
+          .describe('Batch of patches (multi-symbol mode)'),
         language: z.string().optional().describe('Force language detection'),
         dryRun: z.boolean().optional().describe('Return diff without writing'),
       },
     },
     async (input) => {
-      const result = await patch(input as any);
+      const result = await patch(input as Parameters<typeof patch>[0]);
       if (result.ok) {
         const parts = [`${result.linesChanged} lines changed`];
         if (result.diff) parts.push('', result.diff);
@@ -49,7 +52,8 @@ export function registerPatchTool(server: McpServer): void {
         return textResult(parts.join('\n'));
       }
       const parts = [`ERROR: ${result.error.code} — ${result.error.message}`];
-      if (result.error.freshOutline) parts.push('', '--- Fresh outline ---', result.error.freshOutline);
+      if (result.error.freshOutline)
+        parts.push('', '--- Fresh outline ---', result.error.freshOutline);
       if (result.error.disambiguation) {
         parts.push('', 'Disambiguation:');
         for (const d of result.error.disambiguation) {

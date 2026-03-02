@@ -1,15 +1,12 @@
 import { readFile } from 'node:fs/promises';
-import type { InsertInput, PatchResult } from '../types/patch.js';
 import { locateSymbol } from '../parser/patch-engine.js';
+import type { InsertInput, PatchResult } from '../types/patch.js';
 import { atomicWrite } from '../utils/atomic-write.js';
 import { codeOutline } from './code-outline.js';
-import { injectImports, computeDiffSummary } from './patch-helpers.js';
+import { computeDiffSummary, injectImports } from './patch-helpers.js';
 
 /** Get a fresh outline string for error reporting. */
-async function freshOutline(
-  source: string,
-  filePath?: string,
-): Promise<string> {
+async function freshOutline(source: string, filePath?: string): Promise<string> {
   const result = await codeOutline(source, { filePath });
   return result.output;
 }
@@ -22,7 +19,7 @@ function findAfterImportsIndex(source: string): number {
   const lines = source.split('\n');
   let lastImportLine = -1;
   for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i]!.trim();
+    const trimmed = lines[i]?.trim() ?? '';
     if (trimmed.startsWith('import ') || trimmed.startsWith('import{')) {
       lastImportLine = i;
     }
@@ -32,7 +29,7 @@ function findAfterImportsIndex(source: string): number {
   // Return byte offset just after the last import line (including its \n)
   let offset = 0;
   for (let i = 0; i <= lastImportLine; i++) {
-    offset += lines[i]!.length + 1; // +1 for \n
+    offset += (lines[i]?.length ?? 0) + 1; // +1 for \n
   }
   return offset;
 }
@@ -140,17 +137,12 @@ export async function insert(input: InsertInput): Promise<PatchResult> {
   let newSource: string;
   if (insertIndex === 0) {
     // start-of-file: body then existing content
-    newSource = input.body + '\n' + source;
+    newSource = `${input.body}\n${source}`;
   } else if (insertIndex >= source.length) {
     // end-of-file: existing content then body
-    newSource = source + '\n' + input.body + '\n';
+    newSource = `${source}\n${input.body}\n`;
   } else {
-    newSource =
-      source.slice(0, insertIndex) +
-      '\n' +
-      input.body +
-      '\n' +
-      source.slice(insertIndex);
+    newSource = `${source.slice(0, insertIndex)}\n${input.body}\n${source.slice(insertIndex)}`;
   }
 
   // ── Import injection ──

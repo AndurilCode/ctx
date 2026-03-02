@@ -35,16 +35,54 @@ export function registerReviewTool(server: McpServer): void {
         query: z.string().describe('Task description or review query'),
         path: z.string().optional().describe('Root directory to search (default: cwd)'),
         glob: z.string().optional().describe('File glob pattern (default: **/*.{ts,tsx,js,jsx})'),
-        profile: z.enum(['code', 'full', 'docs']).optional().describe('Scope preset: code (default), full, or docs'),
-        maxResults: z.number().int().min(1).optional().describe('Max ranked files to review (default: 10)'),
-        pass1Tokens: z.number().int().min(1).optional().describe('Pass-1 token budget per file (default: 600)'),
-        pass2Tokens: z.number().int().min(1).optional().describe('Pass-2 token budget per file (default: 2000)'),
-        maxPass2Files: z.number().int().min(0).optional().describe('Max files to escalate to pass-2 (default: 3)'),
-        riskTerms: z.array(z.string()).optional().describe('Override risk terms used for pass-2 escalation'),
-        evidence: z.boolean().optional().describe('Include line-anchored evidence snippets for flagged files (default: false)'),
-        changedFiles: z.array(z.string()).optional().describe('File paths to boost in ranking (e.g. from active diff)'),
-        diffBase: z.string().optional().describe('Git ref to derive changed files from (e.g. "HEAD~1", "main")'),
-        cluster: z.boolean().optional().describe('Group flagged files by matched risk term (default: false)'),
+        profile: z
+          .enum(['code', 'full', 'docs'])
+          .optional()
+          .describe('Scope preset: code (default), full, or docs'),
+        maxResults: z
+          .number()
+          .int()
+          .min(1)
+          .optional()
+          .describe('Max ranked files to review (default: 10)'),
+        pass1Tokens: z
+          .number()
+          .int()
+          .min(1)
+          .optional()
+          .describe('Pass-1 token budget per file (default: 600)'),
+        pass2Tokens: z
+          .number()
+          .int()
+          .min(1)
+          .optional()
+          .describe('Pass-2 token budget per file (default: 2000)'),
+        maxPass2Files: z
+          .number()
+          .int()
+          .min(0)
+          .optional()
+          .describe('Max files to escalate to pass-2 (default: 3)'),
+        riskTerms: z
+          .array(z.string())
+          .optional()
+          .describe('Override risk terms used for pass-2 escalation'),
+        evidence: z
+          .boolean()
+          .optional()
+          .describe('Include line-anchored evidence snippets for flagged files (default: false)'),
+        changedFiles: z
+          .array(z.string())
+          .optional()
+          .describe('File paths to boost in ranking (e.g. from active diff)'),
+        diffBase: z
+          .string()
+          .optional()
+          .describe('Git ref to derive changed files from (e.g. "HEAD~1", "main")'),
+        cluster: z
+          .boolean()
+          .optional()
+          .describe('Group flagged files by matched risk term (default: false)'),
       },
     },
     async (input) => runReviewTool(input),

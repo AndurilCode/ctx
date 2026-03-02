@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  applyLineEdits,
+  computeLineHashes,
   locateSymbol,
   locateSymbolByHash,
   replaceSymbolBody,
-  computeLineHashes,
-  applyLineEdits,
 } from '../../../src/parser/patch-engine.js';
 
 const SAMPLE = [
@@ -89,8 +89,7 @@ describe('locateSymbolByHash', () => {
 describe('replaceSymbolBody', () => {
   test('replaces a symbol and returns new source', async () => {
     const loc = await locateSymbol(SAMPLE, 'greet', { language: 'typescript' });
-    const newBody =
-      'export function greet(name: string): string {\n  return `Hi, ${name}!`;\n}';
+    const newBody = 'export function greet(name: string): string {\n  return `Hi, ${name}!`;\n}';
     const result = replaceSymbolBody(SAMPLE, loc!, newBody);
     expect(result).toContain('Hi, ${name}!');
     expect(result).toContain('Goodbye, ${name}!');
@@ -99,8 +98,7 @@ describe('replaceSymbolBody', () => {
 
   test('preserves content before and after the symbol', async () => {
     const loc = await locateSymbol(SAMPLE, 'greet', { language: 'typescript' });
-    const newBody =
-      'export function greet(name: string): string {\n  return `Hi, ${name}!`;\n}';
+    const newBody = 'export function greet(name: string): string {\n  return `Hi, ${name}!`;\n}';
     const result = replaceSymbolBody(SAMPLE, loc!, newBody);
     // Import should still be there
     expect(result).toContain("import { readFile } from 'node:fs/promises';");
@@ -178,8 +176,8 @@ describe('applyLineEdits', () => {
   });
 
   test('rejects on hash mismatch', () => {
-    expect(() =>
-      applyLineEdits('line1\nline2\n', [{ hash: 'zz', replace: 'new' }]),
-    ).toThrow(/hash mismatch/i);
+    expect(() => applyLineEdits('line1\nline2\n', [{ hash: 'zz', replace: 'new' }])).toThrow(
+      /hash mismatch/i,
+    );
   });
 });

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { rename } from '../../../src/core/rename.js';
 import { locateSymbol } from '../../../src/parser/patch-engine.js';
 
@@ -59,12 +59,11 @@ describe('rename', () => {
     ].join('\n');
     await writeFile(defFile, defContent, 'utf8');
 
-    await writeFile(useFile, [
-      "import { greet } from './utils.js';",
-      '',
-      'console.log(greet("world"));',
-      '',
-    ].join('\n'), 'utf8');
+    await writeFile(
+      useFile,
+      ["import { greet } from './utils.js';", '', 'console.log(greet("world"));', ''].join('\n'),
+      'utf8',
+    );
 
     const loc = await locateSymbol(defContent, 'greet', { language: 'typescript' });
 

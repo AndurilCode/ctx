@@ -23,7 +23,11 @@ describe('budgetedRead', () => {
   });
 
   test('truncates when strategy is explicitly truncate', async () => {
-    const result = await budgetedRead({ file: 'package.json', maxTokens: 20, strategy: 'truncate' });
+    const result = await budgetedRead({
+      file: 'package.json',
+      maxTokens: 20,
+      strategy: 'truncate',
+    });
     expect(result.strategy).toBe('truncate');
     expect(result.content).toContain('[...truncated');
   });

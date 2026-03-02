@@ -9,7 +9,11 @@ export const relevanceCommand = defineCommand({
   },
   args: {
     query: { type: 'positional', required: true, description: 'Query string' },
-    glob: { type: 'string', required: false, description: 'Glob pattern to match files, e.g. "src/**/*.ts"' },
+    glob: {
+      type: 'string',
+      required: false,
+      description: 'Glob pattern to match files, e.g. "src/**/*.ts"',
+    },
     maxResults: { type: 'string', required: false, default: '10', description: 'Max results' },
   },
   async run({ args }) {
