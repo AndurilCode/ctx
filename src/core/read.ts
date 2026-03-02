@@ -144,7 +144,7 @@ function truncateToTokenBudget(
   let upperBound = lines.length;
   let charCount = 0;
   for (let i = 0; i < lines.length; i++) {
-    charCount += lines[i].length + 1;
+    charCount += lines[i]!.length + 1;
     if (charCount > charBudget) {
       upperBound = i + 1;
       break;

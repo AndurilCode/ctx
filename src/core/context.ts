@@ -90,8 +90,8 @@ export async function assembleContext(options: ContextOptions): Promise<ContextR
   let usedTokens = 0;
 
   for (let i = 0; i < allocations.length; i++) {
-    const { m } = allocations[i];
-    const result = readResults[i];
+    const { m } = allocations[i]!;
+    const result = readResults[i]!;
     parts.push(
       `## ${m.source.file} (${result.strategy}, ${result.returnedTokens}t of ${m.totalTokens}t)\n\n${result.content}`,
     );
