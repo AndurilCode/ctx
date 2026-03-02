@@ -1,6 +1,6 @@
 {
   "name": "@anduril-code/ctx",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Token-efficient, context-aware compression for agent pipelines.",
   "license": "MIT",
   "type": "module",
