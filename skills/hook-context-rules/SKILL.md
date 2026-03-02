@@ -153,19 +153,23 @@ Prompt must instruct the subagent to:
 
 Prompt must instruct the subagent to:
 
-1. Run `npx @anduril-code/ctx rank "architecture constraints invariants" --maxResults 10`.
+1. Run `npx @anduril-code/ctx rank "architecture constraints invariants style" --maxResults 10`.
    Read every result — do not guess from filenames.
-2. Glob `docs/**/*.md` and read all remaining docs (token-budget per file
-   if needed). For each doc extract:
-   - Module boundary / responsibility constraints
-   - Dependency flow rules
-   - Data invariants (round-trip, encoding, schema)
-   - Naming, style, or toolchain conventions
-3. Build a **constraint inventory** — numbered list:
-   `N. <constraint description> — source: <file>`
+2. Glob `docs/**/*.md` and read all remaining docs. For each doc:
+   a. Use `npx @anduril-code/ctx sections <file>` to list headings.
+   b. Use `npx @anduril-code/ctx extract <file> --onlySections '<heading>'`
+      to read each section individually.
+   c. For each section that contains actionable rules or constraints, produce
+      a **section record**:
+      - `section` — the heading name
+      - `file` — source doc path
+      - `content` — condensed actionable rules (max 500 chars, drop examples/rationale)
+      - `keywords` — 3-5 code-relevant terms (identifiers, directory names,
+        patterns) that would appear in files this section governs
+3. Skip sections that are purely informational (overview, changelog, credits).
 
 **Expected return:**
-- Constraint inventory (the numbered list with source attribution)
+- Array of section records (JSON), each with `section`, `file`, `content`, `keywords`
 
 **Wait for all three subagents.** Collect their outputs.
 
