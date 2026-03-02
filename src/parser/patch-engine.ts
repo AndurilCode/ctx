@@ -41,16 +41,19 @@ function collectMatches(nodes: OutlineNode[], name: string): OutlineNode[] {
 
 /** Build a SymbolLocation from an OutlineNode. */
 function nodeToLocation(source: string, node: OutlineNode): SymbolLocation {
-  // Prefer AST byte offsets (precise) over line-based (may include leading whitespace)
-  const si = node.startIndex != null ? node.startIndex : lineToIndex(source, node.startLine);
-  const ei = node.endIndex != null ? node.endIndex : lineEndToIndex(source, node.endLine);
+  // Use line-based ranges for replacement (includes export prefix, indentation, etc.)
+  // The hash is an AST-level freshness check — it doesn't need to describe the exact range.
   return {
     name: node.name,
-    hash: node.hash ?? shortHash(source.slice(si, ei)),
+    hash:
+      node.hash ??
+      shortHash(
+        source.slice(lineToIndex(source, node.startLine), lineEndToIndex(source, node.endLine)),
+      ),
     startLine: node.startLine,
     endLine: node.endLine,
-    startIndex: si,
-    endIndex: ei,
+    startIndex: lineToIndex(source, node.startLine),
+    endIndex: lineEndToIndex(source, node.endLine),
   };
 }
 
@@ -74,16 +77,16 @@ export async function locateSymbol(
   const location = nodeToLocation(source, first);
 
   if (matches.length > 1) {
-    location.ambiguous = matches.map((m) => {
-      const msi = m.startIndex != null ? m.startIndex : lineToIndex(source, m.startLine);
-      const mei = m.endIndex != null ? m.endIndex : lineEndToIndex(source, m.endLine);
-      return {
-        name: m.name,
-        hash: m.hash ?? shortHash(source.slice(msi, mei)),
-        startLine: m.startLine,
-        endLine: m.endLine,
-      };
-    });
+    location.ambiguous = matches.map((m) => ({
+      name: m.name,
+      hash:
+        m.hash ??
+        shortHash(
+          source.slice(lineToIndex(source, m.startLine), lineEndToIndex(source, m.endLine)),
+        ),
+      startLine: m.startLine,
+      endLine: m.endLine,
+    }));
   }
 
   return location;
