@@ -224,27 +224,43 @@ Prompt must instruct the subagent to:
 ### Batch 3 — Verify & derive candidates (1 subagent)
 
 Dispatch one `general-purpose` Task subagent.
-**Paste the unenforced / partial constraints from Layer 4 into the prompt.**
+**Paste the enriched section records from Layer 3.5 and the section status
+table from Layer 4 into the prompt.**
 
-#### Subagent → Layer 5: Verification & candidate derivation
+#### Subagent → Layer 5: Verification & per-section rule generation
 
 Prompt must instruct the subagent to:
 
-1. For every unenforced constraint that asserts a codebase property
-   (e.g. "types/ is pure", "no imports from cli/"), use Grep to confirm
-   it actually holds. Drop any constraint that does not hold.
-2. Derive candidate rules from verified constraints using these mappings:
-   - Directory responsibility → `PreToolUse` text on
-     `Write|Edit|MultiEdit` matching that path
-   - Doc tied to source dir → `PostToolUse` hint when source read
-   - Data invariant → `UserPromptSubmit` text matching keywords
-   - Toolchain constraint → `PreToolUse` command rule
-   - Design doc for module → `PostToolUse` hint when module read
-3. Format each candidate as a JSON rule object.
+1. Filter to unenforced / partial sections only (from Layer 4 status).
+2. For every section that asserts a codebase property (e.g. "types/ is
+   pure", "no imports from cli/"), use Grep to confirm it actually holds.
+   Drop any section whose assertions do not hold.
+3. For each verified section, emit one rule **per path** in its `paths`
+   array:
+   ```json
+   {
+     "on": "PreToolUse",
+     "when": { "tool": "Write|Edit|MultiEdit", "path": "<glob>" },
+     "inject": { "text": "<Section Name>: <condensed content>" }
+   }
+   ```
+   - Prefix `text` with the section name for self-describing context.
+   - Cap `text` at 500 characters. If longer, condense to actionable
+     rules only (drop examples and rationale).
+4. **Deduplication**: if two sections produce rules with the same path
+   and overlapping content, merge them into one rule with combined text
+   (separated by newline).
+5. For sections flagged `noMatch: true`, include the candidate but
+   annotate with `(no matching code found)` — the user will assign a
+   path or skip.
+6. For sections flagged `broad: true`, include the candidate but
+   annotate with `(broad — keywords matched everywhere)`.
+7. Format each candidate as a JSON rule object.
 
 **Expected return:**
-- Verified constraints (with Grep evidence)
-- Candidate rules (JSON array, each annotated with source + verification)
+- Verified sections (with Grep evidence)
+- Candidate rules (JSON array, each annotated with source section,
+  file, path, and any flags)
 
 **Wait for completion.**
 
