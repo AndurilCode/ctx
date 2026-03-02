@@ -137,5 +137,11 @@ All tools accept `dryRun: true` — returns the diff/summary without writing. Us
 
 ## Hand-off
 
-When done editing → use **ctx-verify** to review changes and run tests.
+When done editing → use **ctx-verify** with the new targeted verify flow:
+- Plan mode (default): `npx @anduril-code/ctx verify <file> --symbol <symbol> [--since <hash>]`
+- Exec mode: `npx @anduril-code/ctx verify <file> --exec`
+
+For markdown round-trip fidelity checks (old verify behavior), use:
+- `npx @anduril-code/ctx roundtrip <file>`
+
 When you need to understand code first → use **ctx-search**.

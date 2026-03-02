@@ -57,7 +57,7 @@ Use the lowest-fidelity tool that answers your question:
 `ctx_sections` · `ctx_locate`
 
 **Code intelligence**
-`ctx_tree` · `ctx_rank` · `ctx_gather` · `ctx_context` · `ctx_outline` · `ctx_imports` · `ctx_symbols` · `ctx_review`
+`ctx_tree` · `ctx_rank` · `ctx_gather` · `ctx_context` · `ctx_outline` · `ctx_imports` · `ctx_symbols` · `ctx_review` · `ctx_focus` · `ctx_verify`
 
 **Extraction & compression**
 `ctx_extract` · `ctx_compact` · `ctx_expand` · `ctx_changes` · `ctx_prune`
@@ -91,6 +91,9 @@ ctx outline src/core/compact.ts
 ctx imports src/stages/tables.ts
 ctx symbols "compact" --kind function
 ctx review "security" --diffBase main --evidence
+ctx focus src/core/patch.ts::patch
+ctx verify src/core/patch.ts --symbol patch --since a3b2
+ctx verify src/core/patch.ts --exec
 
 # Document navigation
 ctx sections docs/api.md
@@ -101,6 +104,7 @@ ctx summarize docs/api.md
 git diff | ctx changes --changes-only
 cat test.log | ctx prune --profile test
 cat doc.md | ctx compact | ctx expand   # round-trips exactly
+ctx roundtrip doc.md                    # round-trip validation command
 ```
 
 ---

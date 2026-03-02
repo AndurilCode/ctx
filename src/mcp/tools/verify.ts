@@ -1,34 +1,23 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import * as z from 'zod/v4';
-import { verifyWithDiagnostics } from '../../core/verify.js';
-import { parseFrontmatter } from '../../utils/frontmatter.js';
-import { jsonResult, resolveMarkdown } from './common.js';
+import {
+  type RoundtripVerifyToolInput,
+  registerRoundtripVerifyTool,
+  runRoundtripVerifyTool,
+} from './roundtrip-verify.js';
 
-export interface VerifyToolInput {
-  markdown?: string;
-  file?: string;
-}
+export type VerifyToolInput = RoundtripVerifyToolInput;
 
+/**
+ * @deprecated Use runRoundtripVerifyTool from mcp/tools/roundtrip-verify.ts.
+ */
 export async function runVerifyTool(input: VerifyToolInput): Promise<CallToolResult> {
-  const markdown = await resolveMarkdown(input);
-  return jsonResult({
-    ...verifyWithDiagnostics(markdown),
-    frontmatter: parseFrontmatter(markdown),
-  });
+  return runRoundtripVerifyTool(input);
 }
 
+/**
+ * @deprecated Use registerRoundtripVerifyTool from mcp/tools/roundtrip-verify.ts.
+ */
 export function registerVerifyTool(server: McpServer): void {
-  server.registerTool(
-    'ctx_verify',
-    {
-      description:
-        'Verify lossless round-trip for markdown input. Use to enforce fidelity guarantees; do not use as a compressor or reader.',
-      inputSchema: {
-        markdown: z.string().optional().describe('Markdown source text (Markdown-only).'),
-        file: z.string().optional().describe('Path to a markdown file (.md/.mdx/.markdown).'),
-      },
-    },
-    async (input) => runVerifyTool(input),
-  );
+  registerRoundtripVerifyTool(server);
 }

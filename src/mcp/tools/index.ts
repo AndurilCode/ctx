@@ -1,8 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerAutoContextTool } from './auto-context.js';
+import { registerChangeVerifyTool } from './change-verify.js';
 import { registerContextTool } from './context.js';
 import { registerDiffTool } from './diff.js';
 import { registerExtractTool } from './extract.js';
+import { registerFocusTool } from './focus.js';
 import { registerImportsTool } from './imports.js';
 import { registerInsertTool } from './insert.js';
 import { registerSymbolsTool } from './symbols.js';
@@ -14,6 +16,7 @@ import { registerReadTool } from './read.js';
 import { registerRelevanceTool } from './relevance.js';
 import { registerRenameTool } from './rename.js';
 import { registerReviewTool } from './review.js';
+import { registerRoundtripVerifyTool } from './roundtrip-verify.js';
 import { registerSectionsTool } from './sections.js';
 import { registerUnpackTool } from './unpack.js';
 import { registerTreeTool } from './tree.js';
@@ -37,4 +40,7 @@ export function registerCompactMdTools(server: McpServer): void {
   registerPatchTool(server);
   registerInsertTool(server);
   registerRenameTool(server);
+  registerFocusTool(server);
+  registerChangeVerifyTool(server);
+  registerRoundtripVerifyTool(server);
 }

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { registerCompactMdTools } from '../../../src/mcp/tools/index.js';
 
 describe('MCP tool surface', () => {
-  test('registered tool count is at most 18', () => {
+  test('registered tool count is at most 21', () => {
     const registered: string[] = [];
     const fakeServer = {
       registerTool: (name: string) => {
@@ -10,8 +10,10 @@ describe('MCP tool surface', () => {
       },
     };
     registerCompactMdTools(fakeServer as any);
-    expect(registered.length).toBeLessThanOrEqual(18);
-    expect(registered).not.toContain('ctx_verify');
+    expect(registered.length).toBeLessThanOrEqual(21);
+    expect(registered).toContain('ctx_verify');
+    expect(registered).toContain('ctx_roundtrip_verify');
+    expect(registered).toContain('ctx_focus');
     expect(registered).not.toContain('ctx_metrics');
     expect(registered).not.toContain('ctx_tokens');
     expect(registered).not.toContain('ctx_locate');

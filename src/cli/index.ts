@@ -6,6 +6,7 @@ import { compactCommand } from './commands/compact.js';
 import { diffCommand } from './commands/diff.js';
 import { expandCommand } from './commands/expand.js';
 import { extractCommand } from './commands/extract.js';
+import { focusCommand } from './commands/focus.js';
 import { importsCommand } from './commands/imports.js';
 import { insertCommand } from './commands/insert.js';
 import { patchCommand } from './commands/patch.js';
@@ -14,6 +15,7 @@ import { readCommand } from './commands/read.js';
 import { relevanceCommand } from './commands/relevance.js';
 import { renameCommand } from './commands/rename.js';
 import { reviewCommand } from './commands/review.js';
+import { roundtripCommand } from './commands/roundtrip.js';
 import { searchSectionsCommand } from './commands/search-sections.js';
 import { sectionsCommand } from './commands/sections.js';
 import { statsCommand } from './commands/stats.js';
@@ -35,7 +37,9 @@ export const command = defineCommand({
     prune: pruneLogCommand,
     extract: extractCommand,
     expand: expandCommand,
+    focus: focusCommand,
     verify: verifyCommand,
+    roundtrip: roundtripCommand,
     metrics: statsCommand,
     sections: sectionsCommand,
     locate: searchSectionsCommand,

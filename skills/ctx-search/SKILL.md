@@ -22,6 +22,7 @@ Use `npx @anduril-code/ctx` CLI commands.
 | `outline <FILE> [--depth N]` | Source code | Structural outline with line numbers and **content hashes** |
 | `imports <FILE> [--direction incoming\|outgoing]` | Source code | Dependency graph |
 | `symbols <QUERY> [--glob PATTERN] [--kind K]` | Source code | Cross-file symbol search |
+| `focus <FILE>::<SYMBOL> [--maxTokens N] [--include SECTIONS]` | Source code | One-call symbol context (body, callers, deps, types, tests, conventions) |
 | `tokens [FILE]` | Any | Count tokens, bytes, and lines |
 | `sections <FILE>` | Markdown | List headings with token costs |
 | `extract [--only <heading>] [--strip <heading>] <FILE>` | Markdown | Extract exact section content |
@@ -36,15 +37,17 @@ All commands are invoked as `npx @anduril-code/ctx <command>`.
    - If blocked, rerun with `--maxTokens 2200`
 2. For file targeting, run `rank` before opening content.
 3. For code files, prefer `outline` then `read`.
-4. For Markdown, run `sections` first, then `extract --only` exact headings.
-5. Use `imports` to trace dependency flow when understanding module relationships.
-6. Use `symbols` to find definitions and call sites for specific functions/types.
-7. Treat `read` output as triage only; anchor any final claim with line-aware evidence (`outline` or `rg -n` + `sed -n`).
+4. For symbol-level understanding before edits, prefer `focus`.
+5. For Markdown, run `sections` first, then `extract --only` exact headings.
+6. Use `imports` to trace dependency flow when understanding module relationships.
+7. Use `symbols` to find definitions and call sites for specific functions/types.
+8. Treat `read` output as triage only; anchor any final claim with line-aware evidence (`outline` or `rg -n` + `sed -n`).
 
 ### When given a file path
 1. If Markdown: `sections` → `extract --only`/`read`
 2. If source code: `outline` → `read`
-3. To understand context: `imports` for dependency graph, `symbols` for usage sites
+3. If symbol-specific: `focus <file>::<symbol>`
+4. To understand context: `imports` for dependency graph, `symbols` for usage sites
 
 ### When given a question or topic
 1. `gather "<question>" --maxTokens 1200` for auto-discovery

@@ -6,7 +6,15 @@ export { codeOutline } from './core/code-outline.js';
 export { createPipeline } from './core/create-pipeline.js';
 export { expand } from './core/expand.js';
 export { pruneLog } from './core/prune-log.js';
+export { verifyChanges } from './core/change-verify.js';
+export { conventions } from './core/conventions.js';
+export { focus } from './core/focus.js';
 export { verify } from './core/verify.js';
+export {
+  verifyRoundTrip,
+  verifyRoundTripWithDiagnostics,
+  type VerifyRoundTripDiagnostics,
+} from './core/roundtrip-verify.js';
 
 export type { CompactOptions, ExpandOptions } from './types/options.js';
 export type { DiffCompactOptions } from './types/diff.js';
@@ -24,6 +32,16 @@ export type {
   LogTokenCounter,
 } from './types/log.js';
 export type { CompactResult, StageStats, Stats } from './types/results.js';
+export type { VerifyChangesOptions, VerifyChangesResult } from './types/change-verify.js';
+export type {
+  FocusDependency,
+  FocusOptions,
+  FocusResult,
+  FocusSection,
+  FocusTestReference,
+  FocusTypeRef,
+} from './types/focus.js';
+export type { ConventionSignal, ConventionsOptions, ConventionsResult } from './types/conventions.js';
 export { tree } from './core/tree.js';
 export type { TreeOptions, TreeResult } from './types/tree.js';
 export { budgetedRead } from './core/read.js';

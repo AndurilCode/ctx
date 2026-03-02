@@ -6,7 +6,7 @@ argument-hint: "[branch, commit range, test command, or blank for current change
 
 # Ctx Verify
 
-Verify changes through code review and test execution. Two flows, one skill.
+Verify changes through targeted planning/execution plus optional review triage.
 
 ## Tools
 
@@ -14,14 +14,37 @@ Use `npx @anduril-code/ctx` CLI commands.
 
 | Command | Purpose |
 |---|---|
+| `npx @anduril-code/ctx verify <file> [--symbol <name>] [--since <hash>]` | Build targeted verification plan (default, read-only) |
+| `npx @anduril-code/ctx verify <file> --exec [--testCommand ...] [--typeCommand ...]` | Execute targeted verification plan |
+| `npx @anduril-code/ctx verify --diff` | Build plan for changed files in working tree |
 | `git diff ... \| npx @anduril-code/ctx changes --context 2` | Compress a diff |
 | `npx @anduril-code/ctx outline <FILE>` | Structural outline with hashes |
 | `npx @anduril-code/ctx review <QUERY> [--diffBase REF] [--evidence] [--cluster]` | Two-pass risk triage |
 | `npx @anduril-code/ctx imports <FILE> [--direction incoming\|outgoing]` | Blast-radius analysis |
 | `npx @anduril-code/ctx symbols <QUERY> [--glob PATTERN]` | Find definitions and call sites |
 | `<test-cmd> 2>&1 \| npx @anduril-code/ctx prune --profile test` | Prune test output |
+| `npx @anduril-code/ctx roundtrip <file>` | Markdown round-trip fidelity check (legacy verify behavior) |
 
-## Flow 1: Code Review
+## Flow 1: Targeted Verify (primary)
+
+1. Build plan (default mode):
+   - `npx @anduril-code/ctx verify <file> --symbol <name> --since <hash>`
+   - or `npx @anduril-code/ctx verify --diff`
+2. Inspect:
+   - changed symbols and caller impact
+   - generated type-check and targeted test commands
+3. Execute when ready:
+   - `npx @anduril-code/ctx verify <file> --exec`
+   - optionally override commands with `--testCommand` and `--typeCommand`
+4. If exec fails:
+   - re-run with narrowed symbol/file scope
+   - use `outline`, `symbols`, and `imports` for fault localization
+5. Report:
+   - plan quality (coverage + relevance)
+   - exec outcomes (pass/fail/timeout)
+   - likely fault locations and fix candidates
+
+## Flow 2: Code Review (secondary)
 
 1. Get diff source:
    - If `$ARGUMENTS` is a branch name: `git diff $ARGUMENTS...HEAD`
@@ -39,21 +62,10 @@ Use `npx @anduril-code/ctx` CLI commands.
    - `npx @anduril-code/ctx review "bugs, regressions, missing tests" --diffBase <REF> --evidence`
 6. Report: findings (by severity), open questions, change summary.
 
-## Flow 2: Test Execution
+## Flow 3: Round-trip Fidelity (markdown-only)
 
-1. Determine test command:
-   - If `$ARGUMENTS` specifies a command or file, use it directly
-   - Otherwise, auto-detect:
-     - `package.json` / `bun.lock` → `bun test`
-     - `pytest.ini` / `pyproject.toml` → `pytest`
-     - `Cargo.toml` → `cargo test`
-     - `go.mod` → `go test ./...`
-2. Run tests and capture output.
-3. Prune logs: `<test-cmd> 2>&1 | npx @anduril-code/ctx prune --profile test`
-4. If failing:
-   - `npx @anduril-code/ctx outline <FILE>` for failing test files
-   - `npx @anduril-code/ctx symbols <NAME>` to trace failing functions
-5. Report: status, failures (test name, error, fault location), fix candidates.
+1. Use `npx @anduril-code/ctx roundtrip <file>` when validating compact/expand fidelity.
+2. Do not use `ctx verify` for markdown fidelity checks; `ctx verify` is now code-change verification.
 
 ## Review output contract
 
@@ -64,7 +76,7 @@ Use `npx @anduril-code/ctx` CLI commands.
 ## Stop conditions
 
 - Review: stop when all changed files have been analyzed.
-- Test: stop when all failing tests have at least one likely fault location.
+- Verify exec: stop when all failing checks/tests have at least one likely fault location.
 
 ## Hand-off
 
