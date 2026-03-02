@@ -108,15 +108,23 @@ export async function review(options: ReviewOptions): Promise<ReviewResult> {
       : allCandidates;
 
   const cwd = resolve('.');
+
+  // Phase 1: parallel pass-1 reads + risk triage
+  const pass1Results = await Promise.all(
+    candidates.map(async (candidate) => {
+      const displayFile = relative(cwd, candidate.file);
+      const pass1 = await budgetedRead({ file: candidate.file, maxTokens: pass1Tokens });
+      const matched = matchedRiskTerms(pass1.content, riskTerms);
+      const flagged = matched.length > 0;
+      return { candidate, displayFile, pass1, matched, flagged };
+    }),
+  );
+
+  // Phase 2: sequential pass-2 escalation + evidence for flagged files
   const files: ReviewFileResult[] = [];
   let pass2Count = 0;
 
-  for (const candidate of candidates) {
-    const displayFile = relative(cwd, candidate.file);
-    const pass1 = await budgetedRead({ file: candidate.file, maxTokens: pass1Tokens });
-    const matched = matchedRiskTerms(pass1.content, riskTerms);
-    const flagged = matched.length > 0;
-
+  for (const { candidate, displayFile, pass1, matched, flagged } of pass1Results) {
     let pass2Used = 0;
     let pass2Strategy: string | undefined;
 
