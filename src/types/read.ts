@@ -6,6 +6,7 @@ export interface ReadOptions {
   strategy?: ReadStrategy;
   content?: string;
   totalTokens?: number;
+  lineHashes?: boolean;
 }
 
 export interface ReadResult {

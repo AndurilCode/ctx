@@ -40,6 +40,8 @@ If you get `STALE_READ` — the file changed since you read it. The error return
 ```
 
 **Line-hash mode** (symbol >= 50 lines, change <= 5 lines):
+
+First, read the file with `ctx_read --lineHashes` to get per-line 2-char hashes (`lineNo:hash| content`), then target specific lines:
 ```json
 {
   "file": "src/utils.ts",
@@ -63,6 +65,8 @@ If you get `STALE_READ` — the file changed since you read it. The error return
 ```
 
 **Hashline fallback** (unparseable files — config, prose, unsupported languages):
+
+Use `ctx_read --lineHashes` to get per-line hashes, then edit without a symbol:
 ```json
 {
   "file": "config.yaml",

@@ -8,6 +8,7 @@ export interface ReadToolInput {
   file: string;
   maxTokens?: number;
   strategy?: string;
+  lineHashes?: boolean;
 }
 
 export async function runReadTool(input: ReadToolInput): Promise<CallToolResult> {
@@ -15,6 +16,7 @@ export async function runReadTool(input: ReadToolInput): Promise<CallToolResult>
     file: input.file,
     maxTokens: input.maxTokens,
     strategy: input.strategy as ReadStrategy | undefined,
+    lineHashes: input.lineHashes,
   });
   return {
     content: [
@@ -54,6 +56,12 @@ export function registerReadTool(server: McpServer): void {
           .enum(['auto', 'truncate', 'outline', 'sections', 'summarize'])
           .optional()
           .describe('Strategy override (default: auto)'),
+        lineHashes: z
+          .boolean()
+          .optional()
+          .describe(
+            'Annotate each line with 2-char content hash for use with ctx_patch line-hash mode',
+          ),
       },
     },
     async (input) => runReadTool(input),

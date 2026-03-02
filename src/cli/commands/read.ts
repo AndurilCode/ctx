@@ -16,12 +16,18 @@ export const readCommand = defineCommand({
       default: 'auto',
       description: 'auto|truncate|outline|sections|summarize',
     },
+    lineHashes: {
+      type: 'boolean',
+      required: false,
+      description: 'Annotate each line with 2-char content hash',
+    },
   },
   async run({ args }) {
     const result = await budgetedRead({
       file: String(args.file),
       maxTokens: args.maxTokens ? Number(args.maxTokens) : undefined,
       strategy: String(args.strategy) as ReadStrategy,
+      lineHashes: Boolean(args.lineHashes),
     });
     process.stdout.write(result.content);
     if (!result.content.endsWith('\n')) process.stdout.write('\n');

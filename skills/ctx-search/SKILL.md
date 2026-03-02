@@ -18,7 +18,7 @@ Use `npx @anduril-code/ctx` CLI commands.
 | `rank <QUERY> [--glob PATTERN] [--maxResults N]` | Code + docs | Rank files by query relevance |
 | `gather <QUERY> --maxTokens N [--seeds F,...] [--depth N]` | Code + docs | Auto-discover and assemble context |
 | `context <FILES...> --maxTokens N [--strategy S]` | Code + docs | Assemble context from known files |
-| `read <FILE> [--maxTokens N] [--strategy S]` | Code + docs | Token-budgeted file read |
+| `read <FILE> [--maxTokens N] [--strategy S] [--lineHashes]` | Code + docs | Token-budgeted file read (with optional per-line hashes) |
 | `outline <FILE> [--depth N]` | Source code | Structural outline with line numbers and **content hashes** |
 | `imports <FILE> [--direction incoming\|outgoing]` | Source code | Dependency graph |
 | `symbols <QUERY> [--glob PATTERN] [--kind K]` | Source code | Cross-file symbol search |
@@ -61,7 +61,11 @@ All commands are invoked as `npx @anduril-code/ctx <command>`.
 
 ## Hashes and editing
 
-`outline` output now includes `hash:xxxx` for every symbol. These hashes are used by the editing tools (`ctx_patch`, `ctx_insert`, `ctx_rename`). When you identify what needs to change, hand off to **ctx-code**.
+`outline` output includes `hash:xxxx` for every symbol. These hashes are used by the editing tools (`ctx_patch`, `ctx_insert`, `ctx_rename`).
+
+`read --lineHashes` annotates each line with `lineNo:hash| content` — use these 2-char hashes for `ctx_patch` line-hash mode or hashline fallback.
+
+When you identify what needs to change, hand off to **ctx-code**.
 
 ## Stop conditions
 

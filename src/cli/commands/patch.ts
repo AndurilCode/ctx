@@ -16,16 +16,23 @@ export const patchCommand = defineCommand({
       required: false,
       description: 'New implementation (or read from stdin if omitted)',
     },
+    lines: {
+      type: 'string',
+      required: false,
+      description: 'JSON array of line-hash edits [{hash,replace?,after?,before?,delete?}]',
+    },
     language: { type: 'string', required: false, description: 'Force language detection' },
     dryRun: { type: 'boolean', default: false, description: 'Return diff without writing' },
   },
   async run({ args }) {
-    const body = args.body ? String(args.body) : await readInput(undefined);
+    const lines = args.lines ? JSON.parse(String(args.lines)) : undefined;
+    const body = !lines && args.body ? String(args.body) : !lines ? await readInput(undefined) : undefined;
     const result = await patch({
       file: String(args.file),
       symbol: args.symbol ? String(args.symbol) : undefined,
       hash: args.hash ? String(args.hash) : undefined,
       body,
+      lines,
       language: args.language ? String(args.language) : undefined,
       dryRun: args.dryRun,
     });

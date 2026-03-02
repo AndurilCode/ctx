@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { budgetedRead } from '../../../src/core/read.js';
+import { computeLineHashes } from '../../../src/parser/patch-line-edits.js';
 
 describe('budgetedRead', () => {
   test('returns full content when file fits within budget', async () => {
@@ -51,5 +52,61 @@ describe('budgetedRead', () => {
     });
     expect(['outline', 'truncate']).toContain(result.strategy);
     expect(result.truncated).toBe(true);
+  });
+
+  test('lineHashes annotates each line with line number and hash', async () => {
+    const content = 'line one\nline two\nline three';
+    const result = await budgetedRead({
+      file: 'test.txt',
+      content,
+      lineHashes: true,
+    });
+    const lines = result.content.split('\n');
+    expect(lines).toHaveLength(3);
+    // Each line should match the format: padded_number:hash| content
+    for (const line of lines) {
+      expect(line).toMatch(/^\s*\d+:[a-f0-9]{2}\| /);
+    }
+  });
+
+  test('lineHashes produces 1-based line numbers', async () => {
+    const content = 'alpha\nbeta';
+    const result = await budgetedRead({
+      file: 'test.txt',
+      content,
+      lineHashes: true,
+    });
+    const lines = result.content.split('\n');
+    expect(lines[0]).toMatch(/^1:[a-f0-9]{2}\| alpha$/);
+    expect(lines[1]).toMatch(/^2:[a-f0-9]{2}\| beta$/);
+  });
+
+  test('lineHashes match computeLineHashes output', async () => {
+    const content = 'import foo\nexport bar\nconst baz = 1';
+    const result = await budgetedRead({
+      file: 'test.ts',
+      content,
+      lineHashes: true,
+    });
+    const expected = computeLineHashes(content);
+    const lines = result.content.split('\n');
+    for (let i = 0; i < expected.length; i++) {
+      const eh = expected[i]!;
+      expect(lines[i]).toContain(`:${eh.hash}| `);
+      expect(lines[i]).toContain(eh.line);
+    }
+  });
+
+  test('lineHashes pads line numbers for multi-digit files', async () => {
+    const content = Array.from({ length: 12 }, (_, i) => `line ${i + 1}`).join('\n');
+    const result = await budgetedRead({
+      file: 'test.txt',
+      content,
+      lineHashes: true,
+    });
+    const lines = result.content.split('\n');
+    // 12 lines → 2-digit padding, so line 1 should be padded
+    expect(lines[0]).toMatch(/^ 1:[a-f0-9]{2}\| /);
+    expect(lines[11]).toMatch(/^12:[a-f0-9]{2}\| /);
   });
 });

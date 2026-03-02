@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import { computeLineHashes } from '../parser/patch-line-edits.js';
 import type { ReadOptions, ReadResult, ReadStrategy } from '../types/read.js';
 import { readFileText } from '../utils/file-reader.js';
 import type { TokenCounter } from '../utils/tokens.js';
@@ -9,23 +10,43 @@ export async function budgetedRead(options: ReadOptions): Promise<ReadResult> {
   const counter = await createTokenCounter();
   const totalTokens = options.totalTokens ?? counter.count(content);
 
+  let result: ReadResult;
+
   if (!options.maxTokens || totalTokens <= options.maxTokens) {
-    return {
+    result = {
       content,
       strategy: 'full',
       totalTokens,
       returnedTokens: totalTokens,
       truncated: false,
     };
+  } else {
+    const strategy = options.strategy ?? 'auto';
+
+    if (strategy === 'auto') {
+      result = await runAutoStrategy(content, options.file, options.maxTokens, totalTokens, counter);
+    } else {
+      result = await applyStrategy(
+        strategy,
+        content,
+        options.file,
+        options.maxTokens,
+        totalTokens,
+        counter,
+      );
+    }
   }
 
-  const strategy = options.strategy ?? 'auto';
-
-  if (strategy === 'auto') {
-    return runAutoStrategy(content, options.file, options.maxTokens, totalTokens, counter);
+  if (options.lineHashes) {
+    const hashes = computeLineHashes(result.content);
+    const pad = String(hashes.length).length;
+    result.content = hashes
+      .map((h) => `${String(h.lineNumber).padStart(pad)}:${h.hash}| ${h.line}`)
+      .join('\n');
+    result.returnedTokens = counter.count(result.content);
   }
 
-  return applyStrategy(strategy, content, options.file, options.maxTokens, totalTokens, counter);
+  return result;
 }
 
 async function runAutoStrategy(
