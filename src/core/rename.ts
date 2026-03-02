@@ -23,7 +23,7 @@ export async function rename(input: RenameInput): Promise<RenameResult> {
 
   // ── Phase 1: Read definition file, locate symbol, validate hash ──
   const source = await readFile(file, 'utf8');
-  const loc = await locateSymbol(source, symbol, { language: 'typescript' });
+  const loc = await locateSymbol(source, symbol, { filePath: file });
 
   if (!loc) {
     return {

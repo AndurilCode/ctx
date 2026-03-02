@@ -4,13 +4,13 @@ import { dirname, extname, join, relative } from 'node:path';
 import Parser from 'web-tree-sitter';
 import type { OutlineNode, OutlineNodeKind, OutlineOptions } from '../types/outline.js';
 import { shortHash } from '../utils/hash.js';
-import { mapNode } from './code-outline-node-map.js';
 import {
   EXTENSION_TO_LANGUAGE,
   OUTLINE_LANGUAGES,
   type OutlineLanguageConfig,
   supportedLanguageNames,
 } from './code-outline-languages.js';
+import { mapNode } from './code-outline-node-map.js';
 
 const require = createRequire(import.meta.url);
 const languageCache = new Map<string, Promise<Parser.Language>>();
@@ -118,6 +118,8 @@ function collectNodes(
       hash: shortHash(nodeText),
       startLine: child.startPosition.row + 1,
       endLine: child.endPosition.row + 1,
+      startIndex: child.startIndex,
+      endIndex: child.endIndex,
       children: nested.length > 0 ? nested : undefined,
     });
   }

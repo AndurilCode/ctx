@@ -16,6 +16,8 @@ export interface OutlineNode {
   hash?: string;
   startLine: number;
   endLine: number;
+  startIndex?: number;
+  endIndex?: number;
   children?: OutlineNode[];
 }
 
