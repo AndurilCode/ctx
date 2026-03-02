@@ -102,8 +102,8 @@ main context clean. Only structured summaries flow back.
 
 ```
 Batch 1 (parallel):   Layer 1 · Layer 2 · Layer 3
-Batch 2 (sequential): Layer 4  — needs Layer 3 output
-Batch 3 (sequential): Layer 5  — needs Layer 4 output
+Batch 2 (parallel):   Layer 3.5 · Layer 4  — both need Layer 3 output
+Batch 3 (sequential): Layer 5  — needs Layer 3.5 + Layer 4 output
 ```
 
 Create a tracked task for each batch (not each layer).
