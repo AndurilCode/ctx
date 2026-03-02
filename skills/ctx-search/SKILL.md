@@ -76,6 +76,12 @@ When you identify what needs to change, hand off to **ctx-code**.
 - Do not full-read large files unless ranked and required.
 - Do not finalize recommendations without file + line references.
 
-## Hand-off
+## Workflow: search → edit → verify
 
-When you know what to change → use **ctx-code** to make the edits.
+This skill is phase 1 of a 3-phase cycle. **NEVER use raw Edit/Write/MultiEdit tools for source changes.** Always follow this sequence:
+
+1. **Search** (this skill) — investigate, gather context, identify what to change
+2. **Edit** — invoke `ctx-code` skill via the Skill tool, then use its patch/insert/rename commands
+3. **Verify** — invoke `ctx-verify` skill via the Skill tool to review diffs and run tests
+
+When you know what to change → **STOP and invoke the `ctx-code` skill before touching any file.** Do not call Edit/Write directly.
