@@ -4,12 +4,15 @@ import { registerContextTool } from './context.js';
 import { registerDiffTool } from './diff.js';
 import { registerExtractTool } from './extract.js';
 import { registerImportsTool } from './imports.js';
+import { registerInsertTool } from './insert.js';
 import { registerSymbolsTool } from './symbols.js';
 import { registerOutlineTool } from './outline.js';
 import { registerPackTool } from './pack.js';
+import { registerPatchTool } from './patch.js';
 import { registerPruneLogTool } from './prune-log.js';
 import { registerReadTool } from './read.js';
 import { registerRelevanceTool } from './relevance.js';
+import { registerRenameTool } from './rename.js';
 import { registerReviewTool } from './review.js';
 import { registerSectionsTool } from './sections.js';
 import { registerUnpackTool } from './unpack.js';
@@ -31,4 +34,7 @@ export function registerCompactMdTools(server: McpServer): void {
   registerAutoContextTool(server);
   registerImportsTool(server);
   registerSymbolsTool(server);
+  registerPatchTool(server);
+  registerInsertTool(server);
+  registerRenameTool(server);
 }

@@ -7,9 +7,12 @@ import { diffCommand } from './commands/diff.js';
 import { expandCommand } from './commands/expand.js';
 import { extractCommand } from './commands/extract.js';
 import { importsCommand } from './commands/imports.js';
+import { insertCommand } from './commands/insert.js';
+import { patchCommand } from './commands/patch.js';
 import { pruneLogCommand } from './commands/prune-log.js';
 import { readCommand } from './commands/read.js';
 import { relevanceCommand } from './commands/relevance.js';
+import { renameCommand } from './commands/rename.js';
 import { reviewCommand } from './commands/review.js';
 import { searchSectionsCommand } from './commands/search-sections.js';
 import { sectionsCommand } from './commands/sections.js';
@@ -45,6 +48,9 @@ export const command = defineCommand({
     review: reviewCommand,
     context: contextCommand,
     gather: autoContextCommand,
+    patch: patchCommand,
+    insert: insertCommand,
+    rename: renameCommand,
   },
 });
 
