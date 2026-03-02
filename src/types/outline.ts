@@ -13,6 +13,7 @@ export interface OutlineNode {
   kind: OutlineNodeKind;
   name: string;
   signature?: string;
+  hash?: string;
   startLine: number;
   endLine: number;
   children?: OutlineNode[];

@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { dirname, extname, join, relative } from 'node:path';
 import Parser from 'web-tree-sitter';
 import type { OutlineNode, OutlineNodeKind, OutlineOptions } from '../types/outline.js';
+import { shortHash } from '../utils/hash.js';
 import { mapNode } from './code-outline-node-map.js';
 import {
   EXTENSION_TO_LANGUAGE,
@@ -109,10 +110,12 @@ function collectNodes(
       output.push(...nested);
       continue;
     }
+    const nodeText = source.slice(child.startIndex, child.endIndex);
     output.push({
       kind: mapped.kind,
       name: mapped.name,
       signature: mapped.signature,
+      hash: shortHash(nodeText),
       startLine: child.startPosition.row + 1,
       endLine: child.endPosition.row + 1,
       children: nested.length > 0 ? nested : undefined,

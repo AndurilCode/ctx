@@ -39,4 +39,26 @@ describe('codeOutline', () => {
     expect(result.output).toContain('Worker');
     expect(result.output).not.toContain('process(value: string)');
   });
+
+  test('outline nodes include content hashes', async () => {
+    const result = await codeOutline(SAMPLE_TS, { language: 'ts' });
+    const runTask = result.nodes.find((n) => n.name === 'runTask');
+    expect(runTask).toBeDefined();
+    expect(runTask!.hash).toBeDefined();
+    expect(runTask!.hash).toMatch(/^[0-9a-f]{4}$/);
+  });
+
+  test('hash changes when symbol body changes', async () => {
+    const result1 = await codeOutline(SAMPLE_TS, { language: 'ts' });
+    const modified = SAMPLE_TS.replace('return input.trim();', 'return input.toUpperCase();');
+    const result2 = await codeOutline(modified, { language: 'ts' });
+    const hash1 = result1.nodes.find((n) => n.name === 'runTask')!.hash;
+    const hash2 = result2.nodes.find((n) => n.name === 'runTask')!.hash;
+    expect(hash1).not.toBe(hash2);
+  });
+
+  test('formatted output includes hash', async () => {
+    const result = await codeOutline(SAMPLE_TS, { language: 'ts' });
+    expect(result.output).toMatch(/runTask.*hash:[0-9a-f]{4}/);
+  });
 });

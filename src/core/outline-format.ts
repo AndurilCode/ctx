@@ -24,7 +24,8 @@ function formatSignature(node: OutlineNode): string {
 }
 
 function formatNode(node: OutlineNode, indent: string): string[] {
-  const lines = [`${indent}${formatSignature(node)}  ${formatRange(node)}`];
+  const hashSuffix = node.hash ? `  hash:${node.hash}` : '';
+  const lines = [`${indent}${formatSignature(node)}  ${formatRange(node)}${hashSuffix}`];
   for (const child of node.children ?? []) {
     lines.push(...formatNode(child, `${indent}  `));
   }
