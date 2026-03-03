@@ -22,7 +22,7 @@ implicit AND), and an `inject` payload (exactly one key).
   {
     "on": "PreToolUse",
     "when": {
-      "tool": "Edit|Write",
+      "tool": "Write|Edit|MultiEdit|replace_string_in_file|create_file|multi_replace_string_in_file",
       "path": "src/core/**"
     },
     "inject": {
@@ -31,7 +31,7 @@ implicit AND), and an `inject` payload (exactly one key).
   },
   {
     "on": "PostToolUse",
-    "when": { "tool": "Read", "path": "src/stages/**" },
+    "when": { "tool": "Read|read_file", "path": "src/stages/**" },
     "inject": { "hint": "docs/stages-overview.md" }
   },
   {
@@ -72,6 +72,22 @@ the tool call is denied even if other rules `allow` or inject context.
 | `path` | glob | Matched against file_path / path in tool input |
 | `command` | regex | Bash tool only — matched against command string |
 | `prompt` | regex | `UserPromptSubmit` only |
+
+### Platform Tool Names
+
+Claude Code and VS Code Copilot use different tool names. Always include both
+sets in `tool` patterns to ensure rules fire on both platforms.
+
+| Action | Claude Code | VS Code Copilot |
+|--------|-------------|-----------------|
+| Write  | `Write`     | `create_file`   |
+| Edit   | `Edit`      | `replace_string_in_file` |
+| Multi-edit | `MultiEdit` | `multi_replace_string_in_file` |
+| Read   | `Read`      | `read_file`     |
+| Shell  | `Bash`      | `run_in_terminal` |
+
+For write rules: `Write|Edit|MultiEdit|replace_string_in_file|create_file|multi_replace_string_in_file`
+For read rules: `Read|read_file`
 
 ### `inject` keys (exactly one)
 | Key | Behavior | Events |
@@ -263,22 +279,39 @@ Prompt must instruct the subagent to:
    ```json
    {
      "on": "PreToolUse",
-     "when": { "tool": "Write|Edit|MultiEdit", "path": "<glob>" },
+     "when": { "tool": "Write|Edit|MultiEdit|replace_string_in_file|create_file|multi_replace_string_in_file", "path": "<glob>" },
      "inject": { "text": "<Section Name>: <condensed content>" }
    }
    ```
    - Prefix `text` with the section name for self-describing context.
    - Cap `text` at 500 characters. If longer, condense to actionable
      rules only (drop examples and rationale).
-4. **Deduplication**: if two sections produce rules with the same path
+4. For each verified section, also emit one **PostToolUse Read** rule per
+   path in its `paths` array:
+   ```json
+   {
+     "on": "PostToolUse",
+     "when": { "tool": "Read|read_file", "path": "<glob>" },
+     "inject": { "hint": "<most relevant source doc path>" }
+   }
+   ```
+   - Use `hint` (not `text`) to keep Read injections lightweight.
+     `hint` is prefixed with `"Related: "` — the agent decides whether to
+     follow up.
+   - The `hint` value should be the relative path to the most relevant
+     source doc from the section's `_source` field.
+   - Apply the same deduplication as step 5: if multiple sections target
+     the same path glob, pick the single most relevant doc to hint rather
+     than emitting multiple Read rules for the same path.
+5. **Deduplication**: if two sections produce rules with the same path
    and overlapping content, merge them into one rule with combined text
    (separated by newline).
-5. For sections flagged `noMatch: true`, include the candidate but
+6. For sections flagged `noMatch: true`, include the candidate but
    annotate with `(no matching code found)` — the user will assign a
    path or skip.
-6. For sections flagged `broad: true`, include the candidate but
+7. For sections flagged `broad: true`, include the candidate but
    annotate with `(broad — keywords matched everywhere)`.
-7. Format each candidate as a JSON rule object.
+8. Format each candidate as a JSON rule object.
 
 **Expected return:**
 - Verified sections (with Grep evidence)
@@ -300,12 +333,16 @@ Each row must include:
 - **Flags** — `broad` or `no match` if applicable
 
 ```
-#  on          scope              inject                          source
+#  on           scope              inject                          source
 ───────────────────────────────────────────────────────────────────────────
-0  PreToolUse  src/api/**         text: "API Design: Use camel…"  docs/style.md §API Design
-1  PreToolUse  src/components/**  text: "Components: Functional…" docs/style.md §Components
-2  PreToolUse  **/*.test.*        text: "Test Patterns: descri…"  docs/style.md §Test Patterns
-3  PreToolUse  src/**  (broad)    text: "Naming: Use snake_cas…"  docs/style.md §Naming
+0  PreToolUse   src/api/**         text: "API Design: Use camel…"  docs/style.md §API Design
+1  PostToolUse  src/api/**         hint: docs/style.md             docs/style.md §API Design
+2  PreToolUse   src/components/**  text: "Components: Functional…" docs/style.md §Components
+3  PostToolUse  src/components/**  hint: docs/style.md             docs/style.md §Components
+4  PreToolUse   **/*.test.*        text: "Test Patterns: descri…"  docs/style.md §Test Patterns
+5  PostToolUse  **/*.test.*        hint: docs/style.md             docs/style.md §Test Patterns
+6  PreToolUse   src/**  (broad)    text: "Naming: Use snake_cas…"  docs/style.md §Naming
+7  PostToolUse  src/**  (broad)    hint: docs/style.md             docs/style.md §Naming
 ```
 
 Ask: **"Accept all (a), pick by number (e.g. 1,3), or skip (s)?"**
@@ -359,6 +396,69 @@ When invoked with `remove <index>`:
 3. On confirm, remove the entry and rewrite the file.
 
 If the index is out of range, print: `Index <n> is out of range (0–<max>).`
+
+## Phase 5 — Smoke Test
+
+Runs automatically after writing rules in Phase 1 or Phase 2. For each
+accepted rule, verify the hook engine actually fires by simulating a
+matching tool call.
+
+### Procedure
+
+1. For each rule in `.claude/context-rules.json`, construct a **minimal
+   matching payload**:
+   ```json
+   {
+     "hook_event_name": "<rule.on>",
+     "tool_name": "<first alternative from rule.when.tool>",
+     "tool_input": { "file_path": "<synthetic path matching rule.when.path>" }
+   }
+   ```
+   - For `when.tool`: use the first pipe-separated alternative
+     (e.g. `"Write"` from `"Write|Edit|MultiEdit|..."`).
+   - For `when.path`: expand the glob to a concrete path
+     (e.g. `"src/core/example.ts"` for `"src/core/**"`).
+   - For `when.command`: set `tool_input.command` to a string matching
+     the regex.
+   - For `when.prompt` (UserPromptSubmit): set `"prompt"` to a matching
+     string instead of `tool_name`/`tool_input`.
+
+2. Pipe the payload to the engine and capture stdout:
+   ```bash
+   echo '<payload>' | node .claude/hooks/context-inject.mjs
+   ```
+
+3. Parse the JSON output and check:
+   - **context rules** (`text` / `hint` / `shell`):
+     output must contain `additionalContext` with the expected value.
+   - **block rules**: output must contain `"permissionDecision": "deny"`.
+   - **allow rules**: output must contain `"permissionDecision": "allow"`.
+   - **no output** (exit 0, empty stdout): rule did **not** fire — fail.
+
+4. Also construct one **non-matching payload** per rule (wrong tool name
+   or path outside the glob) and confirm the engine produces **no output**
+   (empty stdout or exit 0). This guards against overly broad rules.
+
+### Reporting
+
+Present results as:
+
+```
+Rule  on           scope          inject   result
+──────────────────────────────────────────────────
+0     PreToolUse   src/api/**     text     PASS ✓ (matched, context injected)
+1     PostToolUse  src/api/**     hint     PASS ✓ (matched, hint injected)
+2     PreToolUse   src/api/**     text     FAIL ✗ (no output — rule did not fire)
+```
+
+If any rule fails:
+- Show the payload that was sent and the raw output received.
+- Suggest likely causes: wrong `tool` name, path glob mismatch, or
+  missing config file.
+- Ask: **"Fix the failing rules and re-test? (y/n)"**
+
+If all rules pass:
+**"All <N> rules verified — hooks are firing correctly."**
 
 ## Validation
 
