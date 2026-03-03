@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -66,5 +66,16 @@ describe('rules-to-hook engine Phase 1 adapters', () => {
     });
 
     expect(raw).toBe('');
+  });
+});
+
+describe('installer engine sync', () => {
+  test('installer overwrites stale deployed engine', () => {
+    const installer = readFileSync(
+      resolve(process.cwd(), 'skills/rules-to-hook/install.mjs'),
+      'utf8',
+    );
+    expect(installer).not.toContain('!existsSync(ENGINE_DST)');
+    expect(installer).toContain('copyFileSync(ENGINE_SRC, ENGINE_DST)');
   });
 });

@@ -61,13 +61,9 @@ console.log('\nInstalling context-inject hook engine…\n');
 // 1. Directory
 mkdirSync(HOOKS_DIR, { recursive: true });
 
-// 2. Copy engine
-if (!existsSync(ENGINE_DST)) {
-  copyFileSync(ENGINE_SRC, ENGINE_DST);
-  log('Copied engine → .claude/hooks/context-inject.mjs');
-} else {
-  skip('.claude/hooks/context-inject.mjs');
-}
+// 2. Copy engine (always — ensures deployed copy stays in sync)
+copyFileSync(ENGINE_SRC, ENGINE_DST);
+log('Synced engine → .claude/hooks/context-inject.mjs');
 
 // 3. package.json
 const pkg = readJSON(PKG_PATH);
