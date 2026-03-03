@@ -42,6 +42,26 @@ implicit AND), and an `inject` payload (exactly one key).
 ]
 ```
 
+Block and allow rules control tool execution (PreToolUse only):
+
+```json
+[
+  {
+    "on": "PreToolUse",
+    "when": { "tool": "Bash", "command": "rm -rf" },
+    "inject": { "block": "Destructive rm -rf is not allowed." }
+  },
+  {
+    "on": "PreToolUse",
+    "when": { "tool": "Read", "path": "docs/**" },
+    "inject": { "allow": "Safe: reading documentation." }
+  }
+]
+```
+
+**Precedence:** block > allow > context. If any matched rule is a `block`,
+the tool call is denied even if other rules `allow` or inject context.
+
 ### `on` values
 `PreToolUse` / `PostToolUse` / `UserPromptSubmit`
 
@@ -54,11 +74,13 @@ implicit AND), and an `inject` payload (exactly one key).
 | `prompt` | regex | `UserPromptSubmit` only |
 
 ### `inject` keys (exactly one)
-| Key | Behavior |
-|---|---|
-| `text` | Injected verbatim as `additionalContext` |
-| `hint` | Prefixed with `"Related: "` — agent decides whether to read |
-| `shell` | Command stdout captured and injected; must be fast (<100 ms); no `;` or `&&` |
+| Key | Behavior | Events |
+|---|---|---|
+| `text` | Injected verbatim as `additionalContext` | All |
+| `hint` | Prefixed with `"Related: "` — agent decides whether to read | All |
+| `shell` | Command stdout captured and injected; must be fast (<100 ms); no `;` or `&&` | All |
+| `block` | Denies the tool call; value is the reason shown to Claude | PreToolUse only |
+| `allow` | Auto-approves the tool call; value is the reason shown to user | PreToolUse only |
 
 ## Phase 0 — Bootstrap
 
@@ -304,7 +326,8 @@ If yes, collect one answer at a time:
 2. **Trigger keys** — show only valid keys for the chosen event:
    - PreToolUse / PostToolUse: `tool`, `path`, `command`
    - UserPromptSubmit: `prompt`
-3. **Inject type** — text / hint / shell
+3. **Inject type** — text / hint / shell / block / allow
+   - For `block` or `allow`: only available when event is PreToolUse
 4. **Inject content**:
    - For `hint`: list existing `.md` files nearby and suggest one
    - For `shell`: remind that the command must be fast and use no `;` or `&&`
@@ -346,6 +369,7 @@ Apply before writing any rule:
 - `hint` values should exist on disk — warn if the file is not found, but do not block.
 - `shell` values must not contain `;` or `&&` — reject with an explanation.
 - `inject` must have exactly one key — reject if zero or more than one key is present.
+- `block` and `allow` keys are only valid on `PreToolUse` rules — reject on other events with: `"block/allow rules only work on PreToolUse events."`
 
 ## Notes
 
