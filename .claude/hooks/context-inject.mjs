@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Hook engine: inject additionalContext based on .claude/context-rules.json
 
-import { readFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { minimatch } from 'minimatch';
 
 const chunks = [];
@@ -15,10 +15,36 @@ try {
   process.exit(0);
 }
 
-const event = input?.hook_event_name ?? '';
-const toolName = input?.tool_name ?? '';
-const toolInput = input?.tool_input ?? {};
-const prompt = input?.prompt ?? '';
+function detectPlatform(payload) {
+  if (payload?.hook_event_name || payload?.tool_name || payload?.tool_input) return 'claude';
+  if (payload?.hookEventName || payload?.toolName || payload?.toolInput) return 'vscode';
+  return 'claude';
+}
+
+function pickString(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.length > 0) return value;
+  }
+  return '';
+}
+
+function pickObject(...values) {
+  for (const value of values) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) return value;
+  }
+  return {};
+}
+
+const platform = detectPlatform(input);
+const event = pickString(input?.hook_event_name, input?.hookEventName);
+const toolName = pickString(input?.tool_name, input?.toolName, input?.tool?.name);
+const toolInput = pickObject(
+  input?.tool_input,
+  input?.toolInput,
+  input?.tool?.input,
+  input?.toolArguments,
+);
+const prompt = pickString(input?.prompt, input?.userPrompt, input?.message);
 
 const configCandidates = [
   `${process.cwd()}/.claude/context-rules.json`,
@@ -37,10 +63,10 @@ try {
 
 if (!Array.isArray(rules)) process.exit(0);
 
-const rawPath = toolInput.file_path ?? toolInput.path ?? '';
+const rawPath = pickString(toolInput.file_path, toolInput.path, toolInput.filePath);
 const cwd = process.cwd();
 const filePath = rawPath.startsWith(cwd) ? rawPath.slice(cwd.length + 1) : rawPath;
-const command = toolInput.command ?? toolInput.cmd ?? '';
+const command = pickString(toolInput.command, toolInput.cmd, toolInput.shellCommand);
 
 function safeRegex(pattern) {
   try {
@@ -70,34 +96,68 @@ function matchesWhen(when) {
 }
 
 function resolveInject(inject) {
-  if (inject.text) return inject.text;
-  if (inject.hint) return `Related: ${inject.hint}`;
+  if (inject.block) return { type: 'block', value: inject.block };
+  if (inject.allow) return { type: 'allow', value: inject.allow };
+  if (inject.text) return { type: 'context', value: inject.text };
+  if (inject.hint) return { type: 'context', value: `Related: ${inject.hint}` };
   if (inject.shell) {
     try {
-      return execSync(inject.shell, {
+      const out = execSync(inject.shell, {
         encoding: 'utf8',
         timeout: 5000,
         maxBuffer: 128 * 1024,
       }).trim();
+      return out ? { type: 'context', value: out } : null;
     } catch {
-      return '';
+      return null;
     }
   }
-  return '';
+  return null;
 }
 
 const matched = rules
-  .filter((r) => r.on === event && r.when && r.inject && matchesWhen(r.when))
+  .filter((r) => r.on === event && r.inject && matchesWhen(r.when ?? {}))
   .map((r) => resolveInject(r.inject))
   .filter(Boolean);
 
 if (matched.length === 0) process.exit(0);
 
-process.stdout.write(
-  JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: event,
-      additionalContext: matched.join('\n'),
-    },
-  }),
-);
+// block/allow only apply on PreToolUse
+const isPreToolUse = event === 'PreToolUse';
+const blocks = isPreToolUse ? matched.filter((m) => m.type === 'block') : [];
+const allows = isPreToolUse ? matched.filter((m) => m.type === 'allow') : [];
+const contexts = matched.filter((m) => m.type === 'context');
+
+// On non-PreToolUse, block/allow rules produce no output (filtered out above)
+if (blocks.length === 0 && allows.length === 0 && contexts.length === 0) {
+  process.exit(0);
+}
+
+const additionalContext = contexts.map((m) => m.value).join('\n') || undefined;
+
+function buildOutput(eventName) {
+  const hso = { hookEventName: eventName };
+
+  if (additionalContext) hso.additionalContext = additionalContext;
+
+  // Precedence: block > allow > context-only
+  if (blocks.length > 0) {
+    hso.permissionDecision = 'deny';
+    hso.permissionDecisionReason = blocks.map((m) => m.value).join('\n');
+  } else if (allows.length > 0) {
+    hso.permissionDecision = 'allow';
+    hso.permissionDecisionReason = allows[0].value;
+  }
+
+  if (platform === 'vscode') {
+    return {
+      continue: true,
+      systemMessage: additionalContext || '',
+      hookSpecificOutput: hso,
+    };
+  }
+
+  return { hookSpecificOutput: hso };
+}
+
+process.stdout.write(JSON.stringify(buildOutput(event)));
