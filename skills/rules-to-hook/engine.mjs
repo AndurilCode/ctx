@@ -96,20 +96,23 @@ function matchesWhen(when) {
 }
 
 function resolveInject(inject) {
-  if (inject.text) return inject.text;
-  if (inject.hint) return `Related: ${inject.hint}`;
+  if (inject.block) return { type: 'block', value: inject.block };
+  if (inject.allow) return { type: 'allow', value: inject.allow };
+  if (inject.text) return { type: 'context', value: inject.text };
+  if (inject.hint) return { type: 'context', value: `Related: ${inject.hint}` };
   if (inject.shell) {
     try {
-      return execSync(inject.shell, {
+      const out = execSync(inject.shell, {
         encoding: 'utf8',
         timeout: 5000,
         maxBuffer: 128 * 1024,
       }).trim();
+      return out ? { type: 'context', value: out } : null;
     } catch {
-      return '';
+      return null;
     }
   }
-  return '';
+  return null;
 }
 
 const matched = rules
@@ -119,24 +122,42 @@ const matched = rules
 
 if (matched.length === 0) process.exit(0);
 
-function buildOutput(eventName, additionalContext) {
+// block/allow only apply on PreToolUse
+const isPreToolUse = event === 'PreToolUse';
+const blocks = isPreToolUse ? matched.filter((m) => m.type === 'block') : [];
+const allows = isPreToolUse ? matched.filter((m) => m.type === 'allow') : [];
+const contexts = matched.filter((m) => m.type === 'context');
+
+// On non-PreToolUse, block/allow rules produce no output (filtered out above)
+if (blocks.length === 0 && allows.length === 0 && contexts.length === 0) {
+  process.exit(0);
+}
+
+const additionalContext = contexts.map((m) => m.value).join('\n') || undefined;
+
+function buildOutput(eventName) {
+  const hso = { hookEventName: eventName };
+
+  if (additionalContext) hso.additionalContext = additionalContext;
+
+  // Precedence: block > allow > context-only
+  if (blocks.length > 0) {
+    hso.permissionDecision = 'deny';
+    hso.permissionDecisionReason = blocks.map((m) => m.value).join('\n');
+  } else if (allows.length > 0) {
+    hso.permissionDecision = 'allow';
+    hso.permissionDecisionReason = allows[0].value;
+  }
+
   if (platform === 'vscode') {
     return {
       continue: true,
-      systemMessage: additionalContext,
-      hookSpecificOutput: {
-        hookEventName: eventName,
-        additionalContext,
-      },
+      systemMessage: additionalContext || '',
+      hookSpecificOutput: hso,
     };
   }
 
-  return {
-    hookSpecificOutput: {
-      hookEventName: eventName,
-      additionalContext,
-    },
-  };
+  return { hookSpecificOutput: hso };
 }
 
-process.stdout.write(JSON.stringify(buildOutput(event, matched.join('\n'))));
+process.stdout.write(JSON.stringify(buildOutput(event)));
