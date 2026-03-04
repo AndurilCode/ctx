@@ -152,5 +152,75 @@
     "inject": {
       "text": "Learnings system: if you discover something non-obvious about a file (architecture constraints, pitfalls, patterns), record it with: node .claude/hooks/learn.mjs add --files '<glob>' --learning '<text>'. Only record genuinely useful insights. Use list/update/remove to curate existing learnings."
     }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit|replace_string_in_file|create_file|multi_replace_string_in_file",
+      "path": "src/types/**"
+    },
+    "inject": {
+      "text": "[Types purity] src/types/ must contain ONLY pure TS declarations: interfaces, type aliases, import type. Zero runtime code — no functions, classes, const values, enums, or non-type imports. Runtime code goes in src/utils/."
+    }
+  },
+  {
+    "on": "PostToolUse",
+    "when": {
+      "tool": "Read|read_file",
+      "path": "src/types/**"
+    },
+    "inject": {
+      "hint": "src/stages/stage.ts"
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit|replace_string_in_file|create_file|multi_replace_string_in_file",
+      "path": "src/stages/*/index.ts"
+    },
+    "inject": {
+      "text": "[Stage barrel] Each stage barrel (index.ts) MUST export exactly one Stage object via createStage() from '../stage.js'. Sub-stage helpers are internal functions — only the barrel's createStage() export is public."
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit|replace_string_in_file|create_file|multi_replace_string_in_file",
+      "path": "src/stages/**"
+    },
+    "inject": {
+      "text": "[Stage pipeline] New stages must use createStage() from src/stages/stage.ts. Barrel index.ts exports the Stage; internal helpers export plain functions. Stages: dedup, whitespace, semantic, elision, extract, aggressive/unwrap."
+    }
+  },
+  {
+    "on": "PostToolUse",
+    "when": {
+      "tool": "Read|read_file",
+      "path": "src/stages/**"
+    },
+    "inject": {
+      "hint": "src/stages/stage.ts"
+    }
+  },
+  {
+    "on": "PreToolUse",
+    "when": {
+      "tool": "Write|Edit|MultiEdit|replace_string_in_file|create_file|multi_replace_string_in_file",
+      "path": "src/mcp/tools/*.ts"
+    },
+    "inject": {
+      "text": "[MCP registry] Each tool file MUST export exactly one registerXxxTool(server) function (register + PascalCaseName + Tool). New tools must be called from registerCompactMdTools() in index.ts unless intentionally excluded."
+    }
+  },
+  {
+    "on": "PostToolUse",
+    "when": {
+      "tool": "Read|read_file",
+      "path": "src/mcp/tools/*.ts"
+    },
+    "inject": {
+      "hint": "src/mcp/tools/index.ts"
+    }
   }
 ]
