@@ -74,12 +74,14 @@ export type DecisionAction =
   | { action: 'rewrite'; tool: string; args: Record<string, unknown> }
   | { action: 'inject_before'; calls: InterceptedCall[] }
   | { action: 'return_cached'; result: unknown }
-  | { action: 'warn'; message: string };
+  | { action: 'warn'; message: string }
+  | { action: 'deny'; reason: string };
 
 export type StageResult =
   | { outcome: 'allow' }
   | { outcome: 'rewrite'; tool: string; args: Record<string, unknown> }
-  | { outcome: 'escalate'; hint?: string; alternatives?: ScoredAlternative[] };
+  | { outcome: 'escalate'; hint?: string; alternatives?: ScoredAlternative[] }
+  | { outcome: 'deny'; reason: string };
 
 export interface ScoredAlternative {
   tool: string;

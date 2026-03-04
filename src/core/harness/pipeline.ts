@@ -55,6 +55,9 @@ function toDecisionAction(result: StageResult): DecisionAction {
   if (result.outcome === 'rewrite') {
     return { action: 'rewrite', tool: result.tool, args: result.args };
   }
+  if (result.outcome === 'deny') {
+    return { action: 'deny', reason: result.reason };
+  }
   return { action: 'allow' };
 }
 

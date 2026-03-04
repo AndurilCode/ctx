@@ -17,4 +17,10 @@ describe('harness types', () => {
     expect(allow.action).toBe('allow');
     expect(rewrite.action).toBe('rewrite');
   });
+
+  test('DecisionAction supports deny with reason', () => {
+    const action: DecisionAction = { action: 'deny', reason: 'Already read this file' };
+    expect(action.action).toBe('deny');
+    expect(action.reason).toBe('Already read this file');
+  });
 });
