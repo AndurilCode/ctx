@@ -89,3 +89,20 @@ export type {
   SinglePatchOp,
   PatchLineEdit,
 } from './types/patch.js';
+export type {
+  TaskType,
+  StrategyProfile,
+  CostWeights,
+  BudgetZones,
+  BudgetState,
+  CachedRead,
+  SessionCache,
+  ToolCallRecord,
+  SessionSignals,
+  InterceptedCall,
+  DecisionAction,
+  StageResult,
+  ScoredAlternative,
+  HarnessState,
+  SerializedHarnessState,
+} from './types/harness.js';
