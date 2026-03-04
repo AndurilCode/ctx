@@ -5,6 +5,7 @@ import { registerContextTool } from './context.js';
 import { registerDiffTool } from './diff.js';
 import { registerExtractTool } from './extract.js';
 import { registerFocusTool } from './focus.js';
+import { registerHarnessTool } from './harness.js';
 import { registerImportsTool } from './imports.js';
 import { registerInsertTool } from './insert.js';
 import { registerSymbolsTool } from './symbols.js';
@@ -43,4 +44,5 @@ export function registerCompactMdTools(server: McpServer): void {
   registerFocusTool(server);
   registerChangeVerifyTool(server);
   registerRoundtripVerifyTool(server);
+  registerHarnessTool(server);
 }
