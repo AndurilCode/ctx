@@ -25,7 +25,7 @@ const PKG_PATH = resolve(HOOKS_DIR, 'package.json');
 const SETTINGS_PATH = resolve(ROOT, '.claude/settings.json');
 const RULES_PATH = resolve(ROOT, '.claude/context-rules.json');
 
-const EVENTS = ['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'Stop', 'TaskCompleted', 'SubagentStop'];
+const EVENTS = ['PreToolUse', 'PostToolUse', 'UserPromptSubmit'];
 const HOOK_ENTRY = {
   type: 'command',
   command: 'node .claude/hooks/context-inject.mjs',
@@ -138,21 +138,9 @@ const LEARNINGS_RULES = [
     inject: { learnings: true },
   },
   {
-    on: 'Stop',
+    on: 'UserPromptSubmit',
     inject: {
-      text: 'If you discovered something useful about the files you worked with that would help future agents, record it: node .claude/hooks/learn.mjs add --files \'<glob>\' --learning \'<text>\'. Review any overlapping learnings in the output and curate (update/remove) if needed. Only record if genuinely useful — skip for trivial or obvious things.',
-    },
-  },
-  {
-    on: 'TaskCompleted',
-    inject: {
-      text: 'Before completing: if you learned something non-obvious about the files you touched, record it with node .claude/hooks/learn.mjs add. Review and curate overlapping learnings. Skip if nothing meaningful to record.',
-    },
-  },
-  {
-    on: 'SubagentStop',
-    inject: {
-      text: 'If this subagent discovered file-specific insights worth preserving, record them: node .claude/hooks/learn.mjs add --files \'<glob>\' --learning \'<text>\'. Curate overlapping learnings.',
+      text: 'Learnings system: if you discover something non-obvious about a file (architecture constraints, pitfalls, patterns), record it with: node .claude/hooks/learn.mjs add --files \'<glob>\' --learning \'<text>\'. Only record genuinely useful insights. Use list/update/remove to curate existing learnings.',
     },
   },
 ];

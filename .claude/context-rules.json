@@ -136,5 +136,21 @@
     "inject": {
       "text": "Only markdown compact/expand is lossless round-trip. Diff compression, log pruning, and code outline are intentionally ONE-WAY and LOSSY. Do not attempt to add expand/round-trip for these formats."
     }
+  },
+  {
+    "on": "PostToolUse",
+    "when": {
+      "tool": "Read|read_file",
+      "path": "**"
+    },
+    "inject": {
+      "learnings": true
+    }
+  },
+  {
+    "on": "UserPromptSubmit",
+    "inject": {
+      "text": "Learnings system: if you discover something non-obvious about a file (architecture constraints, pitfalls, patterns), record it with: node .claude/hooks/learn.mjs add --files '<glob>' --learning '<text>'. Only record genuinely useful insights. Use list/update/remove to curate existing learnings."
+    }
   }
 ]
