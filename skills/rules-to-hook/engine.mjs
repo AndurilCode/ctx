@@ -4,7 +4,7 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { minimatch } from 'minimatch';
-import { extractInput, pickString, buildOutput } from './platform.mjs';
+import { extractInput, pickString, buildOutput, PERMISSION_EVENTS, DECISION_BLOCK_EVENTS } from './platform.mjs';
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
@@ -18,7 +18,10 @@ try {
 
 // VS Code doesn't include event name in payload; accept it as CLI argument
 const cliEvent = process.argv[2] || '';
-const { platform, event, toolName, toolInput, prompt } = extractInput(input, cliEvent);
+const { platform, event, toolName, toolInput, prompt, source, agentType, error, toolResponse, content, stopHookActive } = extractInput(input, cliEvent);
+
+// Stop safety guard: if stop_hook_active is set, exit silently to prevent infinite loops
+if (event === 'Stop' && stopHookActive) process.exit(0);
 
 const configCandidates = [
   `${process.cwd()}/.claude/context-rules.json`,
@@ -65,6 +68,27 @@ function matchesWhen(when) {
   if (when.prompt) {
     const re = safeRegex(when.prompt);
     if (!prompt || !re || !re.test(prompt)) return false;
+  }
+  if (when.source) {
+    const re = safeRegex(`^(${when.source})$`);
+    if (!source || !re || !re.test(source)) return false;
+  }
+  if (when.agent_type) {
+    const re = safeRegex(`^(${when.agent_type})$`);
+    if (!agentType || !re || !re.test(agentType)) return false;
+  }
+  if (when.error) {
+    const re = safeRegex(when.error);
+    if (!error || !re || !re.test(error)) return false;
+  }
+  if (when.content) {
+    const re = safeRegex(when.content);
+    if (!content || !re || !re.test(content)) return false;
+  }
+  if (when.response) {
+    const re = safeRegex(when.response);
+    const responseStr = toolResponse != null ? JSON.stringify(toolResponse) : '';
+    if (!responseStr || !re || !re.test(responseStr)) return false;
   }
   return true;
 }
@@ -114,9 +138,10 @@ const matched = rules
 
 if (matched.length === 0) process.exit(0);
 
-const isPreToolUse = event === 'PreToolUse';
-const blocks = isPreToolUse ? matched.filter((m) => m.type === 'block') : [];
-const allows = isPreToolUse ? matched.filter((m) => m.type === 'allow') : [];
+const canBlock = PERMISSION_EVENTS.has(event) || DECISION_BLOCK_EVENTS.has(event);
+const canAllow = PERMISSION_EVENTS.has(event);
+const blocks = canBlock ? matched.filter((m) => m.type === 'block') : [];
+const allows = canAllow ? matched.filter((m) => m.type === 'allow') : [];
 const contexts = matched.filter((m) => m.type === 'context');
 
 if (blocks.length === 0 && allows.length === 0 && contexts.length === 0) {

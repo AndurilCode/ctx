@@ -88,6 +88,58 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/context-inject.mjs",
+            "cwd": ".",
+            "statusMessage": "Injecting context rules…"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/context-inject.mjs",
+            "cwd": ".",
+            "statusMessage": "Injecting context rules…"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/context-inject.mjs",
+            "cwd": ".",
+            "statusMessage": "Injecting context rules…"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/context-inject.mjs",
+            "cwd": ".",
+            "statusMessage": "Injecting context rules…"
+          }
+        ]
+      }
     ]
   }
 }

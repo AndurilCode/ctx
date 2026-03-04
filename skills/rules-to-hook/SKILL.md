@@ -95,10 +95,9 @@ Block and allow rules control tool execution (PreToolUse only):
 the tool call is denied even if other rules `allow` or inject context.
 
 ### `on` values
-`PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `SessionStart`
+`PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `SessionStart` / `SubagentStart` / `PostToolUseFailure` / `Stop`
 
-Note: The installer registers hooks for the first three events only. To use
-`SessionStart` rules, manually add the hook registration to `.claude/settings.json`.
+The installer registers hooks for all 7 events automatically.
 
 ### `when` keys (all optional, implicit AND)
 | Key | Type | Notes |
@@ -107,6 +106,11 @@ Note: The installer registers hooks for the first three events only. To use
 | `path` | glob | Matched against file_path / path in tool input |
 | `command` | regex | Bash tool only — matched against command string |
 | `prompt` | regex | `UserPromptSubmit` only |
+| `source` | string | Pipe-separated; `SessionStart` source field |
+| `agent_type` | string | Pipe-separated; `SubagentStart` agent type |
+| `error` | regex | `PostToolUseFailure` error message |
+| `content` | regex | Write `content` or Edit `new_string` field |
+| `response` | regex | Matched against `JSON.stringify(tool_response)` |
 
 ### Platform Tool Names
 
@@ -130,8 +134,24 @@ For read rules: `Read|read_file`
 | `text` | Injected verbatim as `additionalContext` | All | No effect |
 | `hint` | Prefixed with `"Related: "` — agent decides whether to read | All | No effect |
 | `shell` | Command stdout captured and injected; must be fast (<100 ms); no `;` or `&&` | All | No effect |
-| `block` | Denies the tool call; value is the reason shown to Claude | PreToolUse only | Works |
+| `block` | Denies the tool call or blocks the event; value is the reason | PreToolUse, PostToolUse, UserPromptSubmit, Stop | Works (PreToolUse only) |
 | `allow` | Auto-approves the tool call; value is the reason shown to user | PreToolUse only | Works |
+
+### Block behavior per event
+
+| Event | Block output | Notes |
+|---|---|---|
+| `PreToolUse` | `hookSpecificOutput.permissionDecision: 'deny'` | Backward-compatible; denies the tool call |
+| `PostToolUse` | `{ decision: 'block', reason, hookSpecificOutput }` | Blocks with optional context |
+| `UserPromptSubmit` | `{ decision: 'block', reason, hookSpecificOutput }` | Blocks with optional context |
+| `Stop` | `{ decision: 'block', reason }` | Prevents agent from stopping (no HSO) |
+
+### Stop safety guard
+
+When a Stop hook blocks (meaning "don't stop, continue"), the agent retries stopping
+with `stop_hook_active: true` in the payload. The engine detects this flag and exits
+silently (`process.exit(0)`) before matching rules, allowing the agent to stop and
+preventing infinite loops.
 
 ## Learnings System
 
@@ -224,7 +244,7 @@ Check whether the hook engine is installed:
 1. `.claude/hooks/context-inject.mjs` exists
 2. `.claude/hooks/platform.mjs` exists
 3. `.claude/hooks/learn.mjs` exists
-4. `.claude/settings.json` has `context-inject.mjs` registered in all three events
+4. `.claude/settings.json` has `context-inject.mjs` registered in all 7 events (PreToolUse, PostToolUse, UserPromptSubmit, SessionStart, SubagentStart, PostToolUseFailure, Stop)
 5. `.claude/hooks/node_modules/minimatch` exists (dependency installed)
 6. `.claude/learnings.json` exists
 
@@ -241,7 +261,7 @@ The installer is idempotent. It:
 - Copies the platform module from `skills/rules-to-hook/platform.mjs`
 - Copies the learn CLI from `skills/rules-to-hook/learn.mjs`
 - Ensures `package.json` has `minimatch` and installs dependencies
-- Merges hook registrations into `.claude/settings.json` (all 3 events, `.*` matcher)
+- Merges hook registrations into `.claude/settings.json` (all 7 events, `.*` matcher)
 - Seeds an empty `.claude/context-rules.json` if absent
 - Seeds an empty `.claude/learnings.json` if absent
 - Seeds learnings context rules (injection on Read + prompt reminder) into `context-rules.json`
@@ -481,12 +501,13 @@ After auto-discovery (or when invoked with `add`), ask: **"Anything else to add?
 
 If yes, collect one answer at a time:
 
-1. **Event** — PreToolUse / PostToolUse / UserPromptSubmit
+1. **Event** — PreToolUse / PostToolUse / UserPromptSubmit / SessionStart / SubagentStart / PostToolUseFailure / Stop
 2. **Trigger keys** — show only valid keys for the chosen event:
    - PreToolUse / PostToolUse: `tool`, `path`, `command`
    - UserPromptSubmit: `prompt`
 3. **Inject type** — text / hint / shell / block / allow
-   - For `block` or `allow`: only available when event is PreToolUse
+   - For `block`: available on PreToolUse, PostToolUse, UserPromptSubmit, Stop
+   - For `allow`: only available when event is PreToolUse
 4. **Inject content**:
    - For `hint`: list existing `.md` files nearby and suggest one
    - For `shell`: remind that the command must be fast and use no `;` or `&&`
@@ -593,7 +614,9 @@ Apply before writing any rule:
 - `hint` values should exist on disk — warn if the file is not found, but do not block.
 - `shell` values must not contain `;` or `&&` — reject with an explanation.
 - `inject` must have exactly one key — reject if zero or more than one key is present.
-- `block` and `allow` keys are only valid on `PreToolUse` rules — reject on other events with: `"block/allow rules only work on PreToolUse events."`
+- `block` is valid on `PreToolUse`, `PostToolUse`, `UserPromptSubmit`, and `Stop` — reject on other events.
+- `allow` is only valid on `PreToolUse` — reject on other events with: `"allow rules only work on PreToolUse events."`
+- `source` key is only meaningful on `SessionStart`; `agent_type` on `SubagentStart`; `error` on `PostToolUseFailure`.
 
 ## Notes
 

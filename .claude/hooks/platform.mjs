@@ -8,6 +8,9 @@ const EVENT_ALIASES = {
   sessionStart: 'SessionStart',
   sessionEnd: 'SessionEnd',
   errorOccurred: 'ErrorOccurred',
+  subagentStart: 'SubagentStart',
+  postToolUseFailure: 'PostToolUseFailure',
+  stop: 'Stop',
 };
 
 export function normalizeEvent(name) {
@@ -56,20 +59,36 @@ export function extractInput(input, cliEvent = '') {
     parseToolArgs(input?.toolArgs),
   );
   const prompt = pickString(input?.prompt, input?.userPrompt, input?.message);
-  return { platform, event, toolName, toolInput, prompt };
+  const source = pickString(input?.source);
+  const agentType = pickString(input?.agent_type, input?.agentType);
+  const error = pickString(input?.error, input?.errorMessage);
+  const toolResponse = input?.tool_response ?? input?.toolResponse ?? null;
+  const content = pickString(toolInput?.content, toolInput?.new_string);
+  const stopHookActive = !!(input?.stop_hook_active);
+  return { platform, event, toolName, toolInput, prompt, source, agentType, error, toolResponse, content, stopHookActive };
 }
+
+// Event classification sets for output formatting
+export const PERMISSION_EVENTS = new Set(['PreToolUse']);
+
+export const HSO_CONTEXT_EVENTS = new Set([
+  'PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'SessionStart',
+  'SubagentStart', 'PostToolUseFailure',
+]);
+
+export const DECISION_BLOCK_EVENTS = new Set([
+  'PostToolUse', 'UserPromptSubmit', 'Stop',
+]);
 
 /**
  * Build the output object for the given platform.
- * Claude Code: hookSpecificOutput wrapper (or plain text for non-HSO events).
+ * Claude Code: hookSpecificOutput for HSO events, decision/reason for block events.
  * VS Code: flat permissionDecision (preToolUse only; other events return null).
  */
 export function buildOutput({ platform, event, blocks, allows, additionalContext }) {
-  const isPreToolUse = event === 'PreToolUse';
-
   // VS Code: flat permissionDecision on preToolUse only, no context injection
   if (platform === 'vscode') {
-    if (isPreToolUse && (blocks.length > 0 || allows.length > 0)) {
+    if (event === 'PreToolUse' && (blocks.length > 0 || allows.length > 0)) {
       if (blocks.length > 0) {
         return {
           permissionDecision: 'deny',
@@ -84,25 +103,44 @@ export function buildOutput({ platform, event, blocks, allows, additionalContext
     return null;
   }
 
-  // Claude Code: events that support hookSpecificOutput.additionalContext
-  const HSO_EVENTS = new Set(['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'SessionStart']);
-  const supportsHSO = HSO_EVENTS.has(event);
+  // Claude Code output
+  const supportsHSO = HSO_CONTEXT_EVENTS.has(event);
+  const supportsDecisionBlock = DECISION_BLOCK_EVENTS.has(event);
+  const supportsPermission = PERMISSION_EVENTS.has(event);
 
-  if (!supportsHSO) {
-    if (additionalContext) return additionalContext;
-    return null;
+  // Build hookSpecificOutput if event supports it
+  let hso = null;
+  if (supportsHSO) {
+    hso = { hookEventName: event };
+    if (additionalContext) hso.additionalContext = additionalContext;
+    if (supportsPermission) {
+      if (blocks.length > 0) {
+        hso.permissionDecision = 'deny';
+        hso.permissionDecisionReason = blocks.map((m) => m.value).join('\n');
+      } else if (allows.length > 0) {
+        hso.permissionDecision = 'allow';
+        hso.permissionDecisionReason = allows[0].value;
+      }
+    }
   }
 
-  const hso = { hookEventName: event };
-  if (additionalContext) hso.additionalContext = additionalContext;
-
-  if (blocks.length > 0) {
-    hso.permissionDecision = 'deny';
-    hso.permissionDecisionReason = blocks.map((m) => m.value).join('\n');
-  } else if (allows.length > 0) {
-    hso.permissionDecision = 'allow';
-    hso.permissionDecisionReason = allows[0].value;
+  // Build decision block for non-permission block events
+  let result = null;
+  if (supportsDecisionBlock && !supportsPermission && blocks.length > 0) {
+    result = { decision: 'block', reason: blocks.map((m) => m.value).join('\n') };
   }
 
-  return { hookSpecificOutput: hso };
+  // Merge outputs
+  if (result && hso) {
+    result.hookSpecificOutput = hso;
+    return result;
+  }
+  if (result) return result;
+  if (hso && (hso.additionalContext || hso.permissionDecision)) {
+    return { hookSpecificOutput: hso };
+  }
+
+  // Fallback: plain text for non-HSO events
+  if (!supportsHSO && additionalContext) return additionalContext;
+  return null;
 }

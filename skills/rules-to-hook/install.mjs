@@ -7,7 +7,7 @@
 //   2. Copies engine.mjs → .claude/hooks/context-inject.mjs
 //   3. Ensures package.json has the minimatch dependency
 //   4. Installs dependencies (bun or npm)
-//   5. Registers the hook in .claude/settings.json (all 3 events)
+//   5. Registers the hook in .claude/settings.json (all 7 events)
 //   6. Seeds an empty .claude/context-rules.json if absent
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync, copyFileSync } from 'node:fs';
@@ -27,7 +27,7 @@ const PKG_PATH = resolve(HOOKS_DIR, 'package.json');
 const SETTINGS_PATH = resolve(ROOT, '.claude/settings.json');
 const RULES_PATH = resolve(ROOT, '.claude/context-rules.json');
 
-const EVENTS = ['PreToolUse', 'PostToolUse', 'UserPromptSubmit'];
+const EVENTS = ['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'SessionStart', 'SubagentStart', 'PostToolUseFailure', 'Stop'];
 const HOOK_ENTRY = {
   type: 'command',
   command: 'node .claude/hooks/context-inject.mjs',

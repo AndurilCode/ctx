@@ -143,7 +143,7 @@ describe('block/allow rules', () => {
     );
   });
 
-  test('block/allow on non-PreToolUse events are ignored by engine', () => {
+  test('block on PostToolUse produces decision:block (not permissionDecision)', () => {
     const raw = runHook({
       hook_event_name: 'PostToolUse',
       tool_name: 'Read',
@@ -152,12 +152,15 @@ describe('block/allow rules', () => {
       {
         on: 'PostToolUse',
         when: { tool: 'Read' },
-        inject: { block: 'Should be ignored.' },
+        inject: { block: 'Post-read block.' },
       },
     ]);
 
-    // Engine treats block/allow as context on non-PreToolUse — no permissionDecision
-    expect(raw).toBe('');
+    const output = JSON.parse(raw);
+    expect(output.decision).toBe('block');
+    expect(output.reason).toBe('Post-read block.');
+    // No permissionDecision — that's PreToolUse only
+    expect(output.hookSpecificOutput?.permissionDecision).toBeUndefined();
   });
 
   test('VS Code block returns flat permissionDecision (no hookSpecificOutput wrapper)', () => {
