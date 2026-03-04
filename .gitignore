@@ -9,3 +9,4 @@ coverage/
 .cursor/
 docs/
 .serena/
+.claude/harness-state.json
