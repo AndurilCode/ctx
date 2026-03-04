@@ -153,7 +153,18 @@ if (blocks.length === 0 && allows.length === 0 && contexts.length === 0) {
 
 const additionalContext = contexts.map((m) => m.value).join('\n') || undefined;
 
+// Events that support hookSpecificOutput.additionalContext
+const HSO_EVENTS = new Set(['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'SessionStart']);
+
 function buildOutput(eventName) {
+  const supportsHSO = HSO_EVENTS.has(eventName);
+
+  // Events without hookSpecificOutput support: output context as plain text
+  if (!supportsHSO) {
+    if (additionalContext) return additionalContext;
+    return null;
+  }
+
   const hso = { hookEventName: eventName };
 
   if (additionalContext) hso.additionalContext = additionalContext;
@@ -178,4 +189,7 @@ function buildOutput(eventName) {
   return { hookSpecificOutput: hso };
 }
 
-process.stdout.write(JSON.stringify(buildOutput(event)));
+const output = buildOutput(event);
+if (output === null) process.exit(0);
+if (typeof output === 'string') process.stdout.write(output);
+else process.stdout.write(JSON.stringify(output));
