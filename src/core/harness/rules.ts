@@ -12,7 +12,7 @@ export function evaluateRules(
   state: HarnessState,
   fileTokens: Map<string, number>,
 ): StageResult {
-  const file = call.args['file'] as string | undefined;
+  const file = (call.args['file'] ?? call.args['file_path']) as string | undefined;
   const tokens = file ? (fileTokens.get(file) ?? 0) : 0;
 
   // ---- Rule 1: Tiny files — always allow ----

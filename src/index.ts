@@ -106,3 +106,16 @@ export type {
   HarnessState,
   SerializedHarnessState,
 } from './types/harness.js';
+export {
+  createHarnessState,
+  recordToolCall,
+  updateSignals,
+} from './core/harness/state.js';
+export { serialize, deserialize } from './core/harness/serialize.js';
+export { classifyIntent, computeWeights, detectDrift, buildProfile } from './core/harness/classifier.js';
+export { evaluateRules } from './core/harness/rules.js';
+export { generateAlternatives, scoreCost, evaluateCost } from './core/harness/cost.js';
+export { buildJudgePrompt, parseJudgeResponse, evaluateWithJudge } from './core/harness/judge.js';
+export { decide } from './core/harness/pipeline.js';
+export { computeMetrics } from './core/harness/metrics.js';
+export type { SessionMetrics } from './core/harness/metrics.js';

@@ -18,7 +18,7 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath }) {
 
   try {
     const { createHarnessState, decide, serialize, deserialize } = await import(
-      new URL('../../dist/core/harness/index.js', import.meta.url).pathname
+      new URL('../../dist/index.js', import.meta.url).pathname
     );
 
     const statePath = `${process.cwd()}/.claude/harness-state.json`;

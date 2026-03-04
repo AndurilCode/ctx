@@ -83,7 +83,7 @@ export async function decide(
   }
 
   // ── Stage 2: cost analysis ────────────────────────────────────────
-  const file = call.args['file'] as string | undefined;
+  const file = (call.args['file'] ?? call.args['file_path']) as string | undefined;
   const costResult = evaluateCost(call, state.profile.weights, {
     fileTokens: file ? (ctx.fileTokens.get(file) ?? 0) : 0,
     mentionedSymbols: ctx.mentionedSymbols,
