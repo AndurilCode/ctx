@@ -18,11 +18,14 @@ const ROOT = process.cwd();
 const HOOKS_DIR = resolve(ROOT, '.claude/hooks');
 const ENGINE_DST = resolve(HOOKS_DIR, 'context-inject.mjs');
 const ENGINE_SRC = new URL('./engine.mjs', import.meta.url).pathname;
+const LEARN_DST = resolve(HOOKS_DIR, 'learn.mjs');
+const LEARN_SRC = new URL('./learn.mjs', import.meta.url).pathname;
+const LEARNINGS_PATH = resolve(ROOT, '.claude/learnings.json');
 const PKG_PATH = resolve(HOOKS_DIR, 'package.json');
 const SETTINGS_PATH = resolve(ROOT, '.claude/settings.json');
 const RULES_PATH = resolve(ROOT, '.claude/context-rules.json');
 
-const EVENTS = ['PreToolUse', 'PostToolUse', 'UserPromptSubmit'];
+const EVENTS = ['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'Stop', 'TaskCompleted', 'SubagentStop'];
 const HOOK_ENTRY = {
   type: 'command',
   command: 'node .claude/hooks/context-inject.mjs',
@@ -64,6 +67,10 @@ mkdirSync(HOOKS_DIR, { recursive: true });
 // 2. Copy engine (always — ensures deployed copy stays in sync)
 copyFileSync(ENGINE_SRC, ENGINE_DST);
 log('Synced engine → .claude/hooks/context-inject.mjs');
+
+// 2b. Copy learn CLI
+copyFileSync(LEARN_SRC, LEARN_DST);
+log('Synced learn CLI → .claude/hooks/learn.mjs');
 
 // 3. package.json
 const pkg = readJSON(PKG_PATH);
@@ -112,6 +119,59 @@ if (!existsSync(RULES_PATH)) {
   log('Created empty .claude/context-rules.json');
 } else {
   skip('.claude/context-rules.json');
+}
+
+// 7. Seed learnings store
+if (!existsSync(LEARNINGS_PATH)) {
+  writeJSON(LEARNINGS_PATH, []);
+  log('Created empty .claude/learnings.json');
+} else {
+  skip('.claude/learnings.json');
+}
+
+// 8. Seed learnings context rules
+const rulesData = readJSON(RULES_PATH) || [];
+const LEARNINGS_RULES = [
+  {
+    on: 'PostToolUse',
+    when: { tool: 'Read|read_file', path: '**' },
+    inject: { learnings: true },
+  },
+  {
+    on: 'Stop',
+    inject: {
+      text: 'If you discovered something useful about the files you worked with that would help future agents, record it: node .claude/hooks/learn.mjs add --files \'<glob>\' --learning \'<text>\'. Review any overlapping learnings in the output and curate (update/remove) if needed. Only record if genuinely useful — skip for trivial or obvious things.',
+    },
+  },
+  {
+    on: 'TaskCompleted',
+    inject: {
+      text: 'Before completing: if you learned something non-obvious about the files you touched, record it with node .claude/hooks/learn.mjs add. Review and curate overlapping learnings. Skip if nothing meaningful to record.',
+    },
+  },
+  {
+    on: 'SubagentStop',
+    inject: {
+      text: 'If this subagent discovered file-specific insights worth preserving, record them: node .claude/hooks/learn.mjs add --files \'<glob>\' --learning \'<text>\'. Curate overlapping learnings.',
+    },
+  },
+];
+
+let rulesChanged = false;
+for (const rule of LEARNINGS_RULES) {
+  const exists = rulesData.some(
+    (r) => JSON.stringify(r.inject) === JSON.stringify(rule.inject) && r.on === rule.on,
+  );
+  if (!exists) {
+    rulesData.push(rule);
+    rulesChanged = true;
+  }
+}
+if (rulesChanged) {
+  writeJSON(RULES_PATH, rulesData);
+  log('Added learnings rules to .claude/context-rules.json');
+} else {
+  skip('learnings rules in .claude/context-rules.json');
 }
 
 console.log('\nDone. The context-inject hook engine is ready.\n');
