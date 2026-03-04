@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, it, test } from 'bun:test';
 import {
   createHarnessState, buildProfile, decide, computeMetrics,
   recordToolCall, updateSignals, serialize, deserialize,
@@ -41,5 +41,54 @@ describe('harness integration', () => {
     const restored = deserialize(serialize(state));
     expect(restored.turn).toBe(3);
     expect(restored.cache.filesRead.has('src/auth.ts')).toBe(true);
+  });
+});
+
+describe('deny flow integration', () => {
+  it('second read of same file is denied', async () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    const file = '/src/foo.ts';
+    const fileTokens = new Map([[file, 500]]);
+
+    // First read — should allow
+    const r1 = await decide(
+      { tool: 'read', args: { file } },
+      state,
+      { fileTokens, mentionedSymbols: [] },
+    );
+    expect(r1.action).toBe('allow');
+
+    // Record the call so state accumulates
+    recordToolCall(state, { tool: 'read', args: { file }, tokensConsumed: 500, durationMs: 10 });
+
+    // Second read — should deny
+    const r2 = await decide(
+      { tool: 'read', args: { file } },
+      state,
+      { fileTokens, mentionedSymbols: [] },
+    );
+    expect(r2.action).toBe('deny');
+    if (r2.action === 'deny') {
+      expect(r2.reason).toContain('Already read');
+    }
+  });
+
+  it('re-read after mutation with different strategy is allowed', async () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    const file = '/src/foo.ts';
+    const fileTokens = new Map([[file, 500]]);
+
+    // Record initial read
+    recordToolCall(state, { tool: 'read', args: { file }, tokensConsumed: 500, durationMs: 10 });
+    // Record mutation (marks file as hot)
+    recordToolCall(state, { tool: 'edit', args: { file }, tokensConsumed: 0, durationMs: 10 });
+
+    // Re-read with different strategy (budgeted) — should allow
+    const r = await decide(
+      { tool: 'read', args: { file, maxTokens: 200 } },
+      state,
+      { fileTokens, mentionedSymbols: [] },
+    );
+    expect(r.action).not.toBe('deny');
   });
 });
