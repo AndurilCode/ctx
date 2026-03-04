@@ -143,16 +143,28 @@ const blocks = canBlock ? matched.filter((m) => m.type === 'block') : [];
 const allows = canAllow ? matched.filter((m) => m.type === 'allow') : [];
 const contexts = matched.filter((m) => m.type === 'context');
 
-// Harness evaluation (best-effort, appended to context)
-const harnessAdvice = await evaluateHarness({ event, toolName, toolInput, rawPath });
+// Harness evaluation (best-effort, may return block or context)
+const harnessResult = await evaluateHarness({ event, toolName, toolInput, rawPath });
 
-if (matched.length === 0 && !harnessAdvice) process.exit(0);
-if (blocks.length === 0 && allows.length === 0 && contexts.length === 0 && !harnessAdvice) {
+if (matched.length === 0 && !harnessResult) process.exit(0);
+
+// Merge harness result into blocks/contexts
+if (harnessResult) {
+  if (harnessResult.type === 'block' && canBlock) {
+    blocks.push(harnessResult);
+  } else if (harnessResult.type === 'context') {
+    contexts.push(harnessResult);
+  } else if (harnessResult.type === 'block') {
+    // Fallback: if event doesn't support blocking, inject as context
+    contexts.push({ type: 'context', value: harnessResult.value });
+  }
+}
+
+if (blocks.length === 0 && allows.length === 0 && contexts.length === 0) {
   process.exit(0);
 }
 
 let additionalContext = contexts.map((m) => m.value).join('\n') || '';
-if (harnessAdvice) additionalContext = additionalContext ? `${additionalContext}\n${harnessAdvice}` : harnessAdvice;
 additionalContext = additionalContext || undefined;
 const output = buildOutput({ platform, event, blocks, allows, additionalContext });
 if (output === null) process.exit(0);

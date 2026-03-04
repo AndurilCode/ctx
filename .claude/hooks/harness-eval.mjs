@@ -31,13 +31,23 @@ function claudeCall(prompt) {
  * @returns {Promise<string|null>} Advisory text to append to additionalContext, or null.
  */
 export async function evaluateHarness({ event, toolName, toolInput, rawPath }) {
+  // Clear state on session start
+  if (event === 'SessionStart') {
+    try {
+      const { unlinkSync } = await import('node:fs');
+      const statePath = `${process.cwd()}/.claude/harness-state.json`;
+      unlinkSync(statePath);
+    } catch { /* file may not exist */ }
+    return null;
+  }
+
   if (event !== 'PreToolUse') return null;
 
   const HARNESS_TOOLS = new Set(['Read', 'Grep', 'Glob']);
   if (!HARNESS_TOOLS.has(toolName)) return null;
 
   try {
-    const { createHarnessState, decide, serialize, deserialize } = await import(
+    const { createHarnessState, decide, serialize, deserialize, recordToolCall, updateSignals } = await import(
       new URL('../../dist/index.js', import.meta.url).pathname
     );
 
@@ -66,15 +76,28 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath }) {
       // { llmCall: claudeCall },  // Enable when cost alternatives have closer profiles
     );
 
+    // Record this call so state accumulates across hook invocations
+    const estTokens = rawPath ? (fileTokens.get(rawPath) ?? 0) : 0;
+    recordToolCall(state, {
+      tool: toolName.toLowerCase(),
+      args: toolInput ?? {},
+      tokensConsumed: estTokens,
+      durationMs: 0,
+    });
+    updateSignals(state);
+
     // Persist state
     const { writeFileSync } = await import('node:fs');
     writeFileSync(statePath, JSON.stringify(serialize(state), null, 2));
 
+    if (decision.action === 'deny') {
+      return { type: 'block', value: `[Harness] ${decision.reason}` };
+    }
     if (decision.action === 'rewrite') {
-      return `[Harness] Consider using ${decision.tool}(${JSON.stringify(decision.args)}) instead — more token-efficient for this task.`;
+      return { type: 'context', value: `[Harness] Consider using ${decision.tool}(${JSON.stringify(decision.args)}) instead — more token-efficient for this task.` };
     }
     if (decision.action === 'warn') {
-      return `[Harness] ${decision.message}`;
+      return { type: 'context', value: `[Harness] ${decision.message}` };
     }
   } catch {
     // Harness not built or other error — skip silently

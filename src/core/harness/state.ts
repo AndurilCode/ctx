@@ -70,7 +70,7 @@ export function recordToolCall(
 
   state.budget.consumed.working += record.tokensConsumed;
 
-  const file = record.args['file'] as string | undefined;
+  const file = (record.args['file'] ?? record.args['file_path']) as string | undefined;
 
   if (READ_TOOLS.has(record.tool) && file) {
     if (state.cache.filesRead.has(file)) {
