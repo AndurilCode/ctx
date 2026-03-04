@@ -63,7 +63,10 @@ Block and allow rules control tool execution (PreToolUse only):
 the tool call is denied even if other rules `allow` or inject context.
 
 ### `on` values
-`PreToolUse` / `PostToolUse` / `UserPromptSubmit`
+`PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `SessionStart`
+
+Note: The installer registers hooks for the first three events only. To use
+`SessionStart` rules, manually add the hook registration to `.claude/settings.json`.
 
 ### `when` keys (all optional, implicit AND)
 | Key | Type | Notes |
@@ -165,8 +168,9 @@ globs match the current file path, and injects them as `additionalContext`:
 
 ### Prompt reminders
 
-Three context rules prompt agents to record learnings at meaningful checkpoints:
-`Stop`, `TaskCompleted`, and `SubagentStop`. These are installed automatically.
+A `UserPromptSubmit` context rule reminds agents to record learnings on every
+prompt. It has no `when` filter, so it fires unconditionally. This rule is
+installed automatically by the installer.
 
 ## Phase 0 — Bootstrap
 
@@ -177,10 +181,12 @@ Runs **before any other phase**, every time the skill is invoked.
 Check whether the hook engine is installed:
 
 1. `.claude/hooks/context-inject.mjs` exists
-2. `.claude/settings.json` has `context-inject.mjs` registered in all three events
-3. `.claude/hooks/node_modules/minimatch` exists (dependency installed)
+2. `.claude/hooks/learn.mjs` exists
+3. `.claude/settings.json` has `context-inject.mjs` registered in all three events
+4. `.claude/hooks/node_modules/minimatch` exists (dependency installed)
+5. `.claude/learnings.json` exists
 
-If **all three** pass → skip to Phase 1.
+If **all five** pass → skip to Phase 1.
 
 If **any** is missing → run the installer:
 
@@ -190,9 +196,12 @@ node skills/rules-to-hook/install.mjs
 
 The installer is idempotent. It:
 - Creates `.claude/hooks/` and copies the engine from `skills/rules-to-hook/engine.mjs`
+- Copies the learn CLI from `skills/rules-to-hook/learn.mjs`
 - Ensures `package.json` has `minimatch` and installs dependencies
 - Merges hook registrations into `.claude/settings.json` (all 3 events, `.*` matcher)
 - Seeds an empty `.claude/context-rules.json` if absent
+- Seeds an empty `.claude/learnings.json` if absent
+- Seeds learnings context rules (injection on Read + prompt reminder) into `context-rules.json`
 
 After the installer completes, confirm:
 **"Hook engine installed. Proceeding to auto-discovery."**
@@ -535,6 +544,8 @@ If all rules pass:
 Apply before writing any rule:
 
 - `when` must have at least one key — reject rules with an empty `when` object.
+  Exception: `UserPromptSubmit` rules may omit `when` entirely to fire on every prompt
+  (the engine treats missing `when` as `{}`, matching unconditionally).
 - `path` globs must be non-empty strings.
 - `hint` values should exist on disk — warn if the file is not found, but do not block.
 - `shell` values must not contain `;` or `&&` — reject with an explanation.
