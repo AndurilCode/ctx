@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 // CLI for managing .claude/learnings.json
 // Usage:
-//   node learn.mjs add --files 'glob1,glob2' --learning 'text'
-//   node learn.mjs list [--files 'path-to-match']
-//   node learn.mjs remove --index N
-//   node learn.mjs update --index N --learning 'new text'
+//   node learn.mjs add     --files <glob,...> --learning <text>
+//   node learn.mjs list    [--files <path>]
+//   node learn.mjs remove  --index N
+//   node learn.mjs update  --index N --learning <text>
+//   node learn.mjs repath  --index N --files <glob,...>
+//   node learn.mjs check   (find orphaned learnings)
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import { minimatch } from 'minimatch';
 
 const STORE = `${process.cwd()}/.claude/learnings.json`;
@@ -16,9 +19,7 @@ function readStore() {
   try {
     const data = JSON.parse(readFileSync(STORE, 'utf8'));
     return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
 
 function writeStore(entries) {
@@ -37,9 +38,8 @@ function parseArgs(argv) {
   return args;
 }
 
-function formatEntry(entry, index) {
-  const files = entry.files.join(', ');
-  return `  [${index}] ${files} — "${entry.learning}"`;
+function fmt(entry, index) {
+  return `  [${index}] ${entry.files.join(', ')} — "${entry.learning}"`;
 }
 
 function findOverlapping(entries, filePatterns) {
@@ -48,13 +48,20 @@ function findOverlapping(entries, filePatterns) {
     .filter(({ entry }) =>
       entry.files.some((existingGlob) =>
         filePatterns.some(
-          (newPattern) =>
-            minimatch(newPattern, existingGlob) ||
-            minimatch(existingGlob, newPattern) ||
-            existingGlob === newPattern,
+          (p) => minimatch(p, existingGlob) || minimatch(existingGlob, p) || existingGlob === p,
         ),
       ),
     );
+}
+
+function requireIndex(args, entries) {
+  if (args.index === undefined) return null;
+  const idx = parseInt(args.index, 10);
+  if (idx < 0 || idx >= entries.length) {
+    console.error(`Index ${idx} out of range (0-${entries.length - 1}).`);
+    process.exit(1);
+  }
+  return idx;
 }
 
 const [command] = process.argv.slice(2);
@@ -65,88 +72,76 @@ if (command === 'add') {
     console.error('Usage: learn.mjs add --files <glob,...> --learning <text>');
     process.exit(1);
   }
-
   const filePatterns = args.files.split(',').map((s) => s.trim());
   const entries = readStore();
-
-  // Show overlapping existing learnings for curation
   const overlapping = findOverlapping(entries, filePatterns);
   if (overlapping.length > 0) {
     console.log('Existing learnings for overlapping files:');
-    for (const { entry, index } of overlapping) {
-      console.log(formatEntry(entry, index));
-    }
+    for (const { entry, index } of overlapping) console.log(fmt(entry, index));
     console.log('');
   }
-
-  const newEntry = {
-    files: filePatterns,
-    learning: args.learning,
-    timestamp: new Date().toISOString(),
-  };
+  const newEntry = { files: filePatterns, learning: args.learning, timestamp: new Date().toISOString() };
   entries.push(newEntry);
   writeStore(entries);
   console.log(`Added learning [${entries.length - 1}]: ${filePatterns.join(', ')} — "${args.learning}"`);
 } else if (command === 'list') {
   const entries = readStore();
-  if (entries.length === 0) {
-    console.log('No learnings recorded.');
-    process.exit(0);
-  }
-
+  if (entries.length === 0) { console.log('No learnings recorded.'); process.exit(0); }
   let filtered = entries.map((entry, index) => ({ entry, index }));
   if (args.files) {
-    const matchPath = args.files;
     filtered = filtered.filter(({ entry }) =>
-      entry.files.some((pattern) => minimatch(matchPath, pattern)),
+      entry.files.some((pattern) => minimatch(args.files, pattern)),
     );
   }
-
-  if (filtered.length === 0) {
-    console.log('No learnings match the given path.');
-  } else {
-    for (const { entry, index } of filtered) {
-      console.log(formatEntry(entry, index));
-    }
-  }
+  if (filtered.length === 0) console.log('No learnings match the given path.');
+  else for (const { entry, index } of filtered) console.log(fmt(entry, index));
 } else if (command === 'remove') {
-  if (args.index === undefined) {
-    console.error('Usage: learn.mjs remove --index N');
-    process.exit(1);
-  }
-
   const entries = readStore();
-  const idx = parseInt(args.index, 10);
-  if (idx < 0 || idx >= entries.length) {
-    console.error(`Index ${idx} out of range (0-${entries.length - 1}).`);
-    process.exit(1);
-  }
-
+  const idx = requireIndex(args, entries);
+  if (idx === null) { console.error('Usage: learn.mjs remove --index N'); process.exit(1); }
   const removed = entries.splice(idx, 1)[0];
   writeStore(entries);
   console.log(`Removed learning [${idx}]: "${removed.learning}"`);
 } else if (command === 'update') {
-  if (args.index === undefined || !args.learning) {
-    console.error('Usage: learn.mjs update --index N --learning <text>');
-    process.exit(1);
-  }
-
+  if (!args.learning) { console.error('Usage: learn.mjs update --index N --learning <text>'); process.exit(1); }
   const entries = readStore();
-  const idx = parseInt(args.index, 10);
-  if (idx < 0 || idx >= entries.length) {
-    console.error(`Index ${idx} out of range (0-${entries.length - 1}).`);
-    process.exit(1);
-  }
-
+  const idx = requireIndex(args, entries);
+  if (idx === null) { console.error('Usage: learn.mjs update --index N --learning <text>'); process.exit(1); }
   entries[idx].learning = args.learning;
   entries[idx].timestamp = new Date().toISOString();
   writeStore(entries);
   console.log(`Updated learning [${idx}]: "${args.learning}"`);
+} else if (command === 'repath') {
+  if (!args.files) { console.error('Usage: learn.mjs repath --index N --files <glob,...>'); process.exit(1); }
+  const entries = readStore();
+  const idx = requireIndex(args, entries);
+  if (idx === null) { console.error('Usage: learn.mjs repath --index N --files <glob,...>'); process.exit(1); }
+  const oldFiles = entries[idx].files.join(', ');
+  entries[idx].files = args.files.split(',').map((s) => s.trim());
+  entries[idx].timestamp = new Date().toISOString();
+  writeStore(entries);
+  console.log(`Repathed learning [${idx}]: ${oldFiles} → ${entries[idx].files.join(', ')}`);
+} else if (command === 'check') {
+  const entries = readStore();
+  if (entries.length === 0) { console.log('No learnings to check.'); process.exit(0); }
+  let allFiles;
+  try {
+    allFiles = execSync('git ls-files', { encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+  } catch { console.error('Not a git repo or git unavailable.'); process.exit(1); }
+  let orphaned = 0;
+  for (let i = 0; i < entries.length; i++) {
+    const hasMatch = entries[i].files.some((p) => allFiles.some((f) => minimatch(f, p)));
+    if (!hasMatch) { console.log(`  [${i}] ORPHANED — ${entries[i].files.join(', ')} — "${entries[i].learning}"`); orphaned++; }
+  }
+  if (orphaned === 0) console.log('All learnings have matching files.');
+  else console.log(`\n${orphaned} orphaned learning(s). Use repath or remove to fix.`);
 } else {
-  console.error('Usage: learn.mjs <add|list|remove|update> [options]');
+  console.error('Commands: add | list | remove | update | repath | check');
   console.error('  add    --files <glob,...> --learning <text>');
   console.error('  list   [--files <path>]');
   console.error('  remove --index <N>');
   console.error('  update --index <N> --learning <text>');
+  console.error('  repath --index <N> --files <glob,...>');
+  console.error('  check  (find orphaned learnings with no matching files)');
   process.exit(1);
 }

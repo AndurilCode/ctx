@@ -172,10 +172,19 @@ node .claude/hooks/learn.mjs remove --index 0
 
 # Update by index
 node .claude/hooks/learn.mjs update --index 0 --learning 'Updated insight'
+
+# Update file globs after rename/move
+node .claude/hooks/learn.mjs repath --index 0 --files 'src/new-path/**'
+
+# Find orphaned learnings (globs that match no files)
+node .claude/hooks/learn.mjs check
 ```
 
 When adding, the CLI shows overlapping existing learnings so you can curate
 (merge, update, or remove redundant entries).
+
+When renaming or deleting files, run `check` to find orphaned learnings,
+then `repath` or `remove` to fix them.
 
 ### Injection
 
