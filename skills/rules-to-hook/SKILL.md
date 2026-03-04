@@ -98,6 +98,76 @@ For read rules: `Read|read_file`
 | `block` | Denies the tool call; value is the reason shown to Claude | PreToolUse only |
 | `allow` | Auto-approves the tool call; value is the reason shown to user | PreToolUse only |
 
+## Learnings System
+
+Agents can record file-bound learnings that are injected as context when other agents
+interact with those files.
+
+### Storage
+
+Learnings are stored in `.claude/learnings.json`:
+
+```json
+[
+  {
+    "files": ["src/stages/**"],
+    "learning": "Stage transforms must use AST nodes, not string manipulation",
+    "timestamp": "2026-03-04T10:30:00Z"
+  }
+]
+```
+
+### Recording learnings (CLI)
+
+```bash
+# Add a learning
+node .claude/hooks/learn.mjs add --files 'src/stages/**' --learning 'Use AST nodes only'
+
+# Add for multiple file patterns
+node .claude/hooks/learn.mjs add --files 'src/core/**,src/stages/**' --learning 'Cross-cutting concern'
+
+# List all learnings
+node .claude/hooks/learn.mjs list
+
+# List learnings matching a file
+node .claude/hooks/learn.mjs list --files 'src/stages/elision.ts'
+
+# Remove by index
+node .claude/hooks/learn.mjs remove --index 0
+
+# Update by index
+node .claude/hooks/learn.mjs update --index 0 --learning 'Updated insight'
+```
+
+When adding, the CLI shows overlapping existing learnings so you can curate
+(merge, update, or remove redundant entries).
+
+### Injection
+
+The `learnings` inject type in a context rule triggers lookup:
+
+```json
+{
+  "on": "PostToolUse",
+  "when": { "tool": "Read|read_file", "path": "**" },
+  "inject": { "learnings": true }
+}
+```
+
+When matched, the engine reads `.claude/learnings.json`, finds entries whose `files`
+globs match the current file path, and injects them as `additionalContext`:
+
+```
+[Learnings for src/stages/elision.ts]
+- Stage transforms must use AST nodes, not string manipulation
+- Elision uses line-count thresholds
+```
+
+### Prompt reminders
+
+Three context rules prompt agents to record learnings at meaningful checkpoints:
+`Stop`, `TaskCompleted`, and `SubagentStop`. These are installed automatically.
+
 ## Phase 0 — Bootstrap
 
 Runs **before any other phase**, every time the skill is invoked.
