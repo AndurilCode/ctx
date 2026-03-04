@@ -4,6 +4,7 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { minimatch } from 'minimatch';
+import { extractInput, pickString, buildOutput } from './platform.mjs';
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
@@ -15,36 +16,9 @@ try {
   process.exit(0);
 }
 
-function detectPlatform(payload) {
-  if (payload?.hook_event_name || payload?.tool_name || payload?.tool_input) return 'claude';
-  if (payload?.hookEventName || payload?.toolName || payload?.toolInput) return 'vscode';
-  return 'claude';
-}
-
-function pickString(...values) {
-  for (const value of values) {
-    if (typeof value === 'string' && value.length > 0) return value;
-  }
-  return '';
-}
-
-function pickObject(...values) {
-  for (const value of values) {
-    if (value && typeof value === 'object' && !Array.isArray(value)) return value;
-  }
-  return {};
-}
-
-const platform = detectPlatform(input);
-const event = pickString(input?.hook_event_name, input?.hookEventName);
-const toolName = pickString(input?.tool_name, input?.toolName, input?.tool?.name);
-const toolInput = pickObject(
-  input?.tool_input,
-  input?.toolInput,
-  input?.tool?.input,
-  input?.toolArguments,
-);
-const prompt = pickString(input?.prompt, input?.userPrompt, input?.message);
+// VS Code doesn't include event name in payload; accept it as CLI argument
+const cliEvent = process.argv[2] || '';
+const { platform, event, toolName, toolInput, prompt } = extractInput(input, cliEvent);
 
 const configCandidates = [
   `${process.cwd()}/.claude/context-rules.json`,
@@ -140,57 +114,17 @@ const matched = rules
 
 if (matched.length === 0) process.exit(0);
 
-// block/allow only apply on PreToolUse
 const isPreToolUse = event === 'PreToolUse';
 const blocks = isPreToolUse ? matched.filter((m) => m.type === 'block') : [];
 const allows = isPreToolUse ? matched.filter((m) => m.type === 'allow') : [];
 const contexts = matched.filter((m) => m.type === 'context');
 
-// On non-PreToolUse, block/allow rules produce no output (filtered out above)
 if (blocks.length === 0 && allows.length === 0 && contexts.length === 0) {
   process.exit(0);
 }
 
 const additionalContext = contexts.map((m) => m.value).join('\n') || undefined;
-
-// Events that support hookSpecificOutput.additionalContext
-const HSO_EVENTS = new Set(['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'SessionStart']);
-
-function buildOutput(eventName) {
-  const supportsHSO = HSO_EVENTS.has(eventName);
-
-  // Events without hookSpecificOutput support: output context as plain text
-  // (visible in verbose mode only — hooks API limitation)
-  if (!supportsHSO) {
-    if (additionalContext) return additionalContext;
-    return null;
-  }
-
-  const hso = { hookEventName: eventName };
-
-  if (additionalContext) hso.additionalContext = additionalContext;
-
-  // Precedence: block > allow > context-only
-  if (blocks.length > 0) {
-    hso.permissionDecision = 'deny';
-    hso.permissionDecisionReason = blocks.map((m) => m.value).join('\n');
-  } else if (allows.length > 0) {
-    hso.permissionDecision = 'allow';
-    hso.permissionDecisionReason = allows[0].value;
-  }
-
-  if (platform === 'vscode') {
-    return {
-      continue: true,
-      systemMessage: additionalContext || '',
-      hookSpecificOutput: hso,
-    };
-  }
-
-  return { hookSpecificOutput: hso };
-}
-
-const output = buildOutput(event);
+const output = buildOutput({ platform, event, blocks, allows, additionalContext });
 if (output === null) process.exit(0);
 if (typeof output === 'string') process.stdout.write(output);
 else process.stdout.write(JSON.stringify(output));

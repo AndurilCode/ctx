@@ -14,12 +14,13 @@ const BASE_RULES = [
   },
 ];
 
-function runHook(payload: unknown, rules = BASE_RULES): string {
+function runHook(payload: unknown, rules = BASE_RULES, eventArg?: string): string {
   const workspace = mkdtempSync(join(tmpdir(), 'rules-to-hook-'));
   try {
     mkdirSync(join(workspace, '.claude'), { recursive: true });
     writeFileSync(join(workspace, '.claude/context-rules.json'), JSON.stringify(rules, null, 2));
-    return execFileSync('node', [ENGINE], {
+    const args = eventArg ? [ENGINE, eventArg] : [ENGINE];
+    return execFileSync('node', args, {
       cwd: workspace,
       input: JSON.stringify(payload),
       encoding: 'utf8',
@@ -44,18 +45,15 @@ describe('rules-to-hook engine Phase 1 adapters', () => {
     expect(output.systemMessage).toBeUndefined();
   });
 
-  test('returns VS Code-compatible output for VS Code payloads', () => {
+  test('VS Code context-only rules produce no output (context injection unsupported)', () => {
     const raw = runHook({
       hookEventName: 'PreToolUse',
       toolName: 'Edit',
       toolInput: { filePath: 'src/core/context.ts' },
     });
 
-    const output = JSON.parse(raw);
-    expect(output.continue).toBe(true);
-    expect(output.systemMessage).toBe('Rule: write only in src');
-    expect(output.hookSpecificOutput.hookEventName).toBe('PreToolUse');
-    expect(output.hookSpecificOutput.additionalContext).toBe('Rule: write only in src');
+    // VS Code doesn't support context injection — only block/allow on PreToolUse
+    expect(raw).toBe('');
   });
 
   test('exits quietly when no rule matches', () => {
@@ -66,6 +64,41 @@ describe('rules-to-hook engine Phase 1 adapters', () => {
     });
 
     expect(raw).toBe('');
+  });
+
+  test('VS Code toolArgs (JSON string) is parsed into tool input', () => {
+    // VS Code sends toolArgs as a JSON string and event via CLI arg
+    const raw = runHook({
+      toolName: 'Edit',
+      toolArgs: JSON.stringify({ file_path: 'src/core/context.ts' }),
+    }, [
+      {
+        on: 'PreToolUse',
+        when: { tool: 'Edit', path: 'src/**' },
+        inject: { block: 'Blocked via toolArgs.' },
+      },
+    ], 'preToolUse');
+
+    const output = JSON.parse(raw);
+    expect(output.permissionDecision).toBe('deny');
+    expect(output.permissionDecisionReason).toBe('Blocked via toolArgs.');
+  });
+
+  test('CLI event argument normalizes camelCase to PascalCase', () => {
+    const raw = runHook({
+      toolName: 'Bash',
+      toolArgs: '{}',
+    }, [
+      {
+        on: 'PreToolUse',
+        when: { tool: 'Bash' },
+        inject: { block: 'Blocked via CLI event.' },
+      },
+    ], 'preToolUse');
+
+    const output = JSON.parse(raw);
+    expect(output.permissionDecision).toBe('deny');
+    expect(output.permissionDecisionReason).toBe('Blocked via CLI event.');
   });
 });
 

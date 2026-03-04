@@ -10,7 +10,39 @@ argument-hint: "[add | list | remove <index>]"
 # Hook Context Rules
 
 Author and maintain `.claude/context-rules.json` for the `context-inject.mjs` hook.
-The engine supports Claude Code and VS Code hook payload formats in Phase 1.
+The engine supports both Claude Code and VS Code Copilot hook payload formats.
+
+### VS Code Copilot support
+
+The engine auto-detects payloads from VS Code Copilot (camelCase fields, `toolArgs`
+as JSON string). Key differences from Claude Code:
+
+- **Event name**: VS Code doesn't include the event in the payload. Pass it as a
+  CLI argument: `node .claude/hooks/context-inject.mjs preToolUse`. The engine
+  normalizes camelCase (`preToolUse`) to PascalCase (`PreToolUse`) used in rules.
+- **Tool input**: VS Code sends `toolArgs` (JSON string), not `tool_input` (object).
+  The engine parses it automatically.
+- **Output**: VS Code only supports `permissionDecision` on `preToolUse` — flat
+  JSON, no `hookSpecificOutput` wrapper. Context injection (`text`, `hint`, `shell`,
+  `learnings`) has no effect on VS Code.
+- **Supported inject types on VS Code**: only `block` and `allow` (PreToolUse).
+
+#### VS Code hook configuration
+
+```json
+{
+  "hooks": {
+    "preToolUse": [{
+      "type": "command",
+      "bash": "node .claude/hooks/context-inject.mjs preToolUse"
+    }],
+    "postToolUse": [{
+      "type": "command",
+      "bash": "node .claude/hooks/context-inject.mjs postToolUse"
+    }]
+  }
+}
+```
 
 ## Config Format
 
@@ -93,13 +125,13 @@ For write rules: `Write|Edit|MultiEdit|replace_string_in_file|create_file|multi_
 For read rules: `Read|read_file`
 
 ### `inject` keys (exactly one)
-| Key | Behavior | Events |
-|---|---|---|
-| `text` | Injected verbatim as `additionalContext` | All |
-| `hint` | Prefixed with `"Related: "` — agent decides whether to read | All |
-| `shell` | Command stdout captured and injected; must be fast (<100 ms); no `;` or `&&` | All |
-| `block` | Denies the tool call; value is the reason shown to Claude | PreToolUse only |
-| `allow` | Auto-approves the tool call; value is the reason shown to user | PreToolUse only |
+| Key | Behavior | Events | VS Code |
+|---|---|---|---|
+| `text` | Injected verbatim as `additionalContext` | All | No effect |
+| `hint` | Prefixed with `"Related: "` — agent decides whether to read | All | No effect |
+| `shell` | Command stdout captured and injected; must be fast (<100 ms); no `;` or `&&` | All | No effect |
+| `block` | Denies the tool call; value is the reason shown to Claude | PreToolUse only | Works |
+| `allow` | Auto-approves the tool call; value is the reason shown to user | PreToolUse only | Works |
 
 ## Learnings System
 
@@ -181,12 +213,13 @@ Runs **before any other phase**, every time the skill is invoked.
 Check whether the hook engine is installed:
 
 1. `.claude/hooks/context-inject.mjs` exists
-2. `.claude/hooks/learn.mjs` exists
-3. `.claude/settings.json` has `context-inject.mjs` registered in all three events
-4. `.claude/hooks/node_modules/minimatch` exists (dependency installed)
-5. `.claude/learnings.json` exists
+2. `.claude/hooks/platform.mjs` exists
+3. `.claude/hooks/learn.mjs` exists
+4. `.claude/settings.json` has `context-inject.mjs` registered in all three events
+5. `.claude/hooks/node_modules/minimatch` exists (dependency installed)
+6. `.claude/learnings.json` exists
 
-If **all five** pass → skip to Phase 1.
+If **all six** pass → skip to Phase 1.
 
 If **any** is missing → run the installer:
 
@@ -196,6 +229,7 @@ node skills/rules-to-hook/install.mjs
 
 The installer is idempotent. It:
 - Creates `.claude/hooks/` and copies the engine from `skills/rules-to-hook/engine.mjs`
+- Copies the platform module from `skills/rules-to-hook/platform.mjs`
 - Copies the learn CLI from `skills/rules-to-hook/learn.mjs`
 - Ensures `package.json` has `minimatch` and installs dependencies
 - Merges hook registrations into `.claude/settings.json` (all 3 events, `.*` matcher)

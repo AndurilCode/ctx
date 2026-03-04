@@ -160,7 +160,7 @@ describe('block/allow rules', () => {
     expect(raw).toBe('');
   });
 
-  test('VS Code output includes permissionDecision on block', () => {
+  test('VS Code block returns flat permissionDecision (no hookSpecificOutput wrapper)', () => {
     const raw = runHook({
       hookEventName: 'PreToolUse',
       toolName: 'Bash',
@@ -174,8 +174,10 @@ describe('block/allow rules', () => {
     ]);
 
     const output = JSON.parse(raw);
-    expect(output.continue).toBe(true);
-    expect(output.hookSpecificOutput.permissionDecision).toBe('deny');
-    expect(output.hookSpecificOutput.permissionDecisionReason).toBe('Blocked.');
+    // VS Code: flat output, no hookSpecificOutput wrapper
+    expect(output.permissionDecision).toBe('deny');
+    expect(output.permissionDecisionReason).toBe('Blocked.');
+    expect(output.continue).toBeUndefined();
+    expect(output.hookSpecificOutput).toBeUndefined();
   });
 });

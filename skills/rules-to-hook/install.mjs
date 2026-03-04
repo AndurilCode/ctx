@@ -20,6 +20,8 @@ const ENGINE_DST = resolve(HOOKS_DIR, 'context-inject.mjs');
 const ENGINE_SRC = new URL('./engine.mjs', import.meta.url).pathname;
 const LEARN_DST = resolve(HOOKS_DIR, 'learn.mjs');
 const LEARN_SRC = new URL('./learn.mjs', import.meta.url).pathname;
+const PLATFORM_DST = resolve(HOOKS_DIR, 'platform.mjs');
+const PLATFORM_SRC = new URL('./platform.mjs', import.meta.url).pathname;
 const LEARNINGS_PATH = resolve(ROOT, '.claude/learnings.json');
 const PKG_PATH = resolve(HOOKS_DIR, 'package.json');
 const SETTINGS_PATH = resolve(ROOT, '.claude/settings.json');
@@ -68,7 +70,11 @@ mkdirSync(HOOKS_DIR, { recursive: true });
 copyFileSync(ENGINE_SRC, ENGINE_DST);
 log('Synced engine → .claude/hooks/context-inject.mjs');
 
-// 2b. Copy learn CLI
+// 2b. Copy platform module
+copyFileSync(PLATFORM_SRC, PLATFORM_DST);
+log('Synced platform module → .claude/hooks/platform.mjs');
+
+// 2c. Copy learn CLI
 copyFileSync(LEARN_SRC, LEARN_DST);
 log('Synced learn CLI → .claude/hooks/learn.mjs');
 
