@@ -160,6 +160,7 @@ function buildOutput(eventName) {
   const supportsHSO = HSO_EVENTS.has(eventName);
 
   // Events without hookSpecificOutput support: output context as plain text
+  // (visible in verbose mode only — hooks API limitation)
   if (!supportsHSO) {
     if (additionalContext) return additionalContext;
     return null;
