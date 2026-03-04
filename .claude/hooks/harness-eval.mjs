@@ -31,8 +31,8 @@ function claudeCall(prompt) {
  * @returns {Promise<string|null>} Advisory text to append to additionalContext, or null.
  */
 export async function evaluateHarness({ event, toolName, toolInput, rawPath }) {
-  // Clear state on session start
-  if (event === 'SessionStart') {
+  // Clear state on session start or context compaction
+  if (event === 'SessionStart' || event === 'PreCompact') {
     try {
       const { unlinkSync } = await import('node:fs');
       const statePath = `${process.cwd()}/.claude/harness-state.json`;

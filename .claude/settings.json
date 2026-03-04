@@ -140,6 +140,19 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/context-inject.mjs",
+            "cwd": ".",
+            "statusMessage": "Resetting harness state before compaction…"
+          }
+        ]
+      }
     ]
   }
 }

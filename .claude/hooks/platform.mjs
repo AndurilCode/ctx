@@ -11,6 +11,7 @@ const EVENT_ALIASES = {
   subagentStart: 'SubagentStart',
   postToolUseFailure: 'PostToolUseFailure',
   stop: 'Stop',
+  preCompact: 'PreCompact',
 };
 
 export function normalizeEvent(name) {
