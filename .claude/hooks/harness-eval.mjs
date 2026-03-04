@@ -1,0 +1,62 @@
+// Harness evaluation layer — best-effort integration with the decision engine.
+// Runs only on PreToolUse events for read-like tools.
+// If the harness is not built (no dist/), skips silently.
+
+import { readFileSync } from 'node:fs';
+
+/**
+ * Evaluate the harness decision engine for a read-tool invocation.
+ *
+ * @param {{ event: string, toolName: string, toolInput: Record<string, unknown>, rawPath: string }} ctx
+ * @returns {Promise<string|null>} Advisory text to append to additionalContext, or null.
+ */
+export async function evaluateHarness({ event, toolName, toolInput, rawPath }) {
+  if (event !== 'PreToolUse') return null;
+
+  const HARNESS_TOOLS = new Set(['Read', 'Grep', 'Glob']);
+  if (!HARNESS_TOOLS.has(toolName)) return null;
+
+  try {
+    const { createHarnessState, decide, serialize, deserialize } = await import(
+      new URL('../../dist/core/harness/index.js', import.meta.url).pathname
+    );
+
+    const statePath = `${process.cwd()}/.claude/harness-state.json`;
+    let state;
+    try {
+      const raw = readFileSync(statePath, 'utf8');
+      state = deserialize(JSON.parse(raw));
+    } catch {
+      state = createHarnessState({ contextWindow: 200_000 });
+    }
+
+    const fileTokens = new Map();
+    if (rawPath) {
+      try {
+        const { statSync } = await import('node:fs');
+        const stat = statSync(rawPath);
+        fileTokens.set(rawPath, Math.ceil(stat.size / 4));
+      } catch { /* file may not exist yet */ }
+    }
+
+    const decision = await decide(
+      { tool: toolName.toLowerCase(), args: toolInput ?? {} },
+      state,
+      { fileTokens, mentionedSymbols: [] },
+    );
+
+    // Persist state
+    const { writeFileSync } = await import('node:fs');
+    writeFileSync(statePath, JSON.stringify(serialize(state), null, 2));
+
+    if (decision.action === 'rewrite') {
+      return `[Harness] Consider using ${decision.tool}(${JSON.stringify(decision.args)}) instead — more token-efficient for this task.`;
+    }
+    if (decision.action === 'warn') {
+      return `[Harness] ${decision.message}`;
+    }
+  } catch {
+    // Harness not built or other error — skip silently
+  }
+  return null;
+}

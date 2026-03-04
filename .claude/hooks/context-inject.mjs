@@ -5,6 +5,7 @@ import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { minimatch } from 'minimatch';
 import { extractInput, pickString, buildOutput, PERMISSION_EVENTS, DECISION_BLOCK_EVENTS } from './platform.mjs';
+import { evaluateHarness } from './harness-eval.mjs';
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
@@ -136,19 +137,23 @@ const matched = rules
   .map((r) => resolveInject(r.inject))
   .filter(Boolean);
 
-if (matched.length === 0) process.exit(0);
-
 const canBlock = PERMISSION_EVENTS.has(event) || DECISION_BLOCK_EVENTS.has(event);
 const canAllow = PERMISSION_EVENTS.has(event);
 const blocks = canBlock ? matched.filter((m) => m.type === 'block') : [];
 const allows = canAllow ? matched.filter((m) => m.type === 'allow') : [];
 const contexts = matched.filter((m) => m.type === 'context');
 
-if (blocks.length === 0 && allows.length === 0 && contexts.length === 0) {
+// Harness evaluation (best-effort, appended to context)
+const harnessAdvice = await evaluateHarness({ event, toolName, toolInput, rawPath });
+
+if (matched.length === 0 && !harnessAdvice) process.exit(0);
+if (blocks.length === 0 && allows.length === 0 && contexts.length === 0 && !harnessAdvice) {
   process.exit(0);
 }
 
-const additionalContext = contexts.map((m) => m.value).join('\n') || undefined;
+let additionalContext = contexts.map((m) => m.value).join('\n') || '';
+if (harnessAdvice) additionalContext = additionalContext ? `${additionalContext}\n${harnessAdvice}` : harnessAdvice;
+additionalContext = additionalContext || undefined;
 const output = buildOutput({ platform, event, blocks, allows, additionalContext });
 if (output === null) process.exit(0);
 if (typeof output === 'string') process.stdout.write(output);
