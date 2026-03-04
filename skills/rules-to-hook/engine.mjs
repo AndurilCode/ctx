@@ -100,6 +100,24 @@ function resolveInject(inject) {
   if (inject.allow) return { type: 'allow', value: inject.allow };
   if (inject.text) return { type: 'context', value: inject.text };
   if (inject.hint) return { type: 'context', value: `Related: ${inject.hint}` };
+  if (inject.learnings) {
+    if (!filePath) return null;
+    const learningsPath = `${process.cwd()}/.claude/learnings.json`;
+    if (!existsSync(learningsPath)) return null;
+    try {
+      const learnings = JSON.parse(readFileSync(learningsPath, 'utf8'));
+      if (!Array.isArray(learnings)) return null;
+      const hits = learnings.filter((entry) =>
+        Array.isArray(entry.files) &&
+        entry.files.some((pattern) => minimatch(filePath, pattern)),
+      );
+      if (hits.length === 0) return null;
+      const lines = hits.map((h) => `- ${h.learning}`);
+      return { type: 'context', value: `[Learnings for ${filePath}]\n${lines.join('\n')}` };
+    } catch {
+      return null;
+    }
+  }
   if (inject.shell) {
     try {
       const out = execSync(inject.shell, {
