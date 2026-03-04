@@ -1,0 +1,10 @@
+export { createHarnessState, recordToolCall, updateSignals } from './state.js';
+export { MUTATION_TOOLS, READ_TOOLS } from './constants.js';
+export { serialize, deserialize } from './serialize.js';
+export { classifyIntent, computeWeights, detectDrift, buildProfile } from './classifier.js';
+export { evaluateRules } from './rules.js';
+export { generateAlternatives, scoreCost, evaluateCost } from './cost.js';
+export { buildJudgePrompt, parseJudgeResponse, evaluateWithJudge } from './judge.js';
+export { decide } from './pipeline.js';
+export { computeMetrics } from './metrics.js';
+export type { SessionMetrics } from './metrics.js';
