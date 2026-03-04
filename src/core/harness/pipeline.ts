@@ -52,11 +52,10 @@ export function buildCacheSummary(state: HarnessState): string {
  * Precondition: result.outcome !== 'escalate'
  */
 function toDecisionAction(result: StageResult): DecisionAction {
-  if (result.outcome === 'allow') {
-    return { action: 'allow' };
+  if (result.outcome === 'rewrite') {
+    return { action: 'rewrite', tool: result.tool, args: result.args };
   }
-  // outcome === 'rewrite'
-  return { action: 'rewrite', tool: result.tool, args: result.args };
+  return { action: 'allow' };
 }
 
 // ---------------------------------------------------------------------------

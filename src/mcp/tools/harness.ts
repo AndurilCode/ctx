@@ -37,7 +37,7 @@ export function registerHarnessTool(server: McpServer): void {
         'Evaluate a tool call against the context harness decision engine. Returns allow, rewrite, or warn with optimized alternative suggestions.',
       inputSchema: {
         tool: z.string().describe('The tool being called (read, grep, edit, etc.)'),
-        args: z.record(z.unknown()).describe('The tool arguments as key-value pairs'),
+        args: z.record(z.string(), z.unknown()).describe('The tool arguments as key-value pairs'),
         fileTokens: z
           .number()
           .int()

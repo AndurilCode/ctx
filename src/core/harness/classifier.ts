@@ -52,7 +52,7 @@ function extractFiles(prompt: string): string[] {
   // Reset lastIndex before use since the regex has the 'g' flag
   FILE_PATH_RE.lastIndex = 0;
   while ((m = FILE_PATH_RE.exec(prompt)) !== null) {
-    matches.push(m[1]);
+    if (m[1]) matches.push(m[1]);
   }
   return matches;
 }

@@ -71,8 +71,8 @@ export function parseJudgeResponse(response: string): StageResult {
     return { outcome: 'allow' };
   }
 
-  const tool = match[1];
-  const rawPairs = match[2];
+  const tool = match[1] ?? '';
+  const rawPairs = match[2] ?? '';
   const args: Record<string, unknown> = {};
 
   if (rawPairs.trim().length > 0) {
