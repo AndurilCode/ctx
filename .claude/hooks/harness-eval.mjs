@@ -3,6 +3,26 @@
 // If the harness is not built (no dist/), skips silently.
 
 import { readFileSync } from 'node:fs';
+import { execFile } from 'node:child_process';
+
+/**
+ * Call Claude CLI as the LLM judge.
+ * Uses `claude -p` (print mode) with the haiku model for speed/cost.
+ * Returns the raw text response, or throws on failure.
+ */
+function claudeCall(prompt) {
+  return new Promise((resolve, reject) => {
+    const child = execFile('claude', ['-p', '--model', 'haiku', '--max-turns', '1'], {
+      timeout: 5000,
+      maxBuffer: 64 * 1024,
+    }, (err, stdout) => {
+      if (err) return reject(err);
+      resolve(stdout.trim());
+    });
+    child.stdin.write(prompt);
+    child.stdin.end();
+  });
+}
 
 /**
  * Evaluate the harness decision engine for a read-tool invocation.
@@ -43,6 +63,7 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath }) {
       { tool: toolName.toLowerCase(), args: toolInput ?? {} },
       state,
       { fileTokens, mentionedSymbols: [] },
+      // { llmCall: claudeCall },  // Enable when cost alternatives have closer profiles
     );
 
     // Persist state
