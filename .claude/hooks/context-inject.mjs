@@ -100,6 +100,24 @@ function resolveInject(inject) {
   if (inject.allow) return { type: 'allow', value: inject.allow };
   if (inject.text) return { type: 'context', value: inject.text };
   if (inject.hint) return { type: 'context', value: `Related: ${inject.hint}` };
+  if (inject.learnings) {
+    if (!filePath) return null;
+    const learningsPath = `${process.cwd()}/.claude/learnings.json`;
+    if (!existsSync(learningsPath)) return null;
+    try {
+      const learnings = JSON.parse(readFileSync(learningsPath, 'utf8'));
+      if (!Array.isArray(learnings)) return null;
+      const hits = learnings.filter((entry) =>
+        Array.isArray(entry.files) &&
+        entry.files.some((pattern) => minimatch(filePath, pattern)),
+      );
+      if (hits.length === 0) return null;
+      const lines = hits.map((h) => `- ${h.learning}`);
+      return { type: 'context', value: `[Learnings for ${filePath}]\n${lines.join('\n')}` };
+    } catch {
+      return null;
+    }
+  }
   if (inject.shell) {
     try {
       const out = execSync(inject.shell, {
@@ -135,7 +153,19 @@ if (blocks.length === 0 && allows.length === 0 && contexts.length === 0) {
 
 const additionalContext = contexts.map((m) => m.value).join('\n') || undefined;
 
+// Events that support hookSpecificOutput.additionalContext
+const HSO_EVENTS = new Set(['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'SessionStart']);
+
 function buildOutput(eventName) {
+  const supportsHSO = HSO_EVENTS.has(eventName);
+
+  // Events without hookSpecificOutput support: output context as plain text
+  // (visible in verbose mode only — hooks API limitation)
+  if (!supportsHSO) {
+    if (additionalContext) return additionalContext;
+    return null;
+  }
+
   const hso = { hookEventName: eventName };
 
   if (additionalContext) hso.additionalContext = additionalContext;
@@ -160,4 +190,7 @@ function buildOutput(eventName) {
   return { hookSpecificOutput: hso };
 }
 
-process.stdout.write(JSON.stringify(buildOutput(event)));
+const output = buildOutput(event);
+if (output === null) process.exit(0);
+if (typeof output === 'string') process.stdout.write(output);
+else process.stdout.write(JSON.stringify(output));

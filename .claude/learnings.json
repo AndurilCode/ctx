@@ -1,0 +1,10 @@
+[
+  {
+    "files": [
+      "skills/rules-to-hook/engine.mjs",
+      ".claude/hooks/context-inject.mjs"
+    ],
+    "learning": "Only PreToolUse, PostToolUse, UserPromptSubmit, and SessionStart support hookSpecificOutput.additionalContext. Other events (Stop, TaskCompleted, SubagentStop) can only output plain text (verbose mode only). Use HSO_EVENTS set to guard output format.",
+    "timestamp": "2026-03-04T10:21:58.112Z"
+  }
+]
