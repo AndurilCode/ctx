@@ -7,6 +7,7 @@ import { diffCommand } from './commands/diff.js';
 import { expandCommand } from './commands/expand.js';
 import { extractCommand } from './commands/extract.js';
 import { focusCommand } from './commands/focus.js';
+import { harnessCommand } from './commands/harness.js';
 import { importsCommand } from './commands/imports.js';
 import { insertCommand } from './commands/insert.js';
 import { patchCommand } from './commands/patch.js';
@@ -52,6 +53,7 @@ export const command = defineCommand({
     review: reviewCommand,
     context: contextCommand,
     gather: autoContextCommand,
+    harness: harnessCommand,
     patch: patchCommand,
     insert: insertCommand,
     rename: renameCommand,

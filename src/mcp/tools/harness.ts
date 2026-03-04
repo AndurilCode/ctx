@@ -15,7 +15,7 @@ export interface HarnessDecideInput {
 export async function runHarnessDecideTool(input: HarnessDecideInput): Promise<CallToolResult> {
   const state = createHarnessState({ contextWindow: input.contextWindow ?? 200_000 });
   const fileTokens = new Map<string, number>();
-  const file = input.args.file as string | undefined;
+  const file = (input.args.file ?? input.args.file_path) as string | undefined;
   if (file && input.fileTokens) {
     fileTokens.set(file, input.fileTokens);
   }
