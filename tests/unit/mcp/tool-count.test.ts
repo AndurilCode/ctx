@@ -10,7 +10,7 @@ describe('MCP tool surface', () => {
       },
     };
     registerCompactMdTools(fakeServer as any);
-    expect(registered.length).toBeLessThanOrEqual(21);
+    expect(registered.length).toBeLessThanOrEqual(22);
     expect(registered).toContain('ctx_verify');
     expect(registered).toContain('ctx_roundtrip_verify');
     expect(registered).toContain('ctx_focus');
