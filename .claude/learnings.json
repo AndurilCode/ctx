@@ -8,5 +8,19 @@
     ],
     "learning": "Only PreToolUse, PostToolUse, UserPromptSubmit, and SessionStart support hookSpecificOutput.additionalContext. Other events (Stop, TaskCompleted, SubagentStop) can only output plain text (verbose mode only). Use HSO_EVENTS set to guard output format.",
     "timestamp": "2026-03-04T10:58:15.727Z"
+  },
+  {
+    "files": [
+      ".claude/hooks/harness-eval.mjs"
+    ],
+    "learning": "The hook passes tool_input with file_path key, but the internal harness engine uses file key. Must normalize file_path→file before calling decide() and recordToolCall(). Advisory rewrites (type=context) do NOT block the tool call — the original call still executes, so it must be recorded in state.",
+    "timestamp": "2026-03-05T13:36:44.205Z"
+  },
+  {
+    "files": [
+      "src/index.ts"
+    ],
+    "learning": "All harness exports used by .claude/hooks/harness-eval.mjs must be re-exported here — the hook imports from dist/index.js. Missing exports silently destructure as undefined.",
+    "timestamp": "2026-03-05T13:36:44.290Z"
   }
 ]
