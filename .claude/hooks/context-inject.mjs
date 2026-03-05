@@ -6,10 +6,6 @@ import { minimatch } from 'minimatch';
 import { extractInput, pickString, buildOutput, PERMISSION_EVENTS, DECISION_BLOCK_EVENTS } from './platform.mjs';
 import { evaluateHarness } from './harness-eval.mjs';
 import { runHealthCheck } from './health-check.mjs';
-
-const chunks = [];
-for await (const chunk of process.stdin) chunks.push(chunk);
-
 // CLI --check mode (no stdin needed)
 if (process.argv.includes('--check')) {
   const result = runHealthCheck(process.cwd());
@@ -22,6 +18,22 @@ if (process.argv.includes('--check')) {
   }
   process.exit(result.ok ? 0 : 1);
 }
+
+const chunks = [];
+for await (const chunk of process.stdin) chunks.push(chunk);
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 let input;
 try {
