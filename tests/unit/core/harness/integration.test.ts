@@ -17,13 +17,13 @@ describe('harness integration', () => {
     // 2. Create state with classified profile
     const state = createHarnessState({ contextWindow: 200_000, profile });
 
-    // 3. Agent wants to read a big file — should suggest cheaper alternative
-    const decision = await decide(
+    // 3. Agent wants to read a big file — first read is allowed (Rule 10)
+    const firstRead = await decide(
       { tool: 'read', args: { file: 'src/auth.ts' } },
       state,
       { fileTokens: new Map([['src/auth.ts', 4000]]), mentionedSymbols: [] },
     );
-    expect(decision.action).toBe('rewrite');
+    expect(firstRead.action).toBe('allow');
 
     // 4. Record what actually happened (agent took the suggestion)
     recordToolCall(state, { tool: 'outline', args: { file: 'src/auth.ts' }, tokensConsumed: 200, durationMs: 50 });
@@ -71,6 +71,41 @@ describe('deny flow integration', () => {
     if (r2.action === 'deny') {
       expect(r2.reason).toContain('Already read');
     }
+  });
+
+  it('v3: first read allows, second read rewrites with budgetContext, hot file allows', async () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    const file = '/src/big.ts';
+    const fileTokens = new Map([[file, 5000]]);
+
+    // 1. First read of large file → allow (Rule 10)
+    const r1 = await decide(
+      { tool: 'read', args: { file } },
+      state,
+      { fileTokens, mentionedSymbols: [] },
+    );
+    expect(r1.action).toBe('allow');
+
+    // Record the first read
+    recordToolCall(state, { tool: 'read', args: { file }, tokensConsumed: 5000, durationMs: 50 });
+
+    // 2. Second read of same large file with different strategy → rewrite with budgetContext
+    const r2 = await decide(
+      { tool: 'read', args: { file, maxTokens: 800 } },
+      state,
+      { fileTokens, mentionedSymbols: [] },
+    );
+    // Not hot, different strategy → deny (Rule 7)
+    expect(r2.action).toBe('deny');
+
+    // 3. Mutate the file, then re-read with different strategy → allow (hot file)
+    recordToolCall(state, { tool: 'edit', args: { file }, tokensConsumed: 0, durationMs: 10 });
+    const r3 = await decide(
+      { tool: 'read', args: { file, maxTokens: 800 } },
+      state,
+      { fileTokens, mentionedSymbols: [] },
+    );
+    expect(r3.action).not.toBe('deny');
   });
 
   it('re-read after mutation with different strategy is allowed', async () => {

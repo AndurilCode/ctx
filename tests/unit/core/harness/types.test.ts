@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { HarnessState, DecisionAction, StrategyProfile } from '../../../../src/types/harness.js';
+import type { DecisionAction, StageResult, StrategyProfile } from '../../../../src/types/harness.js';
 
 describe('harness types', () => {
   test('StrategyProfile is constructable', () => {
