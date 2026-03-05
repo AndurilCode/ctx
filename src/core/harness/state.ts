@@ -54,6 +54,7 @@ export function createHarnessState(opts: {
       toolDiversity: 0,
     },
     turn: 0,
+    rewriteCompliance: { followed: 0, ignored: 0 },
   };
 }
 
@@ -65,6 +66,16 @@ export function recordToolCall(
   state: HarnessState,
   record: Omit<ToolCallRecord, 'turn'>,
 ): void {
+  // Check rewrite compliance before recording
+  if (state.pendingRewrite) {
+    if (record.tool === state.pendingRewrite.suggestedTool) {
+      state.rewriteCompliance.followed += 1;
+    } else {
+      state.rewriteCompliance.ignored += 1;
+    }
+    state.pendingRewrite = undefined;
+  }
+
   const turn = state.turn;
   state.history.push({ ...record, turn });
   state.turn += 1;

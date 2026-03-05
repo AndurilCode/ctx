@@ -10,6 +10,7 @@ export interface SessionMetrics {
   cacheHitRate: number;           // reads with 0 tokens / total reads
   starterPacketCoverage: number;  // always 0 for now
   wastedReads: number;            // files read but never mutated
+  rewriteAcceptanceRate: number;  // followed / (followed + ignored), 1 if none
 }
 
 export function computeMetrics(state: HarnessState): SessionMetrics {
@@ -62,6 +63,11 @@ export function computeMetrics(state: HarnessState): SessionMetrics {
     if (!mutatedFiles.has(file)) wastedReads += 1;
   }
 
+  const complianceTotal = state.rewriteCompliance.followed + state.rewriteCompliance.ignored;
+  const rewriteAcceptanceRate = complianceTotal > 0
+    ? state.rewriteCompliance.followed / complianceTotal
+    : 1;
+
   return {
     totalTokensConsumed,
     tokensPerMutation,
@@ -71,5 +77,6 @@ export function computeMetrics(state: HarnessState): SessionMetrics {
     cacheHitRate,
     starterPacketCoverage: 0,
     wastedReads,
+    rewriteAcceptanceRate,
   };
 }

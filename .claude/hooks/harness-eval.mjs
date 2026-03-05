@@ -71,6 +71,31 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath, pro
     return null;
   }
 
+  // Emit session metrics on Stop
+  if (event === 'Stop') {
+    try {
+      const { deserialize, computeMetrics, acquireLock, releaseLock } = await import(
+        new URL('../../dist/index.js', import.meta.url).pathname
+      );
+      const statePath = `${process.cwd()}/.claude/harness-state.json`;
+      const lockPath = `${statePath}.lock`;
+      const locked = acquireLock(lockPath, 500);
+      if (locked) {
+        try {
+          const raw = readFileSync(statePath, 'utf8');
+          const state = deserialize(JSON.parse(raw));
+          const metrics = computeMetrics(state);
+          const logPath = `${process.cwd()}/.claude/harness-metrics.log`;
+          const { appendFileSync } = await import('node:fs');
+          appendFileSync(logPath, JSON.stringify({ timestamp: new Date().toISOString(), taskType: state.profile.type, ...metrics }) + '\n');
+        } finally {
+          releaseLock(lockPath);
+        }
+      }
+    } catch { /* harness not built or no state */ }
+    return null;
+  }
+
   if (event !== 'PreToolUse') return null;
 
   const HARNESS_TOOLS = new Set(['Read', 'Grep', 'Glob']);
@@ -133,6 +158,11 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath, pro
         return { type: 'block', value: `[Harness] ${decision.reason} Working budget: ${remaining}/${state.budget.allocated.working} tokens.` };
       }
       if (decision.action === 'rewrite') {
+        state.pendingRewrite = { turn: state.turn, suggestedTool: decision.tool, suggestedArgs: decision.args };
+        // Persist state with pendingRewrite (rewrite calls are not recorded, so persist here)
+        const { writeFileSync: writePending } = await import('node:fs');
+        writePending(statePath, JSON.stringify(serialize(state), null, 2));
+
         const bc = decision.budgetContext;
         let msg = `[Harness] Consider using ${decision.tool}(${JSON.stringify(decision.args)}) instead`;
         if (bc) {

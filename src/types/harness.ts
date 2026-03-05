@@ -99,6 +99,13 @@ export interface ScoredAlternative {
   cost: number;
 }
 
+// --- Rewrite Feedback ---
+export interface PendingRewrite {
+  turn: number;
+  suggestedTool: string;
+  suggestedArgs: Record<string, unknown>;
+}
+
 // --- Session State (top-level) ---
 export interface HarnessState {
   profile: StrategyProfile;
@@ -107,6 +114,8 @@ export interface HarnessState {
   history: ToolCallRecord[];
   signals: SessionSignals;
   turn: number;
+  pendingRewrite?: PendingRewrite;
+  rewriteCompliance: { followed: number; ignored: number };
 }
 
 // --- Serializable subset for disk persistence ---
@@ -122,4 +131,6 @@ export interface SerializedHarnessState {
   history: ToolCallRecord[];
   signals: SessionSignals;
   turn: number;
+  pendingRewrite?: PendingRewrite;
+  rewriteCompliance: { followed: number; ignored: number };
 }

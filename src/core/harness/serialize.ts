@@ -23,6 +23,8 @@ export function serialize(state: HarnessState): SerializedHarnessState {
     history: state.history,
     signals: state.signals,
     turn: state.turn,
+    pendingRewrite: state.pendingRewrite,
+    rewriteCompliance: state.rewriteCompliance,
   };
 }
 
@@ -39,5 +41,7 @@ export function deserialize(s: SerializedHarnessState): HarnessState {
     history: s.history,
     signals: { currentReadStreak: 0, ...s.signals },
     turn: s.turn,
+    pendingRewrite: s.pendingRewrite,
+    rewriteCompliance: s.rewriteCompliance ?? { followed: 0, ignored: 0 },
   };
 }
