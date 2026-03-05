@@ -53,7 +53,7 @@ export function buildCacheSummary(state: HarnessState): string {
  */
 function toDecisionAction(result: StageResult): DecisionAction {
   if (result.outcome === 'rewrite') {
-    return { action: 'rewrite', tool: result.tool, args: result.args };
+    return { action: 'rewrite', tool: result.tool, args: result.args, budgetContext: result.budgetContext };
   }
   if (result.outcome === 'deny') {
     return { action: 'deny', reason: result.reason };

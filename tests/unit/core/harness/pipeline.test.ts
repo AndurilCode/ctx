@@ -23,14 +23,34 @@ describe('decide', () => {
     expect(result.action).toBe('rewrite');
   });
 
-  test('rewrites large file read via Stage 2 cost analysis', async () => {
+  test('rewrites large file read via Stage 2 cost analysis (second read)', async () => {
     const state = createHarnessState({ contextWindow: 200_000 });
+    // Mark as previously read so Rule 10 doesn't short-circuit
+    state.cache.filesRead.set('huge.ts', { strategy: 'budgeted', tokens: 5000, turn: 0 });
+    state.cache.hotFiles.add('huge.ts'); // hot so deny rules pass
     const result = await decide(
       { tool: 'read', args: { file: 'huge.ts' } },
       state,
       { fileTokens: new Map([['huge.ts', 5000]]), mentionedSymbols: [] },
     );
     expect(result.action).toBe('rewrite');
+  });
+
+  test('forwards budgetContext from cost stage to DecisionAction', async () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    state.cache.filesRead.set('huge.ts', { strategy: 'budgeted', tokens: 5000, turn: 0 });
+    state.cache.hotFiles.add('huge.ts');
+    const result = await decide(
+      { tool: 'read', args: { file: 'huge.ts' } },
+      state,
+      { fileTokens: new Map([['huge.ts', 5000]]), mentionedSymbols: [] },
+    );
+    expect(result.action).toBe('rewrite');
+    if (result.action === 'rewrite') {
+      expect(result.budgetContext).toBeDefined();
+      expect(result.budgetContext!.remainingBudget).toBeGreaterThan(0);
+      expect(result.budgetContext!.pressureLevel).toBe('low');
+    }
   });
 
   test('falls back to allow when LLM says ALLOW', async () => {
