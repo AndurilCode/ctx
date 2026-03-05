@@ -90,7 +90,7 @@ export async function decide(
   const costResult = evaluateCost(call, state.profile.weights, {
     fileTokens: file ? (ctx.fileTokens.get(file) ?? 0) : 0,
     mentionedSymbols: ctx.mentionedSymbols,
-  });
+  }, state.budget);
 
   if (costResult.outcome !== 'escalate') {
     return toDecisionAction(costResult);

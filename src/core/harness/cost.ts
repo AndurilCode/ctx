@@ -1,4 +1,6 @@
 import type {
+  BudgetContext,
+  BudgetState,
   CostWeights,
   InterceptedCall,
   ScoredAlternative,
@@ -80,6 +82,7 @@ export function evaluateCost(
   call: InterceptedCall,
   weights: CostWeights,
   ctx: CostContext,
+  budgetState?: BudgetState,
 ): StageResult {
   const alts = generateAlternatives(call, ctx);
 
@@ -103,13 +106,32 @@ export function evaluateCost(
 
   const savingsPct = (originalCost - best.cost) / originalCost;
 
+  // Build budget context when budget info is available
+  const budgetContext = budgetState ? buildBudgetContext(ctx.fileTokens, best.estTokens, budgetState) : undefined;
+
   if (savingsPct > 0.3) {
-    return { outcome: 'rewrite', tool: best.tool, args: best.args };
+    return { outcome: 'rewrite', tool: best.tool, args: best.args, budgetContext };
   }
 
   if (savingsPct >= 0.1) {
-    return { outcome: 'escalate', alternatives: alts };
+    return { outcome: 'escalate', alternatives: alts, budgetContext };
   }
 
   return { outcome: 'allow' };
+}
+
+function buildBudgetContext(
+  originalTokens: number,
+  altTokens: number,
+  budgetState: BudgetState,
+): BudgetContext {
+  const savedTokens = Math.round(originalTokens - altTokens);
+  const savedPct = originalTokens > 0 ? savedTokens / originalTokens : 0;
+  const remaining = budgetState.allocated.working - budgetState.consumed.working;
+  const allocated = budgetState.allocated.working;
+  const pressureLevel: BudgetContext['pressureLevel'] =
+    remaining < allocated * 0.2 ? 'high'
+    : remaining < allocated * 0.5 ? 'medium'
+    : 'low';
+  return { savedTokens, savedPct, remainingBudget: remaining, pressureLevel };
 }

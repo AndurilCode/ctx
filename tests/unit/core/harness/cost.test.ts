@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { generateAlternatives, scoreCost, evaluateCost } from '../../../../src/core/harness/cost.js';
-import type { CostWeights, InterceptedCall } from '../../../../src/types/harness.js';
+import type { BudgetState, CostWeights, InterceptedCall } from '../../../../src/types/harness.js';
 
 describe('generateAlternatives', () => {
   test('generates outline alternative for large read', () => {
@@ -34,6 +34,33 @@ describe('evaluateCost', () => {
     const weights: CostWeights = { wTokens: 0.6, wLatency: 0.2, wCalls: 0.2 };
     const result = evaluateCost(call, weights, { fileTokens: 3000, mentionedSymbols: [] });
     expect(result.outcome).not.toBe('allow');
+  });
+  test('rewrite includes budgetContext when budgetState provided', () => {
+    const call: InterceptedCall = { tool: 'read', args: { file: 'big.ts' } };
+    const weights: CostWeights = { wTokens: 0.6, wLatency: 0.2, wCalls: 0.2 };
+    const budgetState: BudgetState = {
+      total: 200000,
+      allocated: { system: 20000, starter: 10000, working: 40000, output: 10000, safety: 5000 },
+      consumed: { system: 0, starter: 0, working: 25000, output: 0, safety: 0 },
+    };
+    const result = evaluateCost(call, weights, { fileTokens: 3000, mentionedSymbols: [] }, budgetState);
+    expect(result.outcome).toBe('rewrite');
+    if (result.outcome === 'rewrite') {
+      expect(result.budgetContext).toBeDefined();
+      expect(result.budgetContext!.remainingBudget).toBe(15000);
+      expect(result.budgetContext!.pressureLevel).toBe('medium');
+      expect(result.budgetContext!.savedTokens).toBeGreaterThan(0);
+      expect(result.budgetContext!.savedPct).toBeGreaterThan(0);
+    }
+  });
+  test('rewrite has no budgetContext when budgetState omitted', () => {
+    const call: InterceptedCall = { tool: 'read', args: { file: 'big.ts' } };
+    const weights: CostWeights = { wTokens: 0.6, wLatency: 0.2, wCalls: 0.2 };
+    const result = evaluateCost(call, weights, { fileTokens: 3000, mentionedSymbols: [] });
+    expect(result.outcome).toBe('rewrite');
+    if (result.outcome === 'rewrite') {
+      expect(result.budgetContext).toBeUndefined();
+    }
   });
   test('allows when no meaningful savings', () => {
     const call: InterceptedCall = { tool: 'read', args: { file: 'small.ts' } };
