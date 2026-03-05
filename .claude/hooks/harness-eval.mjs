@@ -30,7 +30,7 @@ function claudeCall(prompt) {
  * @param {{ event: string, toolName: string, toolInput: Record<string, unknown>, rawPath: string }} ctx
  * @returns {Promise<string|null>} Advisory text to append to additionalContext, or null.
  */
-export async function evaluateHarness({ event, toolName, toolInput, rawPath }) {
+export async function evaluateHarness({ event, toolName, toolInput, rawPath, prompt }) {
   // Clear state on session start or context compaction
   if (event === 'SessionStart' || event === 'PreCompact') {
     try {
@@ -38,6 +38,36 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath }) {
       const statePath = `${process.cwd()}/.claude/harness-state.json`;
       unlinkSync(statePath);
     } catch { /* file may not exist */ }
+    return null;
+  }
+
+  // Classify intent on prompt submit → persist profile into state
+  if (event === 'UserPromptSubmit' && prompt) {
+    try {
+      const { buildProfile, createHarnessState, serialize, deserialize, acquireLock, releaseLock } = await import(
+        new URL('../../dist/index.js', import.meta.url).pathname
+      );
+      const statePath = `${process.cwd()}/.claude/harness-state.json`;
+      const lockPath = `${statePath}.lock`;
+      const locked = acquireLock(lockPath, 500);
+      if (locked) {
+        try {
+          let state;
+          try {
+            const raw = readFileSync(statePath, 'utf8');
+            state = deserialize(JSON.parse(raw));
+          } catch {
+            state = createHarnessState({ contextWindow: 200_000 });
+          }
+          const profile = buildProfile(prompt, state.signals);
+          state.profile = profile;
+          const { writeFileSync } = await import('node:fs');
+          writeFileSync(statePath, JSON.stringify(serialize(state), null, 2));
+        } finally {
+          releaseLock(lockPath);
+        }
+      }
+    } catch { /* harness not built */ }
     return null;
   }
 

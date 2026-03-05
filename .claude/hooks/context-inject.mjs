@@ -144,7 +144,7 @@ const allows = canAllow ? matched.filter((m) => m.type === 'allow') : [];
 const contexts = matched.filter((m) => m.type === 'context');
 
 // Harness evaluation (best-effort, may return block or context)
-const harnessResult = await evaluateHarness({ event, toolName, toolInput, rawPath });
+const harnessResult = await evaluateHarness({ event, toolName, toolInput, rawPath, prompt });
 
 if (matched.length === 0 && !harnessResult) process.exit(0);
 
