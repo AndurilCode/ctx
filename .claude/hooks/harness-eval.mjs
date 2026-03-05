@@ -4,6 +4,7 @@
 
 import { readFileSync } from 'node:fs';
 import { execFile } from 'node:child_process';
+import { formatSuggestion } from './harness-format.mjs';
 
 /**
  * Call Claude CLI as the LLM judge.
@@ -129,8 +130,14 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath, pro
         } catch { /* file may not exist yet */ }
       }
 
+      // Normalize file_path → file so the internal engine uses a consistent key
+      const normalizedArgs = { ...(toolInput ?? {}) };
+      if (normalizedArgs.file_path && !normalizedArgs.file) {
+        normalizedArgs.file = normalizedArgs.file_path;
+      }
+
       const decision = await decide(
-        { tool: toolName.toLowerCase(), args: toolInput ?? {} },
+        { tool: toolName.toLowerCase(), args: normalizedArgs },
         state,
         { fileTokens, mentionedSymbols: [] },
         // { llmCall: claudeCall },  // Enable when cost alternatives have closer profiles
@@ -143,7 +150,7 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath, pro
       if (decision.action !== 'deny') {
         recordToolCall(state, {
           tool: toolName.toLowerCase(),
-          args: toolInput ?? {},
+          args: normalizedArgs,
           tokensConsumed: estTokens,
           durationMs: 0,
         });
@@ -164,7 +171,8 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath, pro
         writePending(statePath, JSON.stringify(serialize(state), null, 2));
 
         const bc = decision.budgetContext;
-        let msg = `[Harness] Consider using ${decision.tool}(${JSON.stringify(decision.args)}) instead`;
+        const suggestion = formatSuggestion(decision.tool, decision.args);
+        let msg = `[Harness] Consider ${suggestion} instead`;
         if (bc) {
           msg += ` — saves ~${bc.savedTokens} tokens (${Math.round(bc.savedPct * 100)}%).`;
           msg += `\nWorking budget: ${bc.remainingBudget}/${state.budget.allocated.working} tokens remaining (${bc.pressureLevel} pressure).`;
