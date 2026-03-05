@@ -1,5 +1,12 @@
 [
   {
+    "on": "SessionStart",
+    "inject": {
+      "text": "WORKFLOW REQUIREMENT: For ALL codebase operations, you MUST invoke skills via the Skill tool — never use raw Read, Grep, Glob, Edit, Write, or MultiEdit directly.\n• Exploring code/docs → invoke ctx-search skill\n• Making changes → invoke ctx-code skill\n• Reviewing diffs/running tests → invoke ctx-verify skill\nThis is mandatory for every session. No exceptions."
+    }
+  },
+
+  {
     "on": "PreToolUse",
     "when": {
       "tool": "Write|Edit|MultiEdit",
@@ -150,7 +157,7 @@
   {
     "on": "UserPromptSubmit",
     "inject": {
-      "text": "@Skills: Use ctx-search (codebase exploration), ctx-code (changes via read-patch cycle), ctx-verify (review diffs/run tests) instead of raw file reads or manual tool invocations.\nLearnings system: if you discover something non-obvious about a file (architecture constraints, pitfalls, patterns), record it with: node .claude/hooks/learn.mjs add --files '<glob>' --learning '<text>'. Only record genuinely useful insights. Use list/update/remove to curate existing learnings."
+      "text": "REQUIRED: Do NOT use raw Read, Grep, Glob, Edit, Write, or MultiEdit tools directly for codebase work. You MUST use the ctx-search skill (codebase exploration), ctx-code skill (changes via read-patch cycle), and ctx-verify skill (review diffs/run tests) instead. Invoke skills via the Skill tool BEFORE any file operations.\nLearnings system: if you discover something non-obvious about a file (architecture constraints, pitfalls, patterns), record it with: node .claude/hooks/learn.mjs add --files '<glob>' --learning '<text>'. Only record genuinely useful insights. Use list/update/remove to curate existing learnings."
     }
   },
   {

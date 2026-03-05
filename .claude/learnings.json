@@ -22,5 +22,12 @@
     ],
     "learning": "All harness exports used by .claude/hooks/harness-eval.mjs must be re-exported here — the hook imports from dist/index.js. Missing exports silently destructure as undefined.",
     "timestamp": "2026-03-05T13:36:44.290Z"
+  },
+  {
+    "files": [
+      ".claude/context-rules.json"
+    ],
+    "learning": "ctx patch hashline mode replaces ONLY the matched line — surrounding lines stay. To insert new content before an existing line, include the original line content at the end of your replace string. Do not end a replace with content that duplicates what is already on the next line.",
+    "timestamp": "2026-03-05T13:55:08.350Z"
   }
 ]
