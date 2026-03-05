@@ -150,7 +150,7 @@
   {
     "on": "UserPromptSubmit",
     "inject": {
-      "text": "Learnings system: if you discover something non-obvious about a file (architecture constraints, pitfalls, patterns), record it with: node .claude/hooks/learn.mjs add --files '<glob>' --learning '<text>'. Only record genuinely useful insights. Use list/update/remove to curate existing learnings."
+      "text": "@Skills: Use ctx-search (codebase exploration), ctx-code (changes via read-patch cycle), ctx-verify (review diffs/run tests) instead of raw file reads or manual tool invocations.\nLearnings system: if you discover something non-obvious about a file (architecture constraints, pitfalls, patterns), record it with: node .claude/hooks/learn.mjs add --files '<glob>' --learning '<text>'. Only record genuinely useful insights. Use list/update/remove to curate existing learnings."
     }
   },
   {
