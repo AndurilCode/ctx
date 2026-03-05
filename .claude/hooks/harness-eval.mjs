@@ -47,66 +47,74 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath }) {
   if (!HARNESS_TOOLS.has(toolName)) return null;
 
   try {
-    const { createHarnessState, decide, serialize, deserialize, recordToolCall, updateSignals } = await import(
+    const { createHarnessState, decide, serialize, deserialize, recordToolCall, updateSignals, acquireLock, releaseLock } = await import(
       new URL('../../dist/index.js', import.meta.url).pathname
     );
 
     const statePath = `${process.cwd()}/.claude/harness-state.json`;
-    let state;
+    const lockPath = `${statePath}.lock`;
+    const locked = acquireLock(lockPath, 500);
+    if (!locked) return null; // graceful degradation
+
     try {
-      const raw = readFileSync(statePath, 'utf8');
-      state = deserialize(JSON.parse(raw));
-    } catch {
-      state = createHarnessState({ contextWindow: 200_000 });
-    }
-
-    const fileTokens = new Map();
-    if (rawPath) {
+      let state;
       try {
-        const { statSync } = await import('node:fs');
-        const stat = statSync(rawPath);
-        fileTokens.set(rawPath, Math.ceil(stat.size / 4));
-      } catch { /* file may not exist yet */ }
-    }
-
-    const decision = await decide(
-      { tool: toolName.toLowerCase(), args: toolInput ?? {} },
-      state,
-      { fileTokens, mentionedSymbols: [] },
-      // { llmCall: claudeCall },  // Enable when cost alternatives have closer profiles
-    );
-
-    // Record this call so state accumulates across hook invocations
-    const estTokens = rawPath ? (fileTokens.get(rawPath) ?? 0) : 0;
-    recordToolCall(state, {
-      tool: toolName.toLowerCase(),
-      args: toolInput ?? {},
-      tokensConsumed: estTokens,
-      durationMs: 0,
-    });
-    updateSignals(state);
-
-    // Persist state
-    const { writeFileSync } = await import('node:fs');
-    writeFileSync(statePath, JSON.stringify(serialize(state), null, 2));
-
-    if (decision.action === 'deny') {
-      const remaining = state.budget.allocated.working - state.budget.consumed.working;
-      return { type: 'block', value: `[Harness] ${decision.reason} Working budget: ${remaining}/${state.budget.allocated.working} tokens.` };
-    }
-    if (decision.action === 'rewrite') {
-      const bc = decision.budgetContext;
-      let msg = `[Harness] Consider using ${decision.tool}(${JSON.stringify(decision.args)}) instead`;
-      if (bc) {
-        msg += ` — saves ~${bc.savedTokens} tokens (${Math.round(bc.savedPct * 100)}%).`;
-        msg += `\nWorking budget: ${bc.remainingBudget}/${state.budget.allocated.working} tokens remaining (${bc.pressureLevel} pressure).`;
-      } else {
-        msg += ' — more token-efficient for this task.';
+        const raw = readFileSync(statePath, 'utf8');
+        state = deserialize(JSON.parse(raw));
+      } catch {
+        state = createHarnessState({ contextWindow: 200_000 });
       }
-      return { type: 'context', value: msg };
-    }
-    if (decision.action === 'warn') {
-      return { type: 'context', value: `[Harness] ${decision.message}` };
+
+      const fileTokens = new Map();
+      if (rawPath) {
+        try {
+          const { statSync } = await import('node:fs');
+          const stat = statSync(rawPath);
+          fileTokens.set(rawPath, Math.ceil(stat.size / 4));
+        } catch { /* file may not exist yet */ }
+      }
+
+      const decision = await decide(
+        { tool: toolName.toLowerCase(), args: toolInput ?? {} },
+        state,
+        { fileTokens, mentionedSymbols: [] },
+        // { llmCall: claudeCall },  // Enable when cost alternatives have closer profiles
+      );
+
+      // Record this call so state accumulates across hook invocations
+      const estTokens = rawPath ? (fileTokens.get(rawPath) ?? 0) : 0;
+      recordToolCall(state, {
+        tool: toolName.toLowerCase(),
+        args: toolInput ?? {},
+        tokensConsumed: estTokens,
+        durationMs: 0,
+      });
+      updateSignals(state);
+
+      // Persist state
+      const { writeFileSync } = await import('node:fs');
+      writeFileSync(statePath, JSON.stringify(serialize(state), null, 2));
+
+      if (decision.action === 'deny') {
+        const remaining = state.budget.allocated.working - state.budget.consumed.working;
+        return { type: 'block', value: `[Harness] ${decision.reason} Working budget: ${remaining}/${state.budget.allocated.working} tokens.` };
+      }
+      if (decision.action === 'rewrite') {
+        const bc = decision.budgetContext;
+        let msg = `[Harness] Consider using ${decision.tool}(${JSON.stringify(decision.args)}) instead`;
+        if (bc) {
+          msg += ` — saves ~${bc.savedTokens} tokens (${Math.round(bc.savedPct * 100)}%).`;
+          msg += `\nWorking budget: ${bc.remainingBudget}/${state.budget.allocated.working} tokens remaining (${bc.pressureLevel} pressure).`;
+        } else {
+          msg += ' — more token-efficient for this task.';
+        }
+        return { type: 'context', value: msg };
+      }
+      if (decision.action === 'warn') {
+        return { type: 'context', value: `[Harness] ${decision.message}` };
+      }
+    } finally {
+      releaseLock(lockPath);
     }
   } catch {
     // Harness not built or other error — skip silently

@@ -8,3 +8,4 @@ export { buildJudgePrompt, parseJudgeResponse, evaluateWithJudge } from './judge
 export { decide } from './pipeline.js';
 export { computeMetrics } from './metrics.js';
 export type { SessionMetrics } from './metrics.js';
+export { acquireLock, releaseLock } from './lock.js';
