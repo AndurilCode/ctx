@@ -110,5 +110,8 @@ describe('installer engine sync', () => {
     );
     expect(installer).not.toContain('!existsSync(ENGINE_DST)');
     expect(installer).toContain('copyFileSync(ENGINE_SRC, ENGINE_DST)');
+    expect(installer).toContain('copyFileSync(HARNESS_EVAL_SRC, HARNESS_EVAL_DST)');
+    expect(installer).toContain('copyFileSync(HARNESS_FORMAT_SRC, HARNESS_FORMAT_DST)');
+    expect(installer).toContain("'PreCompact'");
   });
 });

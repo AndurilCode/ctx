@@ -5,9 +5,10 @@
 // What it does:
 //   1. Creates .claude/hooks/ directory
 //   2. Copies engine.mjs → .claude/hooks/context-inject.mjs
+//   2a. Copies harness helpers used by the engine
 //   3. Ensures package.json has the minimatch dependency
 //   4. Installs dependencies (bun or npm)
-//   5. Registers the hook in .claude/settings.json (all 7 events)
+//   5. Registers the hook in .claude/settings.json (all 8 events)
 //   6. Seeds an empty .claude/context-rules.json if absent
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync, copyFileSync } from 'node:fs';
@@ -22,17 +23,24 @@ const LEARN_DST = resolve(HOOKS_DIR, 'learn.mjs');
 const LEARN_SRC = new URL('./learn.mjs', import.meta.url).pathname;
 const PLATFORM_DST = resolve(HOOKS_DIR, 'platform.mjs');
 const PLATFORM_SRC = new URL('./platform.mjs', import.meta.url).pathname;
+const HARNESS_EVAL_DST = resolve(HOOKS_DIR, 'harness-eval.mjs');
+const HARNESS_EVAL_SRC = new URL('./harness-eval.mjs', import.meta.url).pathname;
+const HARNESS_FORMAT_DST = resolve(HOOKS_DIR, 'harness-format.mjs');
+const HARNESS_FORMAT_SRC = new URL('./harness-format.mjs', import.meta.url).pathname;
 const LEARNINGS_PATH = resolve(ROOT, '.claude/learnings.json');
 const PKG_PATH = resolve(HOOKS_DIR, 'package.json');
 const SETTINGS_PATH = resolve(ROOT, '.claude/settings.json');
 const RULES_PATH = resolve(ROOT, '.claude/context-rules.json');
 
-const EVENTS = ['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'SessionStart', 'SubagentStart', 'PostToolUseFailure', 'Stop'];
+const EVENTS = ['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'SessionStart', 'SubagentStart', 'PostToolUseFailure', 'Stop', 'PreCompact'];
 const HOOK_ENTRY = {
   type: 'command',
   command: 'node .claude/hooks/context-inject.mjs',
   cwd: '.',
   statusMessage: 'Injecting context rules…',
+};
+const HOOK_STATUS_BY_EVENT = {
+  PreCompact: 'Resetting harness state before compaction…',
 };
 
 // ── helpers ──────────────────────────────────────────────────────────
@@ -78,6 +86,14 @@ log('Synced platform module → .claude/hooks/platform.mjs');
 copyFileSync(LEARN_SRC, LEARN_DST);
 log('Synced learn CLI → .claude/hooks/learn.mjs');
 
+// 2d. Copy harness evaluation module
+copyFileSync(HARNESS_EVAL_SRC, HARNESS_EVAL_DST);
+log('Synced harness evaluator → .claude/hooks/harness-eval.mjs');
+
+// 2e. Copy harness format helper
+copyFileSync(HARNESS_FORMAT_SRC, HARNESS_FORMAT_DST);
+log('Synced harness formatter → .claude/hooks/harness-format.mjs');
+
 // 3. package.json
 const pkg = readJSON(PKG_PATH);
 if (!pkg) {
@@ -108,7 +124,10 @@ let changed = false;
 for (const ev of EVENTS) {
   settings.hooks[ev] = settings.hooks[ev] || [];
   if (!hasContextInject(settings.hooks[ev])) {
-    settings.hooks[ev].push({ matcher: '.*', hooks: [HOOK_ENTRY] });
+    settings.hooks[ev].push({
+      matcher: '.*',
+      hooks: [{ ...HOOK_ENTRY, statusMessage: HOOK_STATUS_BY_EVENT[ev] || HOOK_ENTRY.statusMessage }],
+    });
     changed = true;
   }
 }

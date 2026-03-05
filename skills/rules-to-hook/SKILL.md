@@ -95,9 +95,9 @@ Block and allow rules control tool execution (PreToolUse only):
 the tool call is denied even if other rules `allow` or inject context.
 
 ### `on` values
-`PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `SessionStart` / `SubagentStart` / `PostToolUseFailure` / `Stop`
+`PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `SessionStart` / `SubagentStart` / `PostToolUseFailure` / `Stop` / `PreCompact`
 
-The installer registers hooks for all 7 events automatically.
+The installer registers hooks for all 8 events automatically.
 
 ### `when` keys (all optional, implicit AND)
 | Key | Type | Notes |
@@ -244,11 +244,13 @@ Check whether the hook engine is installed:
 1. `.claude/hooks/context-inject.mjs` exists
 2. `.claude/hooks/platform.mjs` exists
 3. `.claude/hooks/learn.mjs` exists
-4. `.claude/settings.json` has `context-inject.mjs` registered in all 7 events (PreToolUse, PostToolUse, UserPromptSubmit, SessionStart, SubagentStart, PostToolUseFailure, Stop)
-5. `.claude/hooks/node_modules/minimatch` exists (dependency installed)
-6. `.claude/learnings.json` exists
+4. `.claude/hooks/harness-eval.mjs` exists
+5. `.claude/hooks/harness-format.mjs` exists
+6. `.claude/settings.json` has `context-inject.mjs` registered in all 8 events (PreToolUse, PostToolUse, UserPromptSubmit, SessionStart, SubagentStart, PostToolUseFailure, Stop, PreCompact)
+7. `.claude/hooks/node_modules/minimatch` exists (dependency installed)
+8. `.claude/learnings.json` exists
 
-If **all six** pass → skip to Phase 1.
+If **all eight** pass → skip to Phase 1.
 
 If **any** is missing → run the installer:
 
@@ -260,8 +262,9 @@ The installer is idempotent. It:
 - Creates `.claude/hooks/` and copies the engine from `skills/rules-to-hook/engine.mjs`
 - Copies the platform module from `skills/rules-to-hook/platform.mjs`
 - Copies the learn CLI from `skills/rules-to-hook/learn.mjs`
+- Copies harness modules from `skills/rules-to-hook/harness-eval.mjs` and `skills/rules-to-hook/harness-format.mjs`
 - Ensures `package.json` has `minimatch` and installs dependencies
-- Merges hook registrations into `.claude/settings.json` (all 7 events, `.*` matcher)
+- Merges hook registrations into `.claude/settings.json` (all 8 events, `.*` matcher)
 - Seeds an empty `.claude/context-rules.json` if absent
 - Seeds an empty `.claude/learnings.json` if absent
 - Seeds learnings context rules (injection on Read + prompt reminder) into `context-rules.json`
@@ -617,6 +620,9 @@ Apply before writing any rule:
 - `block` is valid on `PreToolUse`, `PostToolUse`, `UserPromptSubmit`, and `Stop` — reject on other events.
 - `allow` is only valid on `PreToolUse` — reject on other events with: `"allow rules only work on PreToolUse events."`
 - `source` key is only meaningful on `SessionStart`; `agent_type` on `SubagentStart`; `error` on `PostToolUseFailure`.
+
+The engine also enforces this validation at runtime. Invalid rules are ignored
+instead of being partially applied.
 
 ## Notes
 

@@ -41,6 +41,79 @@ try {
 
 if (!Array.isArray(rules)) process.exit(0);
 
+const VALID_EVENTS = new Set([
+  'PreToolUse',
+  'PostToolUse',
+  'UserPromptSubmit',
+  'SessionStart',
+  'SubagentStart',
+  'PostToolUseFailure',
+  'Stop',
+  'PreCompact',
+]);
+
+const VALID_WHEN_KEYS = new Set([
+  'tool',
+  'path',
+  'command',
+  'prompt',
+  'source',
+  'agent_type',
+  'error',
+  'content',
+  'response',
+]);
+
+const VALID_INJECT_KEYS = new Set(['text', 'hint', 'shell', 'block', 'allow', 'learnings']);
+
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function validateRule(rule) {
+  if (!isPlainObject(rule)) return false;
+  if (!VALID_EVENTS.has(rule.on)) return false;
+  if (!isPlainObject(rule.inject)) return false;
+
+  const injectKeys = Object.keys(rule.inject);
+  if (injectKeys.length !== 1) return false;
+  const [injectKey] = injectKeys;
+  if (!VALID_INJECT_KEYS.has(injectKey)) return false;
+
+  if (rule.when !== undefined && !isPlainObject(rule.when)) return false;
+  if (isPlainObject(rule.when)) {
+    for (const key of Object.keys(rule.when)) {
+      if (!VALID_WHEN_KEYS.has(key)) return false;
+      const value = rule.when[key];
+      if (key === 'path') {
+        if (!isNonEmptyString(value)) return false;
+      } else if (!isNonEmptyString(value)) {
+        return false;
+      }
+    }
+  }
+
+  if (injectKey === 'allow' && rule.on !== 'PreToolUse') return false;
+  if (injectKey === 'block' && !['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'Stop'].includes(rule.on)) return false;
+
+  if (injectKey === 'shell') {
+    if (!isNonEmptyString(rule.inject.shell)) return false;
+    if (rule.inject.shell.includes(';') || rule.inject.shell.includes('&&')) return false;
+  } else if (injectKey === 'learnings') {
+    if (rule.inject.learnings !== true) return false;
+  } else if (!isNonEmptyString(rule.inject[injectKey])) {
+    return false;
+  }
+
+  return true;
+}
+
+const validRules = rules.filter(validateRule);
+
 const rawPath = pickString(toolInput.file_path, toolInput.path, toolInput.filePath);
 const cwd = process.cwd();
 const filePath = rawPath.startsWith(cwd) ? rawPath.slice(cwd.length + 1) : rawPath;
@@ -132,7 +205,7 @@ function resolveInject(inject) {
   return null;
 }
 
-const matched = rules
+const matched = validRules
   .filter((r) => r.on === event && r.inject && matchesWhen(r.when ?? {}))
   .map((r) => resolveInject(r.inject))
   .filter(Boolean);
