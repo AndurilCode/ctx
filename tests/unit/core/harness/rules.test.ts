@@ -116,7 +116,7 @@ describe('Rule 7: re-read detection', () => {
 });
 
 describe('Rule 8: sequence batching', () => {
-  test('denies when 3+ reads in same directory in recent history', () => {
+  test('escalates when 3+ reads in same directory in recent history', () => {
     const state = createHarnessState({ contextWindow: 200_000 });
     state.history = [
       { turn: 0, tool: 'read', args: { file: '/src/core/a.ts' }, tokensConsumed: 100, durationMs: 10 },
@@ -125,8 +125,8 @@ describe('Rule 8: sequence batching', () => {
     ];
     const call = { tool: 'read', args: { file: '/src/core/d.ts' } };
     const result = evaluateRules(call, state, new Map([['/src/core/d.ts', 500]]));
-    expect(result.outcome).toBe('deny');
-    expect((result as any).reason).toContain('gather()');
+    expect(result.outcome).toBe('escalate');
+    expect((result as any).hint).toBe('dir_batching');
   });
 
   test('allows when only 2 reads in same directory', () => {

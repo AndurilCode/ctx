@@ -43,7 +43,7 @@ export function evaluateRules(
     // Hot file + different strategy = allow (valid re-read after mutation)
   }
 
-  // ---- Rule 8: Sequence batching (3+ reads in same dir) ----
+  // ---- Rule 8: Sequence batching (3+ reads in same dir) → advisory ----
   if (call.tool === 'read' && file != null) {
     const recent = state.history.slice(-5);
     const targetDir = dirname(file);
@@ -53,8 +53,8 @@ export function evaluateRules(
     });
     if (readsInDir.length >= 3) {
       return {
-        outcome: 'deny',
-        reason: `${readsInDir.length} reads in ${targetDir}/ — use gather() or context() to batch.`,
+        outcome: 'escalate',
+        hint: 'dir_batching',
       };
     }
   }
