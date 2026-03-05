@@ -91,10 +91,19 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath }) {
     writeFileSync(statePath, JSON.stringify(serialize(state), null, 2));
 
     if (decision.action === 'deny') {
-      return { type: 'block', value: `[Harness] ${decision.reason}` };
+      const remaining = state.budget.allocated.working - state.budget.consumed.working;
+      return { type: 'block', value: `[Harness] ${decision.reason} Working budget: ${remaining}/${state.budget.allocated.working} tokens.` };
     }
     if (decision.action === 'rewrite') {
-      return { type: 'context', value: `[Harness] Consider using ${decision.tool}(${JSON.stringify(decision.args)}) instead — more token-efficient for this task.` };
+      const bc = decision.budgetContext;
+      let msg = `[Harness] Consider using ${decision.tool}(${JSON.stringify(decision.args)}) instead`;
+      if (bc) {
+        msg += ` — saves ~${bc.savedTokens} tokens (${Math.round(bc.savedPct * 100)}%).`;
+        msg += `\nWorking budget: ${bc.remainingBudget}/${state.budget.allocated.working} tokens remaining (${bc.pressureLevel} pressure).`;
+      } else {
+        msg += ' — more token-efficient for this task.';
+      }
+      return { type: 'context', value: msg };
     }
     if (decision.action === 'warn') {
       return { type: 'context', value: `[Harness] ${decision.message}` };
