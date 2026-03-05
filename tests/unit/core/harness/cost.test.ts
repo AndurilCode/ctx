@@ -13,6 +13,14 @@ describe('generateAlternatives', () => {
     const alts = generateAlternatives(call, { fileTokens: 3000, mentionedSymbols: ['MyClass'] });
     expect(alts.some(a => a.tool === 'focus')).toBe(true);
   });
+  test('outline alternative has roundtrips=2 (outline + follow-up)', () => {
+    const alts = generateAlternatives(
+      { tool: 'read', args: { file: 'big.ts' } },
+      { fileTokens: 5000, mentionedSymbols: [] },
+    );
+    const outline = alts.find(a => a.tool === 'outline');
+    expect(outline?.roundtrips).toBe(2);
+  });
   test('generates budgeted read alternative', () => {
     const call: InterceptedCall = { tool: 'read', args: { file: 'big.ts' } };
     const alts = generateAlternatives(call, { fileTokens: 3000, mentionedSymbols: [] });

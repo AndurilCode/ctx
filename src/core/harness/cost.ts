@@ -36,7 +36,7 @@ export function generateAlternatives(
     tool: 'outline',
     args: { file },
     estTokens: Math.max(50, ctx.fileTokens * 0.05),
-    roundtrips: 1,
+    roundtrips: 2,
     cost: 0,
   });
 
