@@ -10,11 +10,11 @@ describe('evaluateRules', () => {
     expect(result.outcome).toBe('allow');
   });
 
-  test('escalates large file reads without maxTokens', () => {
+  test('allows first read of large file (Rule 10 pass-through)', () => {
     const state = createHarnessState({ contextWindow: 200_000 });
     const fileTokens = new Map([['big.ts', 5000]]);
     const result = evaluateRules({ tool: 'read', args: { file: 'big.ts' } }, state, fileTokens);
-    expect(result.outcome).toBe('escalate');
+    expect(result.outcome).toBe('allow');
   });
 
   test('allows large file reads when maxTokens is set', () => {
@@ -52,12 +52,39 @@ describe('evaluateRules', () => {
     expect(result.outcome).toBe('allow');
   });
 
-  test('escalates when budget is exhausted', () => {
+  test('escalates when budget is exhausted (second read)', () => {
     const state = createHarnessState({ contextWindow: 10_000 });
     state.budget.consumed.working = 3800;
+    state.cache.filesRead.set('file.ts', { strategy: 'budgeted', tokens: 200, turn: 0 });
+    state.cache.hotFiles.add('file.ts'); // hot so it passes deny rules
     const fileTokens = new Map([['file.ts', 500]]);
     const result = evaluateRules({ tool: 'read', args: { file: 'file.ts' } }, state, fileTokens);
     expect(result.outcome).toBe('escalate');
+  });
+});
+
+describe('Rule 10: first-read pass-through', () => {
+  test('allows first read of large file (>2000 tokens)', () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    const fileTokens = new Map([['big.ts', 5000]]);
+    const result = evaluateRules({ tool: 'read', args: { file: 'big.ts' } }, state, fileTokens);
+    expect(result.outcome).toBe('allow');
+  });
+
+  test('escalates second read of large file', () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    state.cache.filesRead.set('big.ts', { strategy: 'full', tokens: 5000, turn: 0 });
+    state.cache.hotFiles.add('big.ts'); // hot so it passes deny rules
+    const fileTokens = new Map([['big.ts', 5000]]);
+    const result = evaluateRules({ tool: 'read', args: { file: 'big.ts', maxTokens: 800 } }, state, fileTokens);
+    // Should not be 'allow' — either escalate or rewrite since file was already read
+    expect(result.outcome).not.toBe('deny');
+  });
+
+  test('does not affect non-read tools', () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    const result = evaluateRules({ tool: 'grep', args: { pattern: 'TODO' } }, state, new Map());
+    expect(result.outcome).toBe('rewrite'); // unscoped grep still rewrites to rank
   });
 });
 

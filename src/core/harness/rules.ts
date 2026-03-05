@@ -66,6 +66,11 @@ export function evaluateRules(
     return { outcome: 'allow' };
   }
 
+  // ---- Rule 10: First-read pass-through ----
+  if (call.tool === 'read' && file != null && !state.cache.filesRead.has(file)) {
+    return { outcome: 'allow' };
+  }
+
   // ---- Rule 2: Large file without budget constraints ----
   if (
     call.tool === 'read' &&
