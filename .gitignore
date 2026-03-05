@@ -12,3 +12,12 @@ docs/
 .claude/harness-state.json
 skills-lock.json
 skills/systems-thinking/SKILL.md
+skills/second-order-thinking/SKILL.md
+skills/red-teaming/SKILL.md
+skills/probabilistic-thinking/SKILL.md
+skills/inversion-premortem/SKILL.md
+skills/five-whys-root-cause/SKILL.md
+skills/first-principles-thinking/SKILL.md
+skills/cynefin-framework/SKILL.md
+skills/cognitive-bias-detection/SKILL.md
+skills/theory-of-constraints/SKILL.md
