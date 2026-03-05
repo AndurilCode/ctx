@@ -136,17 +136,17 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath, pro
         // { llmCall: claudeCall },  // Enable when cost alternatives have closer profiles
       );
 
-      // Only record the call if the harness allows it — rewrites and denies
-      // should not pollute state since the original call won't execute.
+      // Record the call if it will actually execute. Advisory rewrites
+      // (returned as context) don't block — the original call still runs.
+      // Only deny truly prevents execution.
       const estTokens = rawPath ? (fileTokens.get(rawPath) ?? 0) : 0;
-      if (decision.action === 'allow') {
+      if (decision.action !== 'deny') {
         recordToolCall(state, {
           tool: toolName.toLowerCase(),
           args: toolInput ?? {},
           tokensConsumed: estTokens,
           durationMs: 0,
         });
-        updateSignals(state);
       }
 
       // Persist state

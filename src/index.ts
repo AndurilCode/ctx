@@ -119,3 +119,4 @@ export { buildJudgePrompt, parseJudgeResponse, evaluateWithJudge } from './core/
 export { decide } from './core/harness/pipeline.js';
 export { computeMetrics } from './core/harness/metrics.js';
 export type { SessionMetrics } from './core/harness/metrics.js';
+export { acquireLock, releaseLock } from './core/harness/lock.js';
