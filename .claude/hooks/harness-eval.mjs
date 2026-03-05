@@ -111,15 +111,18 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath, pro
         // { llmCall: claudeCall },  // Enable when cost alternatives have closer profiles
       );
 
-      // Record this call so state accumulates across hook invocations
+      // Only record the call if the harness allows it — rewrites and denies
+      // should not pollute state since the original call won't execute.
       const estTokens = rawPath ? (fileTokens.get(rawPath) ?? 0) : 0;
-      recordToolCall(state, {
-        tool: toolName.toLowerCase(),
-        args: toolInput ?? {},
-        tokensConsumed: estTokens,
-        durationMs: 0,
-      });
-      updateSignals(state);
+      if (decision.action === 'allow') {
+        recordToolCall(state, {
+          tool: toolName.toLowerCase(),
+          args: toolInput ?? {},
+          tokensConsumed: estTokens,
+          durationMs: 0,
+        });
+        updateSignals(state);
+      }
 
       // Persist state
       const { writeFileSync } = await import('node:fs');
