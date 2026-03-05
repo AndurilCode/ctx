@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Context Rules",
+  "description": "Declarative rules for the context-inject hook engine",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["on", "inject"],
+    "properties": {
+      "on": {
+        "type": "string",
+        "enum": [
+          "PreToolUse",
+          "PostToolUse",
+          "UserPromptSubmit",
+          "SessionStart",
+          "SessionEnd",
+          "SubagentStart",
+          "PostToolUseFailure",
+          "Stop",
+          "PreCompact",
+          "ErrorOccurred"
+        ],
+        "description": "Hook event that triggers this rule"
+      },
+      "when": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string",
+            "description": "Regex matching tool name (e.g. 'Read', 'Write|Edit|MultiEdit')"
+          },
+          "path": {
+            "type": "string",
+            "description": "Minimatch glob for file path (e.g. 'src/stages/**')"
+          },
+          "command": {
+            "type": "string",
+            "description": "Regex matching Bash command content"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Regex matching user prompt text"
+          },
+          "source": {
+            "type": "string",
+            "description": "Regex matching event source"
+          },
+          "agent_type": {
+            "type": "string",
+            "description": "Regex matching agent type"
+          },
+          "error": {
+            "type": "string",
+            "description": "Regex matching error message"
+          },
+          "content": {
+            "type": "string",
+            "description": "Regex matching tool content/new_string"
+          },
+          "response": {
+            "type": "string",
+            "description": "Regex matching tool response JSON"
+          }
+        },
+        "additionalProperties": false
+      },
+      "inject": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text to inject into additionalContext"
+          },
+          "hint": {
+            "type": "string",
+            "description": "Related file/section hint (prefixed with 'Related:')"
+          },
+          "learnings": {
+            "type": "boolean",
+            "description": "Inject matching learnings for the file"
+          },
+          "block": {
+            "type": "string",
+            "description": "Block the tool call with this reason (PreToolUse only)"
+          },
+          "allow": {
+            "type": "string",
+            "description": "Auto-allow the tool call with this reason (PreToolUse only)"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  }
+}
