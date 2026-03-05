@@ -10,3 +10,5 @@ coverage/
 docs/
 .serena/
 .claude/harness-state.json
+skills-lock.json
+skills/systems-thinking/SKILL.md
