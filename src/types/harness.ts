@@ -64,6 +64,13 @@ export interface SessionSignals {
 }
 
 // --- Decision Engine ---
+
+export interface BudgetContext {
+  savedTokens: number;
+  savedPct: number;
+  remainingBudget: number;
+  pressureLevel: 'low' | 'medium' | 'high';
+}
 export interface InterceptedCall {
   tool: string;
   args: Record<string, unknown>;
@@ -71,7 +78,7 @@ export interface InterceptedCall {
 
 export type DecisionAction =
   | { action: 'allow' }
-  | { action: 'rewrite'; tool: string; args: Record<string, unknown> }
+  | { action: 'rewrite'; tool: string; args: Record<string, unknown>; budgetContext?: BudgetContext }
   | { action: 'inject_before'; calls: InterceptedCall[] }
   | { action: 'return_cached'; result: unknown }
   | { action: 'warn'; message: string }
@@ -79,8 +86,8 @@ export type DecisionAction =
 
 export type StageResult =
   | { outcome: 'allow' }
-  | { outcome: 'rewrite'; tool: string; args: Record<string, unknown> }
-  | { outcome: 'escalate'; hint?: string; alternatives?: ScoredAlternative[] }
+  | { outcome: 'rewrite'; tool: string; args: Record<string, unknown>; budgetContext?: BudgetContext }
+  | { outcome: 'escalate'; hint?: string; alternatives?: ScoredAlternative[]; budgetContext?: BudgetContext }
   | { outcome: 'deny'; reason: string };
 
 export interface ScoredAlternative {
