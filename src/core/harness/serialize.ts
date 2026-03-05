@@ -39,7 +39,7 @@ export function deserialize(s: SerializedHarnessState): HarnessState {
       hotFiles: new Set(s.cache.hotFiles),
     },
     history: s.history,
-    signals: { currentReadStreak: 0, ...s.signals },
+    signals: { ...s.signals, currentReadStreak: s.signals.currentReadStreak ?? 0 },
     turn: s.turn,
     pendingRewrite: s.pendingRewrite,
     rewriteCompliance: s.rewriteCompliance ?? { followed: 0, ignored: 0 },
