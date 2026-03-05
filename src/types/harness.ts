@@ -55,6 +55,7 @@ export interface ToolCallRecord {
 // --- Session Signals ---
 export interface SessionSignals {
   sequentialReads: number;
+  currentReadStreak: number;
   budgetConsumedPct: number;
   depthEscalations: number;
   uniqueFilesRead: number;

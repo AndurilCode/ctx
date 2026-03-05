@@ -61,6 +61,32 @@ describe('recordToolCall', () => {
   });
 });
 
+describe('recordToolCall incremental signals', () => {
+  test('recordToolCall updates signals incrementally', () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+
+    recordToolCall(state, { tool: 'read', args: { file: 'a.ts' }, tokensConsumed: 100, durationMs: 5 });
+    expect(state.signals.sequentialReads).toBe(1);
+    expect(state.signals.currentReadStreak).toBe(1);
+    expect(state.signals.uniqueFilesRead).toBe(1);
+    expect(state.signals.toolDiversity).toBe(1);
+
+    recordToolCall(state, { tool: 'read', args: { file: 'b.ts' }, tokensConsumed: 100, durationMs: 5 });
+    expect(state.signals.sequentialReads).toBe(2);
+    expect(state.signals.currentReadStreak).toBe(2);
+
+    recordToolCall(state, { tool: 'edit', args: { file: 'a.ts' }, tokensConsumed: 50, durationMs: 5 });
+    expect(state.signals.currentReadStreak).toBe(0);
+    expect(state.signals.sequentialReads).toBe(2); // max preserved
+    expect(state.signals.mutations).toBe(1);
+    expect(state.signals.toolDiversity).toBe(2); // read + edit
+
+    recordToolCall(state, { tool: 'read', args: { file: 'c.ts' }, tokensConsumed: 100, durationMs: 5 });
+    expect(state.signals.currentReadStreak).toBe(1);
+    expect(state.signals.sequentialReads).toBe(2); // max still 2
+  });
+});
+
 describe('updateSignals', () => {
   test('computes signals from history', () => {
     const state = createHarnessState({ contextWindow: 200_000 });

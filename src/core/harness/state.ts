@@ -45,6 +45,7 @@ export function createHarnessState(opts: {
     history: [],
     signals: {
       sequentialReads: 0,
+      currentReadStreak: 0,
       budgetConsumedPct: 0,
       depthEscalations: 0,
       uniqueFilesRead: 0,
@@ -86,39 +87,44 @@ export function recordToolCall(
   if (MUTATION_TOOLS.has(record.tool) && file) {
     state.cache.hotFiles.add(file);
   }
+
+  // --- Incremental signal updates ---
+
+  // Sequential reads tracking
+  if (READ_TOOLS.has(record.tool)) {
+    state.signals.currentReadStreak += 1;
+    if (state.signals.currentReadStreak > state.signals.sequentialReads) {
+      state.signals.sequentialReads = state.signals.currentReadStreak;
+    }
+  } else {
+    state.signals.currentReadStreak = 0;
+  }
+
+  // Mutations
+  if (MUTATION_TOOLS.has(record.tool)) {
+    state.signals.mutations += 1;
+  }
+
+  // Unique files read (already tracked via filesRead.size)
+  state.signals.uniqueFilesRead = state.cache.filesRead.size;
+
+  // Tool diversity — check if this tool type was seen before in history
+  // (history already includes the current record at this point)
+  const isNewTool = !state.history.slice(0, -1).some(h => h.tool === record.tool);
+  if (isNewTool) {
+    state.signals.toolDiversity += 1;
+  }
+
+  // Budget consumed percentage
+  const alloc = state.budget.allocated.working;
+  state.signals.budgetConsumedPct = alloc > 0 ? state.budget.consumed.working / alloc : 0;
 }
 
 // ---------------------------------------------------------------------------
 // updateSignals
 // ---------------------------------------------------------------------------
 
-export function updateSignals(state: HarnessState): void {
-  const { history } = state;
-
-  let maxSeq = 0;
-  let curSeq = 0;
-  for (const entry of history) {
-    if (READ_TOOLS.has(entry.tool)) {
-      curSeq += 1;
-      if (curSeq > maxSeq) maxSeq = curSeq;
-    } else {
-      curSeq = 0;
-    }
-  }
-  state.signals.sequentialReads = maxSeq;
-
-  const alloc = state.budget.allocated.working;
-  state.signals.budgetConsumedPct =
-    alloc > 0 ? state.budget.consumed.working / alloc : 0;
-
-  state.signals.uniqueFilesRead = state.cache.filesRead.size;
-
-  let mutations = 0;
-  const toolSet = new Set<string>();
-  for (const entry of history) {
-    toolSet.add(entry.tool);
-    if (MUTATION_TOOLS.has(entry.tool)) mutations += 1;
-  }
-  state.signals.mutations = mutations;
-  state.signals.toolDiversity = toolSet.size;
+/** @deprecated Signals are now updated incrementally in recordToolCall. */
+export function updateSignals(_state: HarnessState): void {
+  // no-op — kept for backward compatibility with harness-eval.mjs callers
 }
