@@ -14,7 +14,7 @@ interface IntentPattern {
 }
 
 const INTENT_PATTERNS: IntentPattern[] = [
-  { pattern: /^(what|where)\b.{0,50}$/i, type: 'pinpoint', confidence: 0.7 },
+  { pattern: /^(what|where)\s+(is|are|file|class|function|module|package)\b.{0,50}$/i, type: 'pinpoint', confidence: 0.7 },
   { pattern: /\b(fix|bug|error|crash|broken|failing)\b/i, type: 'targeted_fix', confidence: 0.8 },
   { pattern: /\b(add|implement|create|build|new)\b/i, type: 'feature', confidence: 0.7 },
   { pattern: /\b(rename|move|extract|refactor|split|merge)\b/i, type: 'refactor', confidence: 0.8 },

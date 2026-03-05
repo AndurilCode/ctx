@@ -29,6 +29,18 @@ describe('classifyIntent', () => {
     const result = classifyIntent('update the thing');
     expect(result.confidence).toBeLessThan(0.8);
   });
+  test('classifies "what does this function do" as exploration, not pinpoint', () => {
+    const result = classifyIntent('what does this function do');
+    expect(result.type).toBe('exploration');
+  });
+  test('classifies "what is the entry point" as pinpoint', () => {
+    const result = classifyIntent('what is the entry point');
+    expect(result.type).toBe('pinpoint');
+  });
+  test('classifies "where is the config file" as pinpoint', () => {
+    const result = classifyIntent('where is the config file');
+    expect(result.type).toBe('pinpoint');
+  });
 });
 
 describe('computeWeights', () => {
