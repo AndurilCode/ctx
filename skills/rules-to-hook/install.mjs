@@ -27,6 +27,10 @@ const HARNESS_EVAL_DST = resolve(HOOKS_DIR, 'harness-eval.mjs');
 const HARNESS_EVAL_SRC = new URL('./harness-eval.mjs', import.meta.url).pathname;
 const HARNESS_FORMAT_DST = resolve(HOOKS_DIR, 'harness-format.mjs');
 const HARNESS_FORMAT_SRC = new URL('./harness-format.mjs', import.meta.url).pathname;
+const HEALTH_CHECK_DST = resolve(HOOKS_DIR, 'health-check.mjs');
+const HEALTH_CHECK_SRC = new URL('./health-check.mjs', import.meta.url).pathname;
+const SCHEMA_DST = resolve(ROOT, '.claude/context-rules.schema.json');
+const SCHEMA_SRC = new URL('../context-rules.schema.json', import.meta.url).pathname;
 const LEARNINGS_PATH = resolve(ROOT, '.claude/learnings.json');
 const PKG_PATH = resolve(HOOKS_DIR, 'package.json');
 const SETTINGS_PATH = resolve(ROOT, '.claude/settings.json');
@@ -93,6 +97,16 @@ log('Synced harness evaluator → .claude/hooks/harness-eval.mjs');
 // 2e. Copy harness format helper
 copyFileSync(HARNESS_FORMAT_SRC, HARNESS_FORMAT_DST);
 log('Synced harness formatter → .claude/hooks/harness-format.mjs');
+
+// 2f. Copy health check module
+copyFileSync(HEALTH_CHECK_SRC, HEALTH_CHECK_DST);
+log('Synced health check → .claude/hooks/health-check.mjs');
+
+// 2g. Copy JSON Schema (if source exists)
+try {
+  copyFileSync(SCHEMA_SRC, SCHEMA_DST);
+  log('Synced schema → .claude/context-rules.schema.json');
+} catch { /* schema may not be bundled */ }
 
 // 3. package.json
 const pkg = readJSON(PKG_PATH);

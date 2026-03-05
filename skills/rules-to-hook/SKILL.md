@@ -23,7 +23,7 @@ as JSON string). Key differences from Claude Code:
 - **Tool input**: VS Code sends `toolArgs` (JSON string), not `tool_input` (object).
   The engine parses it automatically.
 - **Output**: VS Code only supports `permissionDecision` on `preToolUse` — flat
-  JSON, no `hookSpecificOutput` wrapper. Context injection (`text`, `hint`, `shell`,
+  JSON, no `hookSpecificOutput` wrapper. Context injection (`text`, `hint`,
   `learnings`) has no effect on VS Code.
 - **Supported inject types on VS Code**: only `block` and `allow` (PreToolUse).
 
@@ -65,12 +65,12 @@ implicit AND), and an `inject` payload (exactly one key).
     "on": "PostToolUse",
     "when": { "tool": "Read|read_file", "path": "src/stages/**" },
     "inject": { "hint": "docs/stages-overview.md" }
-  },
-  {
-    "on": "UserPromptSubmit",
-    "when": { "prompt": "test|spec" },
-    "inject": { "shell": "bun test --listTests 2>/dev/null | head -20" }
   }
+
+
+
+
+
 ]
 ```
 
@@ -133,7 +133,7 @@ For read rules: `Read|read_file`
 |---|---|---|---|
 | `text` | Injected verbatim as `additionalContext` | All | No effect |
 | `hint` | Prefixed with `"Related: "` — agent decides whether to read | All | No effect |
-| `shell` | Command stdout captured and injected; must be fast (<100 ms); no `;` or `&&` | All | No effect |
+| `learnings` | Injects file-matched learnings from `.claude/learnings.json` | All | No effect |
 | `block` | Denies the tool call or blocks the event; value is the reason | PreToolUse, PostToolUse, UserPromptSubmit, Stop | Works (PreToolUse only) |
 | `allow` | Auto-approves the tool call; value is the reason shown to user | PreToolUse only | Works |
 
@@ -508,12 +508,12 @@ If yes, collect one answer at a time:
 2. **Trigger keys** — show only valid keys for the chosen event:
    - PreToolUse / PostToolUse: `tool`, `path`, `command`
    - UserPromptSubmit: `prompt`
-3. **Inject type** — text / hint / shell / block / allow
+3. **Inject type** — text / hint / block / allow
    - For `block`: available on PreToolUse, PostToolUse, UserPromptSubmit, Stop
    - For `allow`: only available when event is PreToolUse
 4. **Inject content**:
    - For `hint`: list existing `.md` files nearby and suggest one
-   - For `shell`: remind that the command must be fast and use no `;` or `&&`
+
 5. Preview the JSON rule and ask: **"Add this rule? (y/n)"**
 6. On confirm, append to `.claude/context-rules.json`.
 
@@ -528,7 +528,7 @@ When invoked with `list`, display current rules as an ASCII table:
 ─────────────────────────────────────────────────────────────────
 0  PreToolUse       tool=Edit|Write path=src/**   text: "..."
 1  PostToolUse      tool=Read path=src/stages/**  hint: docs/...
-2  UserPromptSubmit prompt=test                   shell: bun ...
+2  UserPromptSubmit prompt=test                   text: "..."
 ```
 
 If `.claude/context-rules.json` does not exist, print: `No rules found.`
@@ -575,7 +575,7 @@ matching tool call.
    ```
 
 3. Parse the JSON output and check:
-   - **context rules** (`text` / `hint` / `shell`):
+   - **context rules** (`text` / `hint`):
      output must contain `additionalContext` with the expected value.
    - **block rules**: output must contain `"permissionDecision": "deny"`.
    - **allow rules**: output must contain `"permissionDecision": "allow"`.
@@ -615,7 +615,7 @@ Apply before writing any rule:
   (the engine treats missing `when` as `{}`, matching unconditionally).
 - `path` globs must be non-empty strings.
 - `hint` values should exist on disk — warn if the file is not found, but do not block.
-- `shell` values must not contain `;` or `&&` — reject with an explanation.
+
 - `inject` must have exactly one key — reject if zero or more than one key is present.
 - `block` is valid on `PreToolUse`, `PostToolUse`, `UserPromptSubmit`, and `Stop` — reject on other events.
 - `allow` is only valid on `PreToolUse` — reject on other events with: `"allow rules only work on PreToolUse events."`
@@ -627,6 +627,6 @@ instead of being partially applied.
 ## Notes
 
 - Prefer `hint` over `text` for long or optional context — it costs fewer tokens.
-- `shell` output is injected verbatim; keep commands deterministic and side-effect-free.
+
 - The hook fires on every matching tool call — keep `when` filters targeted.
 - Phase 0 may create `context-inject.mjs` and modify `settings.json` — only during initial bootstrap.

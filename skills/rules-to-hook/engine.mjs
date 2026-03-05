@@ -1,19 +1,45 @@
 #!/usr/bin/env node
 // Hook engine: inject additionalContext based on .claude/context-rules.json
 
-import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { minimatch } from 'minimatch';
 import { extractInput, pickString, buildOutput, PERMISSION_EVENTS, DECISION_BLOCK_EVENTS } from './platform.mjs';
 import { evaluateHarness } from './harness-eval.mjs';
+import { runHealthCheck } from './health-check.mjs';
+// CLI --check mode (no stdin needed)
+if (process.argv.includes('--check')) {
+  const result = runHealthCheck(process.cwd());
+  if (result.issues.length === 0) {
+    console.log('All checks passed.');
+  } else {
+    for (const issue of result.issues) {
+      console.log(`[${issue.level.toUpperCase()}] ${issue.message}`);
+    }
+  }
+  process.exit(result.ok ? 0 : 1);
+}
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 let input;
 try {
   input = JSON.parse(Buffer.concat(chunks).toString());
-} catch {
+} catch (e) {
+  console.error(`[context-inject] Failed to parse stdin: ${e.message}`);
   process.exit(0);
 }
 
@@ -23,6 +49,19 @@ const { platform, event, toolName, toolInput, prompt, source, agentType, error, 
 
 // Stop safety guard: if stop_hook_active is set, exit silently to prevent infinite loops
 if (event === 'Stop' && stopHookActive) process.exit(0);
+
+// SessionStart health check
+if (event === 'SessionStart') {
+  const hc = runHealthCheck(process.cwd());
+  if (hc.issues.length > 0) {
+    const errors = hc.issues.filter(i => i.level === 'error');
+    const warns = hc.issues.filter(i => i.level === 'warn');
+    const parts = [];
+    if (errors.length) parts.push(`${errors.length} error(s)`);
+    if (warns.length) parts.push(`${warns.length} warning(s)`);
+    console.error(`[context-inject] Health check: ${parts.join(', ')}. Run: node .claude/hooks/context-inject.mjs --check`);
+  }
+}
 
 const configCandidates = [
   `${process.cwd()}/.claude/context-rules.json`,
@@ -35,84 +74,14 @@ if (!configPath) process.exit(0);
 let rules;
 try {
   rules = JSON.parse(readFileSync(configPath, 'utf8'));
-} catch {
+} catch (e) {
+  console.error(`[context-inject] Failed to parse context-rules.json: ${e.message}`);
   process.exit(0);
 }
-
-if (!Array.isArray(rules)) process.exit(0);
-
-const VALID_EVENTS = new Set([
-  'PreToolUse',
-  'PostToolUse',
-  'UserPromptSubmit',
-  'SessionStart',
-  'SubagentStart',
-  'PostToolUseFailure',
-  'Stop',
-  'PreCompact',
-]);
-
-const VALID_WHEN_KEYS = new Set([
-  'tool',
-  'path',
-  'command',
-  'prompt',
-  'source',
-  'agent_type',
-  'error',
-  'content',
-  'response',
-]);
-
-const VALID_INJECT_KEYS = new Set(['text', 'hint', 'shell', 'block', 'allow', 'learnings']);
-
-function isNonEmptyString(value) {
-  return typeof value === 'string' && value.trim().length > 0;
+if (!Array.isArray(rules)) {
+  console.error('[context-inject] context-rules.json must be a JSON array');
+  process.exit(0);
 }
-
-function isPlainObject(value) {
-  return value && typeof value === 'object' && !Array.isArray(value);
-}
-
-function validateRule(rule) {
-  if (!isPlainObject(rule)) return false;
-  if (!VALID_EVENTS.has(rule.on)) return false;
-  if (!isPlainObject(rule.inject)) return false;
-
-  const injectKeys = Object.keys(rule.inject);
-  if (injectKeys.length !== 1) return false;
-  const [injectKey] = injectKeys;
-  if (!VALID_INJECT_KEYS.has(injectKey)) return false;
-
-  if (rule.when !== undefined && !isPlainObject(rule.when)) return false;
-  if (isPlainObject(rule.when)) {
-    for (const key of Object.keys(rule.when)) {
-      if (!VALID_WHEN_KEYS.has(key)) return false;
-      const value = rule.when[key];
-      if (key === 'path') {
-        if (!isNonEmptyString(value)) return false;
-      } else if (!isNonEmptyString(value)) {
-        return false;
-      }
-    }
-  }
-
-  if (injectKey === 'allow' && rule.on !== 'PreToolUse') return false;
-  if (injectKey === 'block' && !['PreToolUse', 'PostToolUse', 'UserPromptSubmit', 'Stop'].includes(rule.on)) return false;
-
-  if (injectKey === 'shell') {
-    if (!isNonEmptyString(rule.inject.shell)) return false;
-    if (rule.inject.shell.includes(';') || rule.inject.shell.includes('&&')) return false;
-  } else if (injectKey === 'learnings') {
-    if (rule.inject.learnings !== true) return false;
-  } else if (!isNonEmptyString(rule.inject[injectKey])) {
-    return false;
-  }
-
-  return true;
-}
-
-const validRules = rules.filter(validateRule);
 
 const rawPath = pickString(toolInput.file_path, toolInput.path, toolInput.filePath);
 const cwd = process.cwd();
@@ -191,21 +160,13 @@ function resolveInject(inject) {
     }
   }
   if (inject.shell) {
-    try {
-      const out = execSync(inject.shell, {
-        encoding: 'utf8',
-        timeout: 5000,
-        maxBuffer: 128 * 1024,
-      }).trim();
-      return out ? { type: 'context', value: out } : null;
-    } catch {
-      return null;
-    }
+    console.error('[context-inject] inject.shell is not supported — use a dedicated hook script');
+    return null;
   }
   return null;
 }
 
-const matched = validRules
+const matched = rules
   .filter((r) => r.on === event && r.inject && matchesWhen(r.when ?? {}))
   .map((r) => resolveInject(r.inject))
   .filter(Boolean);
