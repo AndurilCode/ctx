@@ -5,6 +5,7 @@ import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { minimatch } from 'minimatch';
 import { extractInput, pickString, buildOutput, PERMISSION_EVENTS, DECISION_BLOCK_EVENTS } from './platform.mjs';
+import { evaluateHarness } from './harness-eval.mjs';
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
@@ -136,19 +137,35 @@ const matched = rules
   .map((r) => resolveInject(r.inject))
   .filter(Boolean);
 
-if (matched.length === 0) process.exit(0);
-
 const canBlock = PERMISSION_EVENTS.has(event) || DECISION_BLOCK_EVENTS.has(event);
 const canAllow = PERMISSION_EVENTS.has(event);
 const blocks = canBlock ? matched.filter((m) => m.type === 'block') : [];
 const allows = canAllow ? matched.filter((m) => m.type === 'allow') : [];
 const contexts = matched.filter((m) => m.type === 'context');
 
+// Harness evaluation (best-effort, may return block or context)
+const harnessResult = await evaluateHarness({ event, toolName, toolInput, rawPath, prompt });
+
+if (matched.length === 0 && !harnessResult) process.exit(0);
+
+// Merge harness result into blocks/contexts
+if (harnessResult) {
+  if (harnessResult.type === 'block' && canBlock) {
+    blocks.push(harnessResult);
+  } else if (harnessResult.type === 'context') {
+    contexts.push(harnessResult);
+  } else if (harnessResult.type === 'block') {
+    // Fallback: if event doesn't support blocking, inject as context
+    contexts.push({ type: 'context', value: harnessResult.value });
+  }
+}
+
 if (blocks.length === 0 && allows.length === 0 && contexts.length === 0) {
   process.exit(0);
 }
 
-const additionalContext = contexts.map((m) => m.value).join('\n') || undefined;
+let additionalContext = contexts.map((m) => m.value).join('\n') || '';
+additionalContext = additionalContext || undefined;
 const output = buildOutput({ platform, event, blocks, allows, additionalContext });
 if (output === null) process.exit(0);
 if (typeof output === 'string') process.stdout.write(output);
