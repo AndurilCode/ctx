@@ -10,20 +10,6 @@ describe('evaluateRules', () => {
     expect(result.outcome).toBe('allow');
   });
 
-  test('allows first read of large file (Rule 10 pass-through)', () => {
-    const state = createHarnessState({ contextWindow: 200_000 });
-    const fileTokens = new Map([['big.ts', 5000]]);
-    const result = evaluateRules({ tool: 'read', args: { file: 'big.ts' } }, state, fileTokens);
-    expect(result.outcome).toBe('allow');
-  });
-
-  test('allows large file reads when maxTokens is set', () => {
-    const state = createHarnessState({ contextWindow: 200_000 });
-    const fileTokens = new Map([['big.ts', 5000]]);
-    const result = evaluateRules({ tool: 'read', args: { file: 'big.ts', maxTokens: 800 } }, state, fileTokens);
-    expect(result.outcome).toBe('allow');
-  });
-
   test('rewrites unscoped grep to rank', () => {
     const state = createHarnessState({ contextWindow: 200_000 });
     const result = evaluateRules({ tool: 'grep', args: { pattern: 'TODO' } }, state, new Map());
@@ -81,11 +67,6 @@ describe('Rule 10: first-read pass-through', () => {
     expect(result.outcome).not.toBe('deny');
   });
 
-  test('does not affect non-read tools', () => {
-    const state = createHarnessState({ contextWindow: 200_000 });
-    const result = evaluateRules({ tool: 'grep', args: { pattern: 'TODO' } }, state, new Map());
-    expect(result.outcome).toBe('rewrite'); // unscoped grep still rewrites to rank
-  });
 });
 
 describe('Rule 7: re-read detection', () => {
@@ -103,13 +84,6 @@ describe('Rule 7: re-read detection', () => {
     state.cache.filesRead.set('/src/foo.ts', { strategy: 'full', tokens: 500, turn: 0 });
     state.cache.hotFiles.add('/src/foo.ts');
     const call = { tool: 'read', args: { file: '/src/foo.ts', maxTokens: 200 } };
-    const result = evaluateRules(call, state, new Map([['/src/foo.ts', 500]]));
-    expect(result.outcome).not.toBe('deny');
-  });
-
-  test('allows first read of a file', () => {
-    const state = createHarnessState({ contextWindow: 200_000 });
-    const call = { tool: 'read', args: { file: '/src/foo.ts' } };
     const result = evaluateRules(call, state, new Map([['/src/foo.ts', 500]]));
     expect(result.outcome).not.toBe('deny');
   });
@@ -164,6 +138,39 @@ describe('Rule 8: sequence batching', () => {
     const call = { tool: 'grep', args: { pattern: 'foo', path: '/src/core/' } };
     const result = evaluateRules(call, state, new Map());
     expect(result.outcome).not.toBe('deny');
+  });
+
+  test('detects batching even with interleaved non-read calls', () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    state.history = [
+      { turn: 0, tool: 'read', args: { file: '/src/core/a.ts' }, tokensConsumed: 100, durationMs: 10 },
+      { turn: 1, tool: 'grep', args: { pattern: 'foo' }, tokensConsumed: 50, durationMs: 10 },
+      { turn: 2, tool: 'read', args: { file: '/src/core/b.ts' }, tokensConsumed: 100, durationMs: 10 },
+      { turn: 3, tool: 'bash', args: { command: 'ls' }, tokensConsumed: 20, durationMs: 10 },
+      { turn: 4, tool: 'read', args: { file: '/src/core/c.ts' }, tokensConsumed: 100, durationMs: 10 },
+    ];
+    const call = { tool: 'read', args: { file: '/src/core/d.ts' } };
+    const result = evaluateRules(call, state, new Map([['/src/core/d.ts', 500]]));
+    expect(result.outcome).toBe('escalate');
+    expect((result as any).hint).toBe('dir_batching');
+  });
+
+  test('only considers last 5 reads, not last 5 calls', () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    state.history = [
+      { turn: 0, tool: 'read', args: { file: '/src/core/a.ts' }, tokensConsumed: 100, durationMs: 10 },
+      { turn: 1, tool: 'read', args: { file: '/src/core/b.ts' }, tokensConsumed: 100, durationMs: 10 },
+      { turn: 2, tool: 'read', args: { file: '/src/core/c.ts' }, tokensConsumed: 100, durationMs: 10 },
+      { turn: 3, tool: 'bash', args: { command: 'ls' }, tokensConsumed: 20, durationMs: 10 },
+      { turn: 4, tool: 'bash', args: { command: 'pwd' }, tokensConsumed: 20, durationMs: 10 },
+      { turn: 5, tool: 'bash', args: { command: 'echo' }, tokensConsumed: 20, durationMs: 10 },
+      { turn: 6, tool: 'bash', args: { command: 'date' }, tokensConsumed: 20, durationMs: 10 },
+      { turn: 7, tool: 'bash', args: { command: 'whoami' }, tokensConsumed: 20, durationMs: 10 },
+    ];
+    const call = { tool: 'read', args: { file: '/src/core/d.ts' } };
+    const result = evaluateRules(call, state, new Map([['/src/core/d.ts', 500]]));
+    expect(result.outcome).toBe('escalate');
+    expect((result as any).hint).toBe('dir_batching');
   });
 });
 

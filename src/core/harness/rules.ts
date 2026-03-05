@@ -45,11 +45,11 @@ export function evaluateRules(
 
   // ---- Rule 8: Sequence batching (3+ reads in same dir) → advisory ----
   if (call.tool === 'read' && file != null) {
-    const recent = state.history.slice(-5);
+    const recentReads = state.history.filter((h) => h.tool === 'read').slice(-5);
     const targetDir = dirname(file);
-    const readsInDir = recent.filter((h) => {
+    const readsInDir = recentReads.filter((h) => {
       const hFile = (h.args['file'] ?? h.args['file_path']) as string | undefined;
-      return h.tool === 'read' && hFile != null && dirname(hFile) === targetDir;
+      return hFile != null && dirname(hFile) === targetDir;
     });
     if (readsInDir.length >= 3) {
       return {
