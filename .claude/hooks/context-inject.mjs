@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 // Hook engine: inject additionalContext based on .claude/context-rules.json
 
-import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { minimatch } from 'minimatch';
 import { extractInput, pickString, buildOutput, PERMISSION_EVENTS, DECISION_BLOCK_EVENTS } from './platform.mjs';
@@ -13,7 +12,8 @@ for await (const chunk of process.stdin) chunks.push(chunk);
 let input;
 try {
   input = JSON.parse(Buffer.concat(chunks).toString());
-} catch {
+} catch (e) {
+  console.error(`[context-inject] Failed to parse stdin: ${e.message}`);
   process.exit(0);
 }
 
@@ -35,11 +35,14 @@ if (!configPath) process.exit(0);
 let rules;
 try {
   rules = JSON.parse(readFileSync(configPath, 'utf8'));
-} catch {
+} catch (e) {
+  console.error(`[context-inject] Failed to parse context-rules.json: ${e.message}`);
   process.exit(0);
 }
-
-if (!Array.isArray(rules)) process.exit(0);
+if (!Array.isArray(rules)) {
+  console.error('[context-inject] context-rules.json must be a JSON array');
+  process.exit(0);
+}
 
 const rawPath = pickString(toolInput.file_path, toolInput.path, toolInput.filePath);
 const cwd = process.cwd();
@@ -118,16 +121,8 @@ function resolveInject(inject) {
     }
   }
   if (inject.shell) {
-    try {
-      const out = execSync(inject.shell, {
-        encoding: 'utf8',
-        timeout: 5000,
-        maxBuffer: 128 * 1024,
-      }).trim();
-      return out ? { type: 'context', value: out } : null;
-    } catch {
-      return null;
-    }
+    console.error('[context-inject] inject.shell is not supported — use a dedicated hook script');
+    return null;
   }
   return null;
 }

@@ -26,6 +26,23 @@ function runHook(input, rules) {
   }
 }
 
+function runHookRaw(input, configContent) {
+  const cwd = join(tmpdir(), 'hook-test-' + Date.now() + '-' + Math.random());
+  mkdirSync(join(cwd, '.claude'), { recursive: true });
+  try {
+    if (configContent !== null) {
+      writeFileSync(join(cwd, 'context-rules.json'), typeof configContent === 'string' ? configContent : JSON.stringify(configContent));
+    }
+    return spawnSync('node', [HOOK], {
+      input: JSON.stringify(input),
+      cwd,
+      encoding: 'utf8',
+    });
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+}
+
 describe('context-inject hook', () => {
   test('emits nothing when no rules match', () => {
     const result = runHook(
@@ -160,5 +177,34 @@ describe('context-inject hook', () => {
       ],
     );
     expect(result).toBeNull();
+  });
+
+  test('emits stderr warning on invalid JSON config', () => {
+    const result = runHookRaw(
+      { hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: 'src/foo.ts' } },
+      '{ broken json',
+    );
+    expect(result.stderr).toContain('context-rules.json');
+    expect(result.stdout.trim()).toBe('');
+  });
+
+  test('emits stderr warning when config is not an array', () => {
+    const result = runHookRaw(
+      { hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: 'src/foo.ts' } },
+      '{"not": "array"}',
+    );
+    expect(result.stderr).toContain('array');
+    expect(result.stdout.trim()).toBe('');
+  });
+
+  test('ignores inject.shell rules with stderr warning', () => {
+    const result = runHookRaw(
+      { hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: 'src/foo.ts' } },
+      JSON.stringify([
+        { on: 'PreToolUse', when: { tool: 'Read' }, inject: { shell: 'echo secret' } },
+      ]),
+    );
+    expect(result.stderr).toContain('shell');
+    expect(result.stdout.trim()).toBe('');
   });
 });
