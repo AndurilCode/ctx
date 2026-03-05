@@ -5,9 +5,23 @@ import { existsSync, readFileSync } from 'node:fs';
 import { minimatch } from 'minimatch';
 import { extractInput, pickString, buildOutput, PERMISSION_EVENTS, DECISION_BLOCK_EVENTS } from './platform.mjs';
 import { evaluateHarness } from './harness-eval.mjs';
+import { runHealthCheck } from './health-check.mjs';
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
+
+// CLI --check mode (no stdin needed)
+if (process.argv.includes('--check')) {
+  const result = runHealthCheck(process.cwd());
+  if (result.issues.length === 0) {
+    console.log('All checks passed.');
+  } else {
+    for (const issue of result.issues) {
+      console.log(`[${issue.level.toUpperCase()}] ${issue.message}`);
+    }
+  }
+  process.exit(result.ok ? 0 : 1);
+}
 
 let input;
 try {
@@ -23,6 +37,19 @@ const { platform, event, toolName, toolInput, prompt, source, agentType, error, 
 
 // Stop safety guard: if stop_hook_active is set, exit silently to prevent infinite loops
 if (event === 'Stop' && stopHookActive) process.exit(0);
+
+// SessionStart health check
+if (event === 'SessionStart') {
+  const hc = runHealthCheck(process.cwd());
+  if (hc.issues.length > 0) {
+    const errors = hc.issues.filter(i => i.level === 'error');
+    const warns = hc.issues.filter(i => i.level === 'warn');
+    const parts = [];
+    if (errors.length) parts.push(`${errors.length} error(s)`);
+    if (warns.length) parts.push(`${warns.length} warning(s)`);
+    console.error(`[context-inject] Health check: ${parts.join(', ')}. Run: node .claude/hooks/context-inject.mjs --check`);
+  }
+}
 
 const configCandidates = [
   `${process.cwd()}/.claude/context-rules.json`,
