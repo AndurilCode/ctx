@@ -128,19 +128,7 @@
         ]
       }
     ],
-    "Stop": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/context-inject.mjs",
-            "cwd": ".",
-            "statusMessage": "Injecting context rules…"
-          }
-        ]
-      }
-    ],
+    "Stop": [],
     "PreCompact": [
       {
         "matcher": ".*",

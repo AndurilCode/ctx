@@ -22,19 +22,6 @@ if (process.argv.includes('--check')) {
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 let input;
 try {
   input = JSON.parse(Buffer.concat(chunks).toString());
@@ -177,8 +164,8 @@ const blocks = canBlock ? matched.filter((m) => m.type === 'block') : [];
 const allows = canAllow ? matched.filter((m) => m.type === 'allow') : [];
 const contexts = matched.filter((m) => m.type === 'context');
 
-// Harness evaluation (best-effort, may return block or context)
-const harnessResult = await evaluateHarness({ event, toolName, toolInput, rawPath, prompt });
+// Harness evaluation — skip Stop to avoid shutdown latency
+const harnessResult = event === 'Stop' ? null : await evaluateHarness({ event, toolName, toolInput, rawPath, prompt });
 
 if (matched.length === 0 && !harnessResult) process.exit(0);
 
