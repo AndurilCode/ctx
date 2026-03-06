@@ -58,11 +58,21 @@ export async function mediatePreToolUse(
 
   if (decision.action === 'deny') {
     const remaining = state.budget.allocated.working - state.budget.consumed.working;
+    // Record the call since we're allowing it through as a warning
+    const record = {
+      tool: request.toolName.toLowerCase(),
+      args: request.args,
+      tokensConsumed: estTokens,
+      durationMs: 0,
+    };
+    recordToolCall(state, record);
+    appendStateEvent(paths, { type: 'tool_call', record });
+    newEvents++;
     maybeCompact();
     return {
-      action: 'deny',
+      action: 'warn',
       output: {
-        type: 'block',
+        type: 'context',
         value: `[Harness] ${decision.reason} Working budget: ${remaining}/${state.budget.allocated.working} tokens.`,
       },
     };
@@ -81,13 +91,13 @@ export async function mediatePreToolUse(
     state.downgrades.total += 1;
     appendStateEvent(paths, { type: 'downgrade', key: 'returnCachedToDeny' });
     newEvents++;
-    emitDowngrade(opts, request, 'return_cached', 'deny', `Surface ${request.surface} cannot return cached results`);
+    emitDowngrade(opts, request, 'return_cached', 'warn', `Surface ${request.surface} cannot return cached results`);
     const remaining = state.budget.allocated.working - state.budget.consumed.working;
     maybeCompact();
     return {
-      action: 'deny',
+      action: 'warn',
       output: {
-        type: 'block',
+        type: 'context',
         value: `[Harness] Already read ${cached.file} with same strategy (${cached.strategy}) on turn ${cached.turn}. Content is already in context. Working budget: ${remaining}/${state.budget.allocated.working} tokens.`,
       },
     };
