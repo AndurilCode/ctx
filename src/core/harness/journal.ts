@@ -1,4 +1,8 @@
-import { appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
+import type { HarnessState, JournalEventData } from '../../types/harness.js';
+import { recordToolCall } from './state.js';
+
+// --- Legacy API (kept for downgrade/metrics journal) ---
 
 export interface JournalEntry {
   ts: number;
@@ -17,4 +21,60 @@ export function readJournal(journalPath: string): JournalEntry[] {
   } catch {
     return [];
   }
+}
+
+// --- Phase 3: Typed state journal ---
+
+export interface JournalRecord {
+  ts: number;
+  event: JournalEventData;
+}
+
+export function appendRecord(journalPath: string, event: JournalEventData): void {
+  const record: JournalRecord = { ts: Date.now(), event };
+  appendFileSync(journalPath, JSON.stringify(record) + '\n');
+}
+
+export function readRecords(journalPath: string): JournalRecord[] {
+  try {
+    const raw = readFileSync(journalPath, 'utf8');
+    return raw.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+  } catch {
+    return [];
+  }
+}
+
+export function replayEvent(state: HarnessState, event: JournalEventData): void {
+  switch (event.type) {
+    case 'tool_call':
+      recordToolCall(state, event.record);
+      break;
+    case 'tool_outcome': {
+      const entry = state.history.find(h => h.turn === event.turn);
+      if (entry) entry.outcome = event.outcome;
+      break;
+    }
+    case 'profile_update':
+      state.profile = event.profile;
+      break;
+    case 'pending_rewrite':
+      state.pendingRewrite = event.rewrite;
+      break;
+    case 'downgrade':
+      state.downgrades[event.key] += 1;
+      state.downgrades.total += 1;
+      break;
+  }
+}
+
+export function replayAll(state: HarnessState, records: JournalRecord[]): void {
+  for (const r of records) {
+    replayEvent(state, r.event);
+  }
+}
+
+export function truncateJournal(journalPath: string): void {
+  try {
+    writeFileSync(journalPath, '');
+  } catch { /* may not exist */ }
 }
