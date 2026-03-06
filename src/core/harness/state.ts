@@ -1,4 +1,5 @@
 import type {
+  ActualOutcome,
   BudgetZones,
   HarnessState,
   StrategyProfile,
@@ -130,6 +131,19 @@ export function recordToolCall(
   // Budget consumed percentage
   const alloc = state.budget.allocated.working;
   state.signals.budgetConsumedPct = alloc > 0 ? state.budget.consumed.working / alloc : 0;
+}
+
+// ---------------------------------------------------------------------------
+// recordOutcome
+// ---------------------------------------------------------------------------
+
+export function recordOutcome(
+  state: HarnessState,
+  turn: number,
+  outcome: ActualOutcome,
+): void {
+  const entry = state.history.find(h => h.turn === turn);
+  if (entry) entry.outcome = outcome;
 }
 
 // ---------------------------------------------------------------------------

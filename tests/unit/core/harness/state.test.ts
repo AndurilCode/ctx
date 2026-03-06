@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { createHarnessState, serialize, deserialize, recordToolCall, updateSignals } from '../../../../src/core/harness/state.js';
+import { createHarnessState, serialize, deserialize, recordToolCall, updateSignals, recordOutcome } from '../../../../src/core/harness/state.js';
+import type { ActualOutcome } from '../../../../src/types/harness.js';
 
 describe('createHarnessState', () => {
   test('creates default state with given context window size', () => {
@@ -100,5 +101,21 @@ describe('updateSignals', () => {
     expect(state.signals.uniqueFilesRead).toBe(4);
     expect(state.signals.mutations).toBe(0);
     expect(state.signals.budgetConsumedPct).toBeCloseTo(2000 / 80_000, 2);
+  });
+});
+
+describe('recordOutcome', () => {
+  test('updates history entry with actual outcome', () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    recordToolCall(state, { tool: 'read', args: { file: 'a.ts' }, tokensConsumed: 100, durationMs: 5 });
+    const outcome: ActualOutcome = { tokens: 80, durationMs: 12, success: true };
+    recordOutcome(state, 0, outcome);
+    expect(state.history[0].outcome).toEqual(outcome);
+  });
+
+  test('no-op for nonexistent turn', () => {
+    const state = createHarnessState({ contextWindow: 200_000 });
+    recordOutcome(state, 99, { tokens: 0, durationMs: 0, success: false, error: 'not found' });
+    expect(state.history).toHaveLength(0);
   });
 });
