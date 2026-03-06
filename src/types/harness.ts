@@ -50,6 +50,7 @@ export interface ToolCallRecord {
   args: Record<string, unknown>;
   tokensConsumed: number;
   durationMs: number;
+  outcome?: import('./harness-journal.js').ActualOutcome;
 }
 
 // --- Session Signals ---
@@ -182,6 +183,7 @@ export interface HarnessRequest {
   rawPath?: string;
   prompt?: string;
   taskDescription?: string;
+  result?: { tokens?: number; durationMs?: number; success?: boolean; error?: string };
   capabilities: AdapterCapabilities;
 }
 
