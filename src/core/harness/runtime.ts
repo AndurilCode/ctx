@@ -1,12 +1,15 @@
-import type { HarnessRequest, RuntimeResult } from '../../types/harness.js';
-import { recordToolCall } from './state.js';
-import { loadState, saveState, resetState } from './store.js';
-import { decide } from './pipeline.js';
+import type { HarnessRequest, RuntimeResult, JournalEventData } from '../../types/harness.js';
+import { recordOutcome } from './state.js';
+import {
+  deriveStorePaths, loadStateJournaled, appendStateEvent,
+  compact, resetState, acquireStoreLock, releaseStoreLock,
+} from './store.js';
 import { buildProfile } from './classifier.js';
 import { computeMetrics } from './metrics.js';
-import { appendFileSync, statSync } from 'node:fs';
+import { appendFileSync } from 'node:fs';
 import type { PipelineOptions } from './pipeline.js';
 import { appendEntry } from './journal.js';
+import { isHarnessTool, mediatePreToolUse } from './runtime-mediate.js';
 
 export interface RuntimeOptions {
   statePath: string;
@@ -15,10 +18,9 @@ export interface RuntimeOptions {
   pipelineOptions?: PipelineOptions;
 }
 
-const HARNESS_TOOLS = new Set(['Read', 'Grep', 'Glob']);
+const COMPACT_THRESHOLD = 50;
 
-
-function emitDowngrade(
+export function emitDowngrade(
   opts: RuntimeOptions,
   request: HarnessRequest,
   intended: string,
@@ -40,21 +42,72 @@ export async function evaluate(
   request: HarnessRequest,
   opts: RuntimeOptions,
 ): Promise<RuntimeResult> {
-  const { statePath, contextWindow = 200_000 } = opts;
+  const { statePath } = opts;
 
-  // --- SessionStart / PreCompact: reset ---
+  // --- SessionStart / PreCompact: reset (idempotent, no lock needed) ---
   if (request.event === 'SessionStart' || request.event === 'PreCompact') {
     resetState(statePath);
     return { action: 'noop' };
   }
 
+  // --- Only handle known state-touching events ---
+  const stateEvents = new Set(['UserPromptSubmit', 'PostToolUse', 'Stop', 'PreToolUse']);
+  if (!stateEvents.has(request.event)) return { action: 'noop' };
+
+  // --- PreToolUse for non-harness tools: noop without lock ---
+  if (request.event === 'PreToolUse' && !isHarnessTool(request.toolName)) {
+    return { action: 'noop' };
+  }
+
+  // --- Acquire lock for all state-touching paths ---
+  const paths = deriveStorePaths(statePath);
+  const locked = acquireStoreLock(paths);
+  try {
+    return await evaluateLocked(request, opts, paths);
+  } finally {
+    if (locked) releaseStoreLock(paths);
+  }
+}
+
+async function evaluateLocked(
+  request: HarnessRequest,
+  opts: RuntimeOptions,
+  paths: ReturnType<typeof deriveStorePaths>,
+): Promise<RuntimeResult> {
+  const contextWindow = opts.contextWindow ?? 200_000;
+
   // --- UserPromptSubmit: classify intent ---
   if (request.event === 'UserPromptSubmit' && request.prompt) {
     try {
-      const state = loadState(statePath, contextWindow);
+      const { state, journalEntries } = loadStateJournaled(paths, contextWindow);
       const profile = buildProfile(request.prompt, state.signals);
       state.profile = profile;
-      saveState(statePath, state);
+      const event: JournalEventData = { type: 'profile_update', profile };
+      appendStateEvent(paths, event);
+      if (journalEntries + 1 >= COMPACT_THRESHOLD) compact(paths, state);
+    } catch { /* harness not available */ }
+    return { action: 'noop' };
+  }
+
+  // --- PostToolUse: record actual outcome ---
+  if (request.event === 'PostToolUse') {
+    try {
+      const { state, journalEntries } = loadStateJournaled(paths, contextWindow);
+      if (state.history.length > 0 && request.result) {
+        const lastEntry = state.history[state.history.length - 1];
+        const outcome = {
+          tokens: request.result.tokens ?? lastEntry.tokensConsumed,
+          durationMs: request.result.durationMs ?? lastEntry.durationMs,
+          success: request.result.success ?? true,
+          error: request.result.error,
+        };
+        recordOutcome(state, lastEntry.turn, outcome);
+        const event: JournalEventData = {
+          type: 'tool_outcome', turn: lastEntry.turn, outcome,
+        };
+        appendStateEvent(paths, event);
+        if (journalEntries + 1 >= COMPACT_THRESHOLD) compact(paths, state);
+      }
     } catch { /* harness not available */ }
     return { action: 'noop' };
   }
@@ -62,11 +115,10 @@ export async function evaluate(
   // --- Stop: emit metrics ---
   if (request.event === 'Stop') {
     try {
-      const state = loadState(statePath, contextWindow);
+      const { state } = loadStateJournaled(paths, contextWindow);
       const metrics = computeMetrics(state);
-      const metricsPath = opts.metricsPath;
-      if (metricsPath) {
-        appendFileSync(metricsPath, JSON.stringify({
+      if (opts.metricsPath) {
+        appendFileSync(opts.metricsPath, JSON.stringify({
           timestamp: new Date().toISOString(),
           taskType: state.profile.type,
           ...metrics,
@@ -76,111 +128,7 @@ export async function evaluate(
     return { action: 'noop' };
   }
 
-  // --- Only mediate PreToolUse ---
-  if (request.event !== 'PreToolUse') return { action: 'noop' };
-
-  // --- Only mediate read/search/list tools ---
-  if (!HARNESS_TOOLS.has(request.toolName)) return { action: 'noop' };
-
-  const state = loadState(statePath, contextWindow);
-
-  const fileTokens = new Map<string, number>();
-  if (request.rawPath) {
-    try {
-      const stat = statSync(request.rawPath);
-      fileTokens.set(request.rawPath, Math.ceil(stat.size / 4));
-    } catch { /* file may not exist */ }
-  }
-
-  const decision = await decide(
-    { tool: request.toolName.toLowerCase(), args: request.args },
-    state,
-    { fileTokens, mentionedSymbols: [], taskDescription: request.taskDescription },
-    opts.pipelineOptions,
-  );
-
-  // Record the call if it will execute
-  const estTokens = request.rawPath ? (fileTokens.get(request.rawPath) ?? 0) : 0;
-  if (decision.action !== 'deny' && decision.action !== 'return_cached') {
-    recordToolCall(state, {
-      tool: request.toolName.toLowerCase(),
-      args: request.args,
-      tokensConsumed: estTokens,
-      durationMs: 0,
-    });
-  }
-
-  saveState(statePath, state);
-
-  // --- Translate decision to RuntimeResult with capability awareness ---
-  const caps = request.capabilities;
-
-  if (decision.action === 'deny') {
-    const remaining = state.budget.allocated.working - state.budget.consumed.working;
-    return {
-      action: 'deny',
-      output: {
-        type: 'block',
-        value: `[Harness] ${decision.reason} Working budget: ${remaining}/${state.budget.allocated.working} tokens.`,
-      },
-    };
-  }
-
-  if (decision.action === 'return_cached') {
-    const cached = decision.result as { file: string; strategy: string; tokens: number; turn: number };
-    if (caps.canReturnCached) {
-      // Capable surface: return cached metadata directly
-      return {
-        action: 'return_cached',
-        output: { type: 'result', file: cached.file, cached: { strategy: cached.strategy, tokens: cached.tokens, turn: cached.turn } },
-      };
-    }
-    // Downgrade: surface cannot return cached → deny with explanation
-    state.downgrades.returnCachedToDeny += 1;
-    state.downgrades.total += 1;
-    saveState(statePath, state);
-    emitDowngrade(opts, request, 'return_cached', 'deny', `Surface ${request.surface} cannot return cached results`);
-    const remaining = state.budget.allocated.working - state.budget.consumed.working;
-    return {
-      action: 'deny',
-      output: {
-        type: 'block',
-        value: `[Harness] Already read ${cached.file} with same strategy (${cached.strategy}) on turn ${cached.turn}. Content is already in context. Working budget: ${remaining}/${state.budget.allocated.working} tokens.`,
-      },
-    };
-  }
-
-  if (decision.action === 'rewrite') {
-    state.pendingRewrite = { turn: state.turn, suggestedTool: decision.tool, suggestedArgs: decision.args };
-    saveState(statePath, state);
-
-    if (caps.canRewrite) {
-      // Capable surface: return executable rewrite
-      return {
-        action: 'rewrite',
-        output: { type: 'execute', tool: decision.tool, args: decision.args },
-      };
-    }
-    // Downgrade: surface cannot execute rewrite → advisory context
-    state.downgrades.rewriteToContext += 1;
-    state.downgrades.total += 1;
-    saveState(statePath, state);
-    emitDowngrade(opts, request, 'rewrite', 'rewrite', `Surface ${request.surface} cannot execute rewrites; advisory only`);
-
-    const bc = decision.budgetContext;
-    let msg = `[Harness] Consider using ${decision.tool} instead`;
-    if (bc) {
-      msg += ` — saves ~${bc.savedTokens} tokens (${Math.round(bc.savedPct * 100)}%).`;
-      msg += `\nWorking budget: ${bc.remainingBudget}/${state.budget.allocated.working} tokens remaining (${bc.pressureLevel} pressure).`;
-    } else {
-      msg += ' — more token-efficient for this task.';
-    }
-    return { action: 'rewrite', output: { type: 'context', value: msg } };
-  }
-
-  if (decision.action === 'warn') {
-    return { action: 'warn', output: { type: 'context', value: `[Harness] ${decision.message}` } };
-  }
-
-  return { action: 'allow' };
+  // --- PreToolUse: delegate to mediation ---
+  const { state, journalEntries } = loadStateJournaled(paths, contextWindow);
+  return mediatePreToolUse(request, opts, paths, state, journalEntries);
 }

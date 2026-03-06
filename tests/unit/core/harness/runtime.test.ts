@@ -1,7 +1,8 @@
 import { describe, expect, test, beforeEach } from 'bun:test';
 import { evaluate } from '../../../../src/core/harness/runtime.js';
 import { createHarnessState } from '../../../../src/core/harness/state.js';
-import { saveState, loadState } from '../../../../src/core/harness/store.js';
+import { saveState, loadState, deriveStorePaths } from '../../../../src/core/harness/store.js';
+import { readRecords } from '../../../../src/core/harness/journal.js';
 import type { HarnessRequest } from '../../../../src/types/harness.js';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -26,6 +27,8 @@ describe('runtime.evaluate', () => {
   beforeEach(() => {
     mkdirSync(stateDir, { recursive: true });
     try { unlinkSync(statePath); } catch {}
+    const paths = deriveStorePaths(statePath);
+    try { unlinkSync(paths.journalPath); } catch {}
   });
 
   test('SessionStart resets state and returns noop', async () => {
@@ -90,5 +93,45 @@ describe('runtime.evaluate', () => {
   test('Glob returns allow on first call', async () => {
     const result = await evaluate(makeRequest({ toolName: 'Glob', toolClass: 'list', args: { pattern: '*.ts' } }), { statePath });
     expect(result.action).toBe('allow');
+  });
+
+  test('PreToolUse for Read appends journal event instead of full snapshot', async () => {
+    await evaluate(makeRequest(), { statePath });
+    const paths = deriveStorePaths(statePath);
+    const records = readRecords(paths.journalPath);
+    expect(records.length).toBeGreaterThan(0);
+    expect(records.some(r => r.event.type === 'tool_call')).toBe(true);
+  });
+
+  test('UserPromptSubmit appends profile_update journal event', async () => {
+    await evaluate(
+      makeRequest({ event: 'UserPromptSubmit', prompt: 'fix the bug in auth.ts' }),
+      { statePath },
+    );
+    const paths = deriveStorePaths(statePath);
+    const records = readRecords(paths.journalPath);
+    expect(records.some(r => r.event.type === 'profile_update')).toBe(true);
+  });
+
+  test('PostToolUse records actual outcome', async () => {
+    await evaluate(makeRequest(), { statePath });
+    await evaluate(
+      makeRequest({
+        event: 'PostToolUse',
+        result: { tokens: 80, durationMs: 15, success: true },
+      }),
+      { statePath },
+    );
+    const paths = deriveStorePaths(statePath);
+    const records = readRecords(paths.journalPath);
+    expect(records.some(r => r.event.type === 'tool_outcome')).toBe(true);
+  });
+
+  test('SessionStart clears journal file', async () => {
+    const paths = deriveStorePaths(statePath);
+    await evaluate(makeRequest(), { statePath });
+    expect(readRecords(paths.journalPath).length).toBeGreaterThan(0);
+    await evaluate(makeRequest({ event: 'SessionStart' }), { statePath });
+    expect(readRecords(paths.journalPath)).toEqual([]);
   });
 });
