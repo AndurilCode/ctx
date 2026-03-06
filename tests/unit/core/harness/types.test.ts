@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { DecisionAction, StageResult, StrategyProfile } from '../../../../src/types/harness.js';
+import type { DecisionAction, StageResult, StrategyProfile, ToolClass, Surface, AdapterCapabilities, HarnessRequest, RuntimeResult } from '../../../../src/types/harness.js';
 
 describe('harness types', () => {
   test('StrategyProfile is constructable', () => {
@@ -81,5 +81,19 @@ describe('harness types', () => {
       expect(rewriteAction.budgetContext).toBeDefined();
       expect(rewriteAction.budgetContext!.savedTokens).toBe(800);
     }
+  });
+
+  test('ToolClass covers expected categories', () => {
+    const classes: ToolClass[] = ['read', 'search', 'list', 'mutate', 'execute', 'verify', 'context'];
+    expect(classes).toHaveLength(7);
+  });
+
+  test('RuntimeResult covers all decision actions', () => {
+    const allow: RuntimeResult = { action: 'allow' };
+    const deny: RuntimeResult = { action: 'deny', output: { type: 'block', value: 'reason' } };
+    const rewrite: RuntimeResult = { action: 'rewrite', output: { type: 'context', value: 'msg' } };
+    const warn: RuntimeResult = { action: 'warn', output: { type: 'context', value: 'msg' } };
+    const noop: RuntimeResult = { action: 'noop' };
+    expect([allow, deny, rewrite, warn, noop]).toHaveLength(5);
   });
 });
