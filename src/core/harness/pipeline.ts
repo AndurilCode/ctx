@@ -55,6 +55,9 @@ function toDecisionAction(result: StageResult): DecisionAction {
   if (result.outcome === 'rewrite') {
     return { action: 'rewrite', tool: result.tool, args: result.args, budgetContext: result.budgetContext };
   }
+  if (result.outcome === 'return_cached') {
+    return { action: 'return_cached', result: { file: result.file, ...result.cached } };
+  }
   if (result.outcome === 'deny') {
     return { action: 'deny', reason: result.reason };
   }

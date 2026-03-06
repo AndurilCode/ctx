@@ -67,7 +67,7 @@ describe('hook integration pattern', () => {
       state,
       new Map([['big.ts', 5000]]),
     );
-    expect(rulesResult.outcome).toBe('escalate');
+    expect(rulesResult.outcome).toBe('return_cached');
     // State should still have exactly 1 entry, not 2
     expect(state.cache.filesRead.size).toBe(1);
     expect(state.signals.sameFileRereads).toBe(0);

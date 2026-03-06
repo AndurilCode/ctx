@@ -11,6 +11,7 @@ export interface SessionMetrics {
   starterPacketCoverage: number;  // always 0 for now
   wastedReads: number;            // files read but never mutated
   rewriteAcceptanceRate: number;  // followed / (followed + ignored), 1 if none
+  downgrades: { rewriteToContext: number; returnCachedToDeny: number; total: number };
 }
 
 export function computeMetrics(state: HarnessState): SessionMetrics {
@@ -78,5 +79,6 @@ export function computeMetrics(state: HarnessState): SessionMetrics {
     starterPacketCoverage: 0,
     wastedReads,
     rewriteAcceptanceRate,
+    downgrades: { ...state.downgrades },
   };
 }

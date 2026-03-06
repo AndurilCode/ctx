@@ -25,11 +25,12 @@ export function evaluateRules(
       : call.args['offset'] != null ? 'partial'
       : 'full';
 
-    // Rule 9: same strategy re-read — advisory (allow but warn)
+    // Rule 9: same strategy re-read — return cached if available
     if (cached.strategy === currentStrategy) {
       return {
-        outcome: 'escalate',
-        hint: `reread_same_strategy: Already read ${file} with same strategy (${currentStrategy}) on turn ${cached.turn}. Content may already be in context.`,
+        outcome: 'return_cached',
+        file,
+        cached,
       };
     }
 

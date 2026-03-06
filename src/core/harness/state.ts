@@ -55,6 +55,7 @@ export function createHarnessState(opts: {
     },
     turn: 0,
     rewriteCompliance: { followed: 0, ignored: 0 },
+    downgrades: { rewriteToContext: 0, returnCachedToDeny: 0, total: 0 },
   };
 }
 

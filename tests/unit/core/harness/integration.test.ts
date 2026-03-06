@@ -67,7 +67,7 @@ describe('deny flow integration', () => {
       state,
       { fileTokens, mentionedSymbols: [] },
     );
-    expect(r2.action).toBe('allow');
+    expect(r2.action).toBe('return_cached');
     if (r2.action === 'deny') {
       expect(r2.reason).toContain('Already read');
     }

@@ -6,6 +6,7 @@ import { buildProfile } from './classifier.js';
 import { computeMetrics } from './metrics.js';
 import { appendFileSync, statSync } from 'node:fs';
 import type { PipelineOptions } from './pipeline.js';
+import { appendEntry } from './journal.js';
 
 export interface RuntimeOptions {
   statePath: string;
@@ -15,6 +16,25 @@ export interface RuntimeOptions {
 }
 
 const HARNESS_TOOLS = new Set(['Read', 'Grep', 'Glob']);
+
+
+function emitDowngrade(
+  opts: RuntimeOptions,
+  request: HarnessRequest,
+  intended: string,
+  actual: string,
+  reason: string,
+): void {
+  if (!opts.metricsPath) return;
+  const journalPath = opts.metricsPath.replace(/\.jsonl?$/, '-journal.jsonl');
+  try {
+    appendEntry(journalPath, {
+      ts: Date.now(),
+      event: 'downgrade',
+      data: { surface: request.surface, intended, actual, reason },
+    });
+  } catch { /* best-effort */ }
+}
 
 export async function evaluate(
   request: HarnessRequest,
@@ -81,7 +101,7 @@ export async function evaluate(
 
   // Record the call if it will execute
   const estTokens = request.rawPath ? (fileTokens.get(request.rawPath) ?? 0) : 0;
-  if (decision.action !== 'deny') {
+  if (decision.action !== 'deny' && decision.action !== 'return_cached') {
     recordToolCall(state, {
       tool: request.toolName.toLowerCase(),
       args: request.args,
@@ -92,7 +112,9 @@ export async function evaluate(
 
   saveState(statePath, state);
 
-  // --- Translate decision to RuntimeResult ---
+  // --- Translate decision to RuntimeResult with capability awareness ---
+  const caps = request.capabilities;
+
   if (decision.action === 'deny') {
     const remaining = state.budget.allocated.working - state.budget.consumed.working;
     return {
@@ -104,9 +126,46 @@ export async function evaluate(
     };
   }
 
+  if (decision.action === 'return_cached') {
+    const cached = decision.result as { file: string; strategy: string; tokens: number; turn: number };
+    if (caps.canReturnCached) {
+      // Capable surface: return cached metadata directly
+      return {
+        action: 'return_cached',
+        output: { type: 'result', file: cached.file, cached: { strategy: cached.strategy, tokens: cached.tokens, turn: cached.turn } },
+      };
+    }
+    // Downgrade: surface cannot return cached → deny with explanation
+    state.downgrades.returnCachedToDeny += 1;
+    state.downgrades.total += 1;
+    saveState(statePath, state);
+    emitDowngrade(opts, request, 'return_cached', 'deny', `Surface ${request.surface} cannot return cached results`);
+    const remaining = state.budget.allocated.working - state.budget.consumed.working;
+    return {
+      action: 'deny',
+      output: {
+        type: 'block',
+        value: `[Harness] Already read ${cached.file} with same strategy (${cached.strategy}) on turn ${cached.turn}. Content is already in context. Working budget: ${remaining}/${state.budget.allocated.working} tokens.`,
+      },
+    };
+  }
+
   if (decision.action === 'rewrite') {
     state.pendingRewrite = { turn: state.turn, suggestedTool: decision.tool, suggestedArgs: decision.args };
     saveState(statePath, state);
+
+    if (caps.canRewrite) {
+      // Capable surface: return executable rewrite
+      return {
+        action: 'rewrite',
+        output: { type: 'execute', tool: decision.tool, args: decision.args },
+      };
+    }
+    // Downgrade: surface cannot execute rewrite → advisory context
+    state.downgrades.rewriteToContext += 1;
+    state.downgrades.total += 1;
+    saveState(statePath, state);
+    emitDowngrade(opts, request, 'rewrite', 'rewrite', `Surface ${request.surface} cannot execute rewrites; advisory only`);
 
     const bc = decision.budgetContext;
     let msg = `[Harness] Consider using ${decision.tool} instead`;

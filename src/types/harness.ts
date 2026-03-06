@@ -89,6 +89,7 @@ export type StageResult =
   | { outcome: 'allow' }
   | { outcome: 'rewrite'; tool: string; args: Record<string, unknown>; budgetContext?: BudgetContext }
   | { outcome: 'escalate'; hint?: string; alternatives?: ScoredAlternative[]; budgetContext?: BudgetContext }
+  | { outcome: 'return_cached'; file: string; cached: CachedRead }
   | { outcome: 'deny'; reason: string };
 
 export interface ScoredAlternative {
@@ -107,6 +108,21 @@ export interface PendingRewrite {
 }
 
 // --- Session State (top-level) ---
+
+// --- Downgrade Tracking (Phase 2) ---
+export interface DowngradeEvent {
+  ts: number;
+  surface: Surface;
+  intended: DecisionAction['action'];
+  actual: RuntimeResult['action'];
+  reason: string;
+}
+
+export interface DowngradeCounters {
+  rewriteToContext: number;
+  returnCachedToDeny: number;
+  total: number;
+}
 export interface HarnessState {
   profile: StrategyProfile;
   budget: BudgetState;
@@ -116,6 +132,7 @@ export interface HarnessState {
   turn: number;
   pendingRewrite?: PendingRewrite;
   rewriteCompliance: { followed: number; ignored: number };
+  downgrades: DowngradeCounters;
 }
 
 // --- Serializable subset for disk persistence ---
@@ -133,6 +150,7 @@ export interface SerializedHarnessState {
   turn: number;
   pendingRewrite?: PendingRewrite;
   rewriteCompliance: { followed: number; ignored: number };
+  downgrades?: DowngradeCounters;
 }
 
 // --- Context Kernel Runtime (Phase 1) ---
@@ -170,6 +188,7 @@ export interface HarnessRequest {
 export type RuntimeResult =
   | { action: 'allow' }
   | { action: 'deny'; output: { type: 'block'; value: string } }
-  | { action: 'rewrite'; output: { type: 'context'; value: string } }
+  | { action: 'rewrite'; output: { type: 'context'; value: string } | { type: 'execute'; tool: string; args: Record<string, unknown> } }
+  | { action: 'return_cached'; output: { type: 'result'; file: string; cached: CachedRead } }
   | { action: 'warn'; output: { type: 'context'; value: string } }
   | { action: 'noop' };
