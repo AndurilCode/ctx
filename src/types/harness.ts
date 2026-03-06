@@ -1,3 +1,6 @@
+import type { ActualOutcome, JournalEventData } from './harness-journal.js';
+export type { ActualOutcome, JournalEventData } from './harness-journal.js';
+
 // --- Task Classification ---
 export type TaskType = 'pinpoint' | 'targeted_fix' | 'feature' | 'refactor' | 'exploration' | 'verification';
 
@@ -50,7 +53,7 @@ export interface ToolCallRecord {
   args: Record<string, unknown>;
   tokensConsumed: number;
   durationMs: number;
-  outcome?: import('./harness-journal.js').ActualOutcome;
+  outcome?: ActualOutcome;
 }
 
 // --- Session Signals ---
