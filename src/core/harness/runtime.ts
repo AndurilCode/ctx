@@ -93,8 +93,8 @@ async function evaluateLocked(
   if (request.event === 'PostToolUse') {
     try {
       const { state, journalEntries } = loadStateJournaled(paths, contextWindow);
-      if (state.history.length > 0 && request.result) {
-        const lastEntry = state.history[state.history.length - 1];
+      const lastEntry = state.history[state.history.length - 1];
+      if (lastEntry && request.result) {
         const outcome = {
           tokens: request.result.tokens ?? lastEntry.tokensConsumed,
           durationMs: request.result.durationMs ?? lastEntry.durationMs,
