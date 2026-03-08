@@ -128,9 +128,9 @@ All tools accept `dryRun: true` — returns the diff/summary without writing. Us
 | `AMBIGUOUS_SYMBOL` | Multiple symbols with same name | Use the disambiguation list to pick by hash |
 | `PARSE_ERROR` | File can't be parsed | Fall back to hashline mode (no symbol, just lines) |
 
-## ctx exec --allow-write
+## Prefer `exec --allow-write` for multi-step edits
 
-For multi-step workflows that combine reading and writing (e.g., outline → patch → verify outline), use `exec` with `--allow-write`:
+**When you need to outline + patch + verify across multiple files, always use a single `exec --allow-write` call** instead of separate commands. This is the default for any workflow involving 3+ ctx calls that chain together (e.g., outline → patch → re-outline, or batch-patching several files).
 
 ```bash
 npx @anduril-code/ctx exec --allow-write '
@@ -148,13 +148,13 @@ Use `log(...)` and `json(value)` for output.
 
 ## Decision guide
 
+- **Multi-step read+write workflow (3+ calls)** → `ctx exec --allow-write` *(prefer this first)*
 - **Modify existing code** → `ctx patch`
 - **Add new code** → `ctx insert`
 - **Rename** → `ctx rename`
 - **Unparseable file** → `ctx patch` hashline mode
 - **Small change in large function** → `ctx patch` line-hash mode
 - **Multiple related changes** → `ctx patch` multi-symbol batch
-- **Multi-step read+write workflow** → `ctx exec --allow-write`
 
 ## Hand-off
 

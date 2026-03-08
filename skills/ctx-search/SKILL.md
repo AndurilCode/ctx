@@ -33,16 +33,17 @@ All commands are invoked as `npx @anduril-code/ctx <command>`.
 
 ## Strategy (high-signal defaults)
 
-1. Build a narrow first-pass context:
+1. **Default to `exec` for multi-file research.** When you need to read 3+ files, or when results from one call feed into the next, use a single `exec` call instead of separate commands. One `exec` replaces many sequential reads/outlines/symbols calls and cuts round-trips dramatically.
+2. Build a narrow first-pass context:
    - `gather "<query>" --maxTokens 1200 --seeds <seed files>`
    - If blocked, rerun with `--maxTokens 2200`
-2. For file targeting, run `rank` before opening content.
-3. For code files, prefer `outline` then `read`.
-4. For symbol-level understanding before edits, prefer `focus`.
-5. For Markdown, run `sections` first, then `extract --only` exact headings.
-6. Use `imports` to trace dependency flow when understanding module relationships.
-7. Use `symbols` to find definitions and call sites for specific functions/types.
-8. Treat `read` output as triage only; anchor any final claim with line-aware evidence (`outline` or `rg -n` + `sed -n`).
+3. For file targeting, run `rank` before opening content.
+4. For code files, prefer `outline` then `read`.
+5. For symbol-level understanding before edits, prefer `focus`.
+6. For Markdown, run `sections` first, then `extract --only` exact headings.
+7. Use `imports` to trace dependency flow when understanding module relationships.
+8. Use `symbols` to find definitions and call sites for specific functions/types.
+9. Treat `read` output as triage only; anchor any final claim with line-aware evidence (`outline` or `rg -n` + `sed -n`).
 
 ### When given a file path
 1. If Markdown: `sections` → `extract --only`/`read`
@@ -56,8 +57,9 @@ All commands are invoked as `npx @anduril-code/ctx <command>`.
 3. For docs: add `locate` to search across markdown headings
 4. For code: add `outline` and `symbols` for structural context
 
-### When composing multi-step exploration
-Use `exec` to combine multiple ctx operations in a single call, reducing round-trips:
+### Prefer `exec` for multi-file and chained exploration
+
+**Always reach for `exec` first** when your task involves reading multiple files, cross-referencing results, or chaining ctx calls. A single `exec` call that reads 7 files and cross-references their contents is far better than 7 separate `read` calls. Only fall back to individual commands when you need just one or two simple lookups.
 ```bash
 npx @anduril-code/ctx exec '
 const t = await tree({ depth: 2 });
@@ -82,7 +84,7 @@ Available functions in `exec` (all async — use `await`):
 - **Utilities**: `log(...)` and `json(value)` to produce output
 - **Write** (requires `--allow-write`): `patch`, `insert`, `rename`
 
-Prefer `exec` when a task requires 3+ sequential ctx calls that feed into each other.
+**Rule of thumb:** if you're about to make 3+ ctx calls, stop and write an `exec` script instead.
 
 ### When onboarding to a codebase
 1. `tree` for shape + token map

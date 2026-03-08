@@ -68,9 +68,9 @@ Use `npx @anduril-code/ctx` CLI commands.
 1. Use `npx @anduril-code/ctx roundtrip <file>` when validating compact/expand fidelity.
 2. Do not use `ctx verify` for markdown fidelity checks; `ctx verify` is now code-change verification.
 
-## Flow 4: Composed Verification via exec
+## Flow 4: Prefer `exec` for composed verification
 
-Use `exec` to combine multiple verification steps in a single call when tracing blast radius across files:
+**When verification involves 3+ ctx calls (outline, imports, symbols, etc.), always use a single `exec` call** instead of separate commands. This is especially important for blast-radius analysis across multiple changed files:
 
 ```bash
 npx @anduril-code/ctx exec '
@@ -82,7 +82,7 @@ json({ outlines, blastRadius, syms });
 '
 ```
 
-Prefer `exec` when verification requires 3+ ctx calls that feed into each other (e.g., outline → imports → symbols).
+**Rule of thumb:** if you're about to make 3+ ctx calls for verification, stop and write an `exec` script instead.
 
 ## Review output contract
 
