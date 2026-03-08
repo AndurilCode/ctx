@@ -1,9 +1,13 @@
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { tree } from '../tree.js';
 import { budgetedRead } from '../read.js';
 import { assembleContext } from '../context.js';
 import { autoContext } from '../auto-context.js';
 import { relevance } from '../relevance.js';
+import { extract as extractMarkdown } from '../extract.js';
+import { sections as listSections } from '../sections.js';
+import { locate as locateSections } from '../locate.js';
 import { focus } from '../focus.js';
 import { symbols } from '../symbols.js';
 import { fileImports } from '../imports.js';
@@ -49,9 +53,49 @@ export function buildApiSurface(
       return fileImports({ ...o, file, root: cwd } as Parameters<typeof fileImports>[0]);
     },
 
-    outline: (file: string) => codeOutline(resolve(cwd, file)),
+    outline: async (o: string | { file: string; depth?: number; language?: string; collapseImports?: boolean }) => {
+      const normalized = typeof o === 'string' ? { file: o } : o;
+      const filePath = resolve(cwd, normalized.file);
+      const content = await readFile(filePath, 'utf-8');
+      return codeOutline(content, {
+        filePath,
+        depth: normalized.depth,
+        language: normalized.language,
+        collapseImports: normalized.collapseImports,
+      });
+    },
 
     tokenCount: (text: string) => tokenCount({ text }),
+
+    sections: async (o: { file: string }) => {
+      const markdown = await readFile(resolve(cwd, o.file), 'utf-8');
+      return listSections(markdown);
+    },
+
+    extract: async (o: { file: string; only?: string[]; strip?: string[]; maxChars?: number; maxListItems?: number; maxTableRows?: number }) => {
+      const markdown = await readFile(resolve(cwd, o.file), 'utf-8');
+      return extractMarkdown(markdown, {
+        onlySections: o.only,
+        stripSections: o.strip,
+        maxChars: o.maxChars,
+        maxListItems: o.maxListItems,
+        maxTableRows: o.maxTableRows,
+      });
+    },
+
+    locate: async (o: { query: string; files: string[] }) => {
+      const entries = await Promise.all(
+        o.files.map(async (f) => {
+          try {
+            const markdown = await readFile(resolve(cwd, f), 'utf-8');
+            return { file: f, markdown };
+          } catch {
+            return null;
+          }
+        }),
+      );
+      return locateSections(o.query, entries.filter((e): e is NonNullable<typeof e> => e !== null));
+    },
 
     log: (...args: unknown[]) => {
       opts.outputBuffer.push(
