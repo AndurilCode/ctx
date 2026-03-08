@@ -5,7 +5,6 @@
       "text": "WORKFLOW REQUIREMENT: For ALL codebase operations, you MUST invoke skills via the Skill tool — never use raw Read, Grep, Glob, Edit, Write, or MultiEdit directly.\n• Exploring code/docs → invoke ctx-search skill\n• Making changes → invoke ctx-code skill\n• Reviewing diffs/running tests → invoke ctx-verify skill\nThis is mandatory for every session. No exceptions."
     }
   },
-
   {
     "on": "PreToolUse",
     "when": {
@@ -228,6 +227,12 @@
     },
     "inject": {
       "hint": "src/mcp/tools/index.ts"
+    }
+  },
+  {
+    "on": "UserPromptSubmit",
+    "inject": {
+      "text": "Learnings system: if you discover something non-obvious about a file (architecture constraints, pitfalls, patterns), record it with: node .claude/hooks/learn.mjs add --files '<glob>' --learning '<text>'. Only record genuinely useful insights. Use list/update/remove to curate existing learnings."
     }
   }
 ]
