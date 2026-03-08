@@ -25,19 +25,19 @@ export function evaluateRules(
       : call.args['offset'] != null ? 'partial'
       : 'full';
 
-    // Rule 9: same strategy re-read — always deny (even if hot)
+    // Rule 9: same strategy re-read — advisory (allow but warn)
     if (cached.strategy === currentStrategy) {
       return {
-        outcome: 'deny',
-        reason: `Already read ${file} with same strategy (${currentStrategy}) on turn ${cached.turn}. Content is already in context.`,
+        outcome: 'escalate',
+        hint: `reread_same_strategy: Already read ${file} with same strategy (${currentStrategy}) on turn ${cached.turn}. Content may already be in context.`,
       };
     }
 
-    // Rule 7: different strategy but unchanged file — deny
+    // Rule 7: different strategy but unchanged file — advisory
     if (!state.cache.hotFiles.has(file)) {
       return {
-        outcome: 'deny',
-        reason: `Already read ${file} on turn ${cached.turn}. Use cached content or outline() for a refresher.`,
+        outcome: 'escalate',
+        hint: `reread_unchanged: Already read ${file} on turn ${cached.turn}. Consider using cached content or outline() for a refresher.`,
       };
     }
     // Hot file + different strategy = allow (valid re-read after mutation)

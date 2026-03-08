@@ -67,7 +67,7 @@ describe('deny flow integration', () => {
       state,
       { fileTokens, mentionedSymbols: [] },
     );
-    expect(r2.action).toBe('deny');
+    expect(r2.action).toBe('allow');
     if (r2.action === 'deny') {
       expect(r2.reason).toContain('Already read');
     }
@@ -95,8 +95,8 @@ describe('deny flow integration', () => {
       state,
       { fileTokens, mentionedSymbols: [] },
     );
-    // Not hot, different strategy → deny (Rule 7)
-    expect(r2.action).toBe('deny');
+    // Not hot, different strategy → escalate (Rule 7) → cost analysis
+    expect(['allow', 'rewrite']).toContain(r2.action);
 
     // 3. Mutate the file, then re-read with different strategy → allow (hot file)
     recordToolCall(state, { tool: 'edit', args: { file }, tokensConsumed: 0, durationMs: 10 });

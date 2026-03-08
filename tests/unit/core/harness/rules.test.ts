@@ -70,13 +70,13 @@ describe('Rule 10: first-read pass-through', () => {
 });
 
 describe('Rule 7: re-read detection', () => {
-  test('denies re-read of unchanged file', () => {
+  test('escalates re-read of unchanged file', () => {
     const state = createHarnessState({ contextWindow: 200_000 });
     state.cache.filesRead.set('/src/foo.ts', { strategy: 'full', tokens: 500, turn: 0 });
     const call = { tool: 'read', args: { file: '/src/foo.ts' } };
     const result = evaluateRules(call, state, new Map([['/src/foo.ts', 500]]));
-    expect(result.outcome).toBe('deny');
-    expect((result as any).reason).toContain('Already read');
+    expect(result.outcome).toBe('escalate');
+    expect((result as any).hint).toContain('Already read');
   });
 
   test('allows re-read of mutated file with different strategy', () => {
@@ -175,14 +175,14 @@ describe('Rule 8: sequence batching', () => {
 });
 
 describe('Rule 9: same-strategy re-read', () => {
-  test('denies re-read with same strategy even if file is hot', () => {
+  test('escalates re-read with same strategy even if file is hot', () => {
     const state = createHarnessState({ contextWindow: 200_000 });
     state.cache.filesRead.set('/src/foo.ts', { strategy: 'full', tokens: 500, turn: 0 });
     state.cache.hotFiles.add('/src/foo.ts');
     const call = { tool: 'read', args: { file: '/src/foo.ts' } };
     const result = evaluateRules(call, state, new Map([['/src/foo.ts', 500]]));
-    expect(result.outcome).toBe('deny');
-    expect((result as any).reason).toContain('same strategy');
+    expect(result.outcome).toBe('escalate');
+    expect((result as any).hint).toContain('same strategy');
   });
 
   test('allows re-read with different strategy (budgeted after full)', () => {
