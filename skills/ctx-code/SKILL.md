@@ -128,6 +128,24 @@ All tools accept `dryRun: true` — returns the diff/summary without writing. Us
 | `AMBIGUOUS_SYMBOL` | Multiple symbols with same name | Use the disambiguation list to pick by hash |
 | `PARSE_ERROR` | File can't be parsed | Fall back to hashline mode (no symbol, just lines) |
 
+## ctx exec --allow-write
+
+For multi-step workflows that combine reading and writing (e.g., outline → patch → verify outline), use `exec` with `--allow-write`:
+
+```bash
+npx @anduril-code/ctx exec --allow-write '
+const o = await outline("src/utils.ts");
+const sym = o.symbols.find(s => s.name === "parseConfig");
+await patch({ file: "src/utils.ts", symbol: "parseConfig", hash: sym.hash, body: newBody });
+const updated = await outline("src/utils.ts");
+json({ before: sym, after: updated.symbols.find(s => s.name === "parseConfig") });
+'
+```
+
+Available write functions: `patch`, `insert`, `rename` (same API as CLI, but as JS functions).
+All read functions are also available: `tree`, `read`, `outline`, `symbols`, `imports`, `focus`, `rank`, `gather`, `context`, `tokenCount`.
+Use `log(...)` and `json(value)` for output.
+
 ## Decision guide
 
 - **Modify existing code** → `ctx patch`
@@ -136,6 +154,7 @@ All tools accept `dryRun: true` — returns the diff/summary without writing. Us
 - **Unparseable file** → `ctx patch` hashline mode
 - **Small change in large function** → `ctx patch` line-hash mode
 - **Multiple related changes** → `ctx patch` multi-symbol batch
+- **Multi-step read+write workflow** → `ctx exec --allow-write`
 
 ## Hand-off
 

@@ -1,5 +1,6 @@
 import { defineCommand, runMain } from 'citty';
 import { autoContextCommand } from './commands/auto-context.js';
+import { execCommand } from './commands/exec.js';
 import { codeOutlineCommand } from './commands/code-outline.js';
 import { contextCommand } from './commands/context.js';
 import { compactCommand } from './commands/compact.js';
@@ -57,6 +58,7 @@ export const command = defineCommand({
     patch: patchCommand,
     insert: insertCommand,
     rename: renameCommand,
+    exec: execCommand,
   },
 });
 

@@ -24,6 +24,7 @@ Use `npx @anduril-code/ctx` CLI commands.
 | `npx @anduril-code/ctx symbols <QUERY> [--glob PATTERN]` | Find definitions and call sites |
 | `<test-cmd> 2>&1 \| npx @anduril-code/ctx prune --profile test` | Prune test output |
 | `npx @anduril-code/ctx roundtrip <file>` | Markdown round-trip fidelity check (legacy verify behavior) |
+| `npx @anduril-code/ctx exec '<CODE>'` | Compose multi-step verification in one call |
 
 ## Flow 1: Targeted Verify (primary)
 
@@ -66,6 +67,22 @@ Use `npx @anduril-code/ctx` CLI commands.
 
 1. Use `npx @anduril-code/ctx roundtrip <file>` when validating compact/expand fidelity.
 2. Do not use `ctx verify` for markdown fidelity checks; `ctx verify` is now code-change verification.
+
+## Flow 4: Composed Verification via exec
+
+Use `exec` to combine multiple verification steps in a single call when tracing blast radius across files:
+
+```bash
+npx @anduril-code/ctx exec '
+const changed = ["src/core/exec/sandbox.ts", "src/core/exec/api-surface.ts"];
+const outlines = await Promise.all(changed.map(f => outline(f)));
+const blastRadius = await Promise.all(changed.map(f => imports({ file: f, direction: "incoming" })));
+const syms = await symbols({ query: "executeCode" });
+json({ outlines, blastRadius, syms });
+'
+```
+
+Prefer `exec` when verification requires 3+ ctx calls that feed into each other (e.g., outline → imports → symbols).
 
 ## Review output contract
 

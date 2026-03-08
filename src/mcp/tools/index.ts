@@ -3,6 +3,7 @@ import { registerAutoContextTool } from './auto-context.js';
 import { registerChangeVerifyTool } from './change-verify.js';
 import { registerContextTool } from './context.js';
 import { registerDiffTool } from './diff.js';
+import { registerExecTool } from './exec.js';
 import { registerExtractTool } from './extract.js';
 import { registerFocusTool } from './focus.js';
 import { registerHarnessTool } from './harness.js';
@@ -45,4 +46,5 @@ export function registerCompactMdTools(server: McpServer): void {
   registerChangeVerifyTool(server);
   registerRoundtripVerifyTool(server);
   registerHarnessTool(server);
+  registerExecTool(server);
 }

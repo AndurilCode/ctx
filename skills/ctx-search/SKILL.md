@@ -27,6 +27,7 @@ Use `npx @anduril-code/ctx` CLI commands.
 | `sections <FILE>` | Markdown | List headings with token costs |
 | `extract [--only <heading>] [--strip <heading>] <FILE>` | Markdown | Extract exact section content |
 | `locate <QUERY> [FILES...]` | Markdown | Find headings matching a query across files |
+| `exec '<CODE>'` | Any | Execute a JS code block with all ctx functions pre-loaded |
 
 All commands are invoked as `npx @anduril-code/ctx <command>`.
 
@@ -54,6 +55,34 @@ All commands are invoked as `npx @anduril-code/ctx <command>`.
 2. Or manual: `tree` → `rank` → `read` top-ranked files
 3. For docs: add `locate` to search across markdown headings
 4. For code: add `outline` and `symbols` for structural context
+
+### When composing multi-step exploration
+Use `exec` to combine multiple ctx operations in a single call, reducing round-trips:
+```bash
+npx @anduril-code/ctx exec '
+const t = await tree({ depth: 2 });
+const files = [];
+function collect(entries) {
+  for (const e of entries) {
+    if (!e.isDirectory) files.push(e.path);
+    if (e.children) collect(e.children);
+  }
+}
+collect(t.entries);
+const ranked = await rank({ query: "authentication", files });
+const top3 = ranked.results.slice(0, 3);
+const contents = await Promise.all(top3.map(f => read({ file: f.file, maxTokens: 2000 })));
+const syms = await symbols({ query: "validateToken" });
+json({ top3, contents: contents.map(c => c.content.slice(0, 200)), syms });
+'
+```
+
+Available functions in `exec` (all async — use `await`):
+- **Read-only**: `tree`, `read`, `context`, `gather`, `rank`, `focus`, `symbols`, `imports`, `outline`, `tokenCount`
+- **Utilities**: `log(...)` and `json(value)` to produce output
+- **Write** (requires `--allow-write`): `patch`, `insert`, `rename`
+
+Prefer `exec` when a task requires 3+ sequential ctx calls that feed into each other.
 
 ### When onboarding to a codebase
 1. `tree` for shape + token map
