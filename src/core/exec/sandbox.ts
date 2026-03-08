@@ -1,3 +1,4 @@
+import { createContext, Script } from 'node:vm';
 import { buildApiSurface } from './api-surface.js';
 import { createTokenCounter } from '../../utils/tokens.js';
 import type { ExecOptions, ExecResult } from './types.js';
@@ -27,28 +28,39 @@ export async function executeInSandbox(opts: ExecOptions): Promise<ExecResult> {
   const outputBuffer: string[] = [];
   const api = buildApiSurface(cwd, { allowWrite: opts.allowWrite ?? false, outputBuffer });
 
-  // Shadow dangerous globals by injecting them as undefined parameters
-  const shadowedGlobals = [
-    'process', 'require', 'Bun', 'Deno',
-    'globalThis', 'global',
-    'fs', 'child_process', 'net', 'http', 'https',
-    '__filename', '__dirname', 'module', 'exports',
-  ];
+  // Build a V8 isolate via node:vm — no prototype chain to walk back to host globals
+  const sandbox = Object.create(null) as Record<string, unknown>;
+  for (const [key, value] of Object.entries(api)) {
+    sandbox[key] = value;
+  }
 
-  const paramNames = [...Object.keys(api), ...shadowedGlobals];
-  const paramValues: unknown[] = [
-    ...Object.values(api),
-    ...shadowedGlobals.map(() => undefined),
-  ];
+  const ctx = createContext(sandbox);
 
-  // Construct AsyncFunction
-  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor as new (
-    ...args: string[]
-  ) => (...args: unknown[]) => Promise<unknown>;
+  // Lock down dynamic code generation and host-scope escape paths
+  const lockdown = new Script(`
+    (function() {
+      const deny = () => { throw new TypeError('Dynamic code generation is not available in sandbox'); };
+      // Block .constructor escape on sync, async, generator, and async-generator Function prototypes
+      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      const GeneratorFunction = Object.getPrototypeOf(function*(){}).constructor;
+      const AsyncGeneratorFunction = Object.getPrototypeOf(async function*(){}).constructor;
+      for (const F of [Function, AsyncFunction, GeneratorFunction, AsyncGeneratorFunction]) {
+        Object.defineProperty(F.prototype, 'constructor', { get: deny, set: deny, configurable: false });
+      }
+      // Block direct Function/eval/globalThis access
+      Object.defineProperty(this, 'Function', { value: undefined, writable: false, configurable: false });
+      Object.defineProperty(this, 'eval', { value: undefined, writable: false, configurable: false });
+      Object.defineProperty(this, 'globalThis', { value: undefined, writable: false, configurable: false });
+    })();
+  `);
+  lockdown.runInContext(ctx);
 
-  let fn: (...args: unknown[]) => Promise<unknown>;
+  // Compile user code as an async IIFE inside the isolated context
+  let script: Script;
   try {
-    fn = new AsyncFunction(...paramNames, opts.code);
+    script = new Script(`(async () => {\n${opts.code}\n})()`, {
+      filename: 'exec-sandbox',
+    });
   } catch (err) {
     const e = err as Error;
     return {
@@ -68,8 +80,9 @@ export async function executeInSandbox(opts: ExecOptions): Promise<ExecResult> {
 
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
+    const promise = script.runInContext(ctx) as Promise<unknown>;
     result = await Promise.race([
-      fn(...paramValues),
+      promise,
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error('Execution timed out')), timeoutMs);
       }),
