@@ -32,7 +32,7 @@ describe('Phase 2: return_cached in rules', () => {
     expect(result.outcome).toBe('return_cached');
   });
 
-  test('different-strategy re-read of non-hot file still denies', () => {
+  test('different-strategy re-read of non-hot file escalates', () => {
     const state = createHarnessState({ contextWindow: 200_000 });
     state.cache.filesRead.set('/src/c.ts', { strategy: 'full', tokens: 500, turn: 0 });
     const result = evaluateRules(
@@ -40,7 +40,7 @@ describe('Phase 2: return_cached in rules', () => {
       state,
       new Map([['/src/c.ts', 500]]),
     );
-    expect(result.outcome).toBe('deny');
+    expect(result.outcome).toBe('escalate');
   });
 });
 

@@ -97,13 +97,13 @@ describe('Rule 7: re-read detection', () => {
     expect((result as any).file).toBe('/src/foo.ts');
   });
 
-  test('denies re-read of unchanged file with different strategy', () => {
+  test('escalates re-read of unchanged file with different strategy', () => {
     const state = createHarnessState({ contextWindow: 200_000 });
     state.cache.filesRead.set('/src/foo.ts', { strategy: 'full', tokens: 500, turn: 0 });
     const call = { tool: 'read', args: { file: '/src/foo.ts', maxTokens: 200 } };
     const result = evaluateRules(call, state, new Map([['/src/foo.ts', 500]]));
-    expect(result.outcome).toBe('deny');
-    expect((result as any).reason).toContain('Already read');
+    expect(result.outcome).toBe('escalate');
+    expect((result as any).hint).toContain('Already read');
   });
 
   test('allows re-read of mutated file with different strategy', () => {
