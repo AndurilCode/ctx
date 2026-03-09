@@ -15,11 +15,11 @@ const TOOL_CLASS_MAP: Record<string, ToolClass> = {
 };
 
 const SURFACE_CAPABILITIES: Record<Surface, AdapterCapabilities> = {
-  'claude-hook': { canBlock: true, canRewrite: false, canInjectContext: true, canReturnCached: false },
-  'vscode-hook': { canBlock: true, canRewrite: false, canInjectContext: false, canReturnCached: false },
-  'mcp':         { canBlock: true, canRewrite: true,  canInjectContext: true,  canReturnCached: true },
-  'cli':         { canBlock: true, canRewrite: true,  canInjectContext: true,  canReturnCached: true },
-  'library':     { canBlock: true, canRewrite: true,  canInjectContext: true,  canReturnCached: true },
+  'claude-hook': { canBlock: true, canRewrite: false, canInjectContext: true, canReturnCached: false, canInjectBefore: false },
+  'vscode-hook': { canBlock: true, canRewrite: false, canInjectContext: false, canReturnCached: false, canInjectBefore: false },
+  'mcp':         { canBlock: true, canRewrite: true,  canInjectContext: true,  canReturnCached: true,  canInjectBefore: true },
+  'cli':         { canBlock: true, canRewrite: true,  canInjectContext: true,  canReturnCached: true,  canInjectBefore: true },
+  'library':     { canBlock: true, canRewrite: true,  canInjectContext: true,  canReturnCached: true,  canInjectBefore: true },
 };
 
 export function classifyTool(toolName: string): ToolClass {

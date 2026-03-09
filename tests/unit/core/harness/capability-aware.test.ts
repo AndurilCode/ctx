@@ -65,8 +65,8 @@ describe('Phase 2: return_cached on capable vs incapable surface', () => {
       const req = buildRequest({ surface: 'claude-hook', event: 'PreToolUse', toolName: 'Read', toolInput: { file: testFile }, rawPath: testFile });
       await evaluate(req, { statePath }); // first read → allow
       const r2 = await evaluate(req, { statePath }); // second read
-      expect(r2.action).toBe('deny');
-      if (r2.action === 'deny') {
+      expect(r2.action).toBe('warn');
+      if (r2.action === 'warn') {
         expect(r2.output.value).toContain('Already read');
       }
     } finally { cleanup(); }

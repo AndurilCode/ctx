@@ -11,7 +11,9 @@ export interface SessionMetrics {
   starterPacketCoverage: number;  // always 0 for now
   wastedReads: number;            // files read but never mutated
   rewriteAcceptanceRate: number;  // followed / (followed + ignored), 1 if none
-  downgrades: { rewriteToContext: number; returnCachedToDeny: number; total: number };
+  mutationSafetyBlocks: number;
+  staleEvidenceCatches: number;
+  downgrades: { rewriteToContext: number; returnCachedToDeny: number; injectBeforeToWarn: number; total: number };
 }
 
 export function computeMetrics(state: HarnessState): SessionMetrics {
@@ -69,6 +71,21 @@ export function computeMetrics(state: HarnessState): SessionMetrics {
     ? state.rewriteCompliance.followed / complianceTotal
     : 1;
 
+  // Mutation safety: count files mutated without prior read evidence
+  let mutationSafetyBlocks = 0;
+  let staleEvidenceCatches = 0;
+  const readBeforeMutation = new Set<string>();
+  for (const entry of history) {
+    const file = entry.args['file'] as string | undefined;
+    if (READ_TOOLS.has(entry.tool) && file) readBeforeMutation.add(file);
+    if (MUTATION_TOOLS.has(entry.tool) && file) {
+      if (!readBeforeMutation.has(file)) mutationSafetyBlocks += 1;
+      // After mutation, evidence is stale for subsequent mutations
+      readBeforeMutation.delete(file);
+    }
+  }
+  staleEvidenceCatches = state.staleReads.size;
+
   return {
     totalTokensConsumed,
     tokensPerMutation,
@@ -79,6 +96,8 @@ export function computeMetrics(state: HarnessState): SessionMetrics {
     starterPacketCoverage: 0,
     wastedReads,
     rewriteAcceptanceRate,
+    mutationSafetyBlocks,
+    staleEvidenceCatches,
     downgrades: { ...state.downgrades },
   };
 }

@@ -58,6 +58,9 @@ function toDecisionAction(result: StageResult): DecisionAction {
   if (result.outcome === 'return_cached') {
     return { action: 'return_cached', result: { file: result.file, ...result.cached } };
   }
+  if (result.outcome === 'inject_before') {
+    return { action: 'inject_before', calls: result.calls };
+  }
   if (result.outcome === 'deny') {
     return { action: 'deny', reason: result.reason };
   }

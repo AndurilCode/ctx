@@ -1,6 +1,7 @@
 import { dirname } from 'node:path';
 import type { HarnessState, InterceptedCall, StageResult } from '../../types/harness.js';
 import { MUTATION_TOOLS, READ_TOOLS } from './constants.js';
+import { checkMutationEvidence, isMutationRequiringEvidence } from './evidence.js';
 
 /**
  * Stage 1: deterministic rule engine.
@@ -95,17 +96,16 @@ export function evaluateRules(
     };
   }
 
-  // ---- Rule 4: Mutation without prior read ----
-  if (
-    MUTATION_TOOLS.has(call.tool) &&
-    file != null &&
-    !state.cache.filesRead.has(file)
-  ) {
-    return {
-      outcome: 'rewrite',
-      tool: 'read',
-      args: { file },
-    };
+  // ---- Rule 4: Mutation safety — require fresh read evidence ----
+  if (isMutationRequiringEvidence(call.tool) && file != null) {
+    const evidence = checkMutationEvidence(state, file);
+    if (!evidence.safe) {
+      return {
+        outcome: 'inject_before',
+        calls: evidence.requiredReads!,
+        reason: evidence.reason!,
+      };
+    }
   }
 
   // ---- Rule 5: Budget overflow ----

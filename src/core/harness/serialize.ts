@@ -25,6 +25,7 @@ export function serialize(state: HarnessState): SerializedHarnessState {
     turn: state.turn,
     pendingRewrite: state.pendingRewrite,
     rewriteCompliance: state.rewriteCompliance,
+    staleReads: [...state.staleReads],
     downgrades: state.downgrades,
   };
 }
@@ -44,6 +45,7 @@ export function deserialize(s: SerializedHarnessState): HarnessState {
     turn: s.turn,
     pendingRewrite: s.pendingRewrite,
     rewriteCompliance: s.rewriteCompliance ?? { followed: 0, ignored: 0 },
-    downgrades: s.downgrades ?? { rewriteToContext: 0, returnCachedToDeny: 0, total: 0 },
+    staleReads: new Set(s.staleReads ?? []),
+    downgrades: s.downgrades ?? { rewriteToContext: 0, returnCachedToDeny: 0, injectBeforeToWarn: 0, total: 0 },
   };
 }

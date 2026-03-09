@@ -1,4 +1,5 @@
 import type { ActualOutcome, JournalEventData } from './harness-journal.js';
+import type { Surface, RuntimeResult } from './harness-runtime.js';
 export type { ActualOutcome, JournalEventData } from './harness-journal.js';
 
 // --- Task Classification ---
@@ -94,6 +95,7 @@ export type StageResult =
   | { outcome: 'rewrite'; tool: string; args: Record<string, unknown>; budgetContext?: BudgetContext }
   | { outcome: 'escalate'; hint?: string; alternatives?: ScoredAlternative[]; budgetContext?: BudgetContext }
   | { outcome: 'return_cached'; file: string; cached: CachedRead }
+  | { outcome: 'inject_before'; calls: InterceptedCall[]; reason: string }
   | { outcome: 'deny'; reason: string };
 
 export interface ScoredAlternative {
@@ -125,6 +127,7 @@ export interface DowngradeEvent {
 export interface DowngradeCounters {
   rewriteToContext: number;
   returnCachedToDeny: number;
+  injectBeforeToWarn: number;
   total: number;
 }
 export interface HarnessState {
@@ -136,6 +139,7 @@ export interface HarnessState {
   turn: number;
   pendingRewrite?: PendingRewrite;
   rewriteCompliance: { followed: number; ignored: number };
+  staleReads: Set<string>;
   downgrades: DowngradeCounters;
 }
 
@@ -154,46 +158,9 @@ export interface SerializedHarnessState {
   turn: number;
   pendingRewrite?: PendingRewrite;
   rewriteCompliance: { followed: number; ignored: number };
+  staleReads?: string[];
   downgrades?: DowngradeCounters;
 }
 
-// --- Context Kernel Runtime (Phase 1) ---
-
-export type ToolClass =
-  | 'read'
-  | 'search'
-  | 'list'
-  | 'mutate'
-  | 'execute'
-  | 'verify'
-  | 'context';
-
-export type Surface = 'claude-hook' | 'vscode-hook' | 'mcp' | 'cli' | 'library';
-
-export interface AdapterCapabilities {
-  canBlock: boolean;
-  canRewrite: boolean;
-  canInjectContext: boolean;
-  canReturnCached: boolean;
-}
-
-export interface HarnessRequest {
-  surface: Surface;
-  event: string;
-  toolClass: ToolClass;
-  toolName: string;
-  args: Record<string, unknown>;
-  rawPath?: string;
-  prompt?: string;
-  taskDescription?: string;
-  result?: { tokens?: number; durationMs?: number; success?: boolean; error?: string };
-  capabilities: AdapterCapabilities;
-}
-
-export type RuntimeResult =
-  | { action: 'allow' }
-  | { action: 'deny'; output: { type: 'block'; value: string } }
-  | { action: 'rewrite'; output: { type: 'context'; value: string } | { type: 'execute'; tool: string; args: Record<string, unknown> } }
-  | { action: 'return_cached'; output: { type: 'result'; file: string; cached: CachedRead } }
-  | { action: 'warn'; output: { type: 'context'; value: string } }
-  | { action: 'noop' };
+// --- Context Kernel Runtime types (split to harness-runtime.ts) ---
+export type { ToolClass, Surface, AdapterCapabilities, HarnessRequest, RuntimeResult } from './harness-runtime.js';

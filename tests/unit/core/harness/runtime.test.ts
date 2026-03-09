@@ -18,7 +18,7 @@ function makeRequest(overrides: Partial<HarnessRequest> = {}): HarnessRequest {
     toolClass: 'read',
     toolName: 'Read',
     args: { file: 'test.ts' },
-    capabilities: { canBlock: true, canRewrite: false, canInjectContext: true, canReturnCached: false },
+    capabilities: { canBlock: true, canRewrite: false, canInjectContext: true, canReturnCached: false, canInjectBefore: false },
     ...overrides,
   };
 }

@@ -60,9 +60,20 @@ export function replayEvent(state: HarnessState, event: JournalEventData): void 
     case 'pending_rewrite':
       state.pendingRewrite = event.rewrite;
       break;
-    case 'downgrade':
-      state.downgrades[event.key] += 1;
-      state.downgrades.total += 1;
+    case 'downgrade': {
+      const counters = state.downgrades;
+      const key = event.key;
+      if (key === 'rewriteToContext') counters.rewriteToContext += 1;
+      else if (key === 'returnCachedToDeny') counters.returnCachedToDeny += 1;
+      else if (key === 'injectBeforeToWarn') counters.injectBeforeToWarn += 1;
+      counters.total += 1;
+      break;
+    }
+    case 'evidence_invalidated':
+      state.staleReads.add(event.file);
+      break;
+    case 'evidence_restored':
+      state.staleReads.delete(event.file);
       break;
   }
 }

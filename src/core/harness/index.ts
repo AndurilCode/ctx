@@ -20,3 +20,5 @@ export { appendEntry, readJournal, appendRecord, readRecords, replayEvent, repla
 export type { JournalEntry, JournalRecord } from './journal.js';
 export { createBundle } from './bundles.js';
 export type { Bundle, BundleType } from './bundles.js';
+export { checkMutationEvidence, invalidateEvidence, restoreEvidence, isMutationRequiringEvidence } from './evidence.js';
+export type { MutationCheck } from './evidence.js';

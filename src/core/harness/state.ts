@@ -6,6 +6,7 @@ import type {
   ToolCallRecord,
 } from '../../types/harness.js';
 import { DEFAULT_PROFILE, MUTATION_TOOLS, READ_TOOLS, ZONE_PCT } from './constants.js';
+import { invalidateEvidence, restoreEvidence, isMutationRequiringEvidence } from './evidence.js';
 
 // Re-export everything consumers need from a single entry point
 export { MUTATION_TOOLS, READ_TOOLS } from './constants.js';
@@ -56,7 +57,8 @@ export function createHarnessState(opts: {
     },
     turn: 0,
     rewriteCompliance: { followed: 0, ignored: 0 },
-    downgrades: { rewriteToContext: 0, returnCachedToDeny: 0, total: 0 },
+    staleReads: new Set(),
+    downgrades: { rewriteToContext: 0, returnCachedToDeny: 0, injectBeforeToWarn: 0, total: 0 },
   };
 }
 
@@ -95,10 +97,14 @@ export function recordToolCall(
       tokens: record.tokensConsumed,
       turn,
     });
+    restoreEvidence(state, file);
   }
 
   if (MUTATION_TOOLS.has(record.tool) && file) {
     state.cache.hotFiles.add(file);
+    if (isMutationRequiringEvidence(record.tool)) {
+      invalidateEvidence(state, file);
+    }
   }
 
   // --- Incremental signal updates ---
