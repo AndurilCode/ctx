@@ -20,6 +20,8 @@ export async function evaluateHarness({ event, toolName, toolInput, rawPath, pro
     );
 
     const statePath = resolveStatePath(process.cwd());
+    // Skip evaluation if no harness state exists (e.g. temp test workspaces)
+    if (!existsSync(statePath)) return null;
     const metricsPath = `${process.cwd()}/.claude/harness-metrics.log`;
 
     const request = buildRequest({

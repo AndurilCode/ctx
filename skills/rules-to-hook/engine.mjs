@@ -6,6 +6,7 @@ import { minimatch } from 'minimatch';
 import { extractInput, pickString, buildOutput, PERMISSION_EVENTS, DECISION_BLOCK_EVENTS } from './platform.mjs';
 import { evaluateHarness } from './harness-eval.mjs';
 import { runHealthCheck } from './health-check.mjs';
+import { isValidRule } from './validate.mjs';
 // CLI --check mode (no stdin needed)
 if (process.argv.includes('--check')) {
   const result = runHealthCheck(process.cwd());
@@ -21,19 +22,6 @@ if (process.argv.includes('--check')) {
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 let input;
 try {
@@ -167,7 +155,7 @@ function resolveInject(inject) {
 }
 
 const matched = rules
-  .filter((r) => r.on === event && r.inject && matchesWhen(r.when ?? {}))
+  .filter((r) => r.on === event && r.inject && isValidRule(r) && matchesWhen(r.when ?? {}))
   .map((r) => resolveInject(r.inject))
   .filter(Boolean);
 

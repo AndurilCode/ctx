@@ -22,7 +22,6 @@ export async function createTokenCounter(): Promise<TokenCounter> {
   }
 
   try {
-    // @ts-expect-error -- tiktoken is an optional peer dependency
     const mod = await import('tiktoken');
     const encoder = mod.get_encoding('cl100k_base');
     cachedCounter = {

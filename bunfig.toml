@@ -1,0 +1,5 @@
+[test]
+root = "."
+
+# Exclude dist/ to avoid running compiled copies of tests
+ignore = ["dist/", "node_modules/", ".claude/"]
