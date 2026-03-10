@@ -129,6 +129,18 @@
       }
     ],
     "Stop": [],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/harness-hook.py",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
     "PreCompact": [
       {
         "matcher": ".*",
